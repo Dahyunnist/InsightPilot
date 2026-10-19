@@ -1,0 +1,23 @@
+{
+  "created_at_utc": "2026-10-19T05:24:37.564016+00:00",
+  "total": 16,
+  "passed": 16,
+  "normal_total": 12,
+  "normal_numeric_pass": 12,
+  "clarify_pass": 2,
+  "refusal_pass": 2,
+  "sql_executable": 12,
+  "p50_elapsed_ms": 2715.452,
+  "p95_elapsed_ms": 8736.444,
+  "mean_reported_total_tokens": 799.92,
+  "token_usage_cases": 12,
+  "failures": [],
+  "retrieval_ablation": {
+    "cases": 6,
+    "numeric_pass": 4,
+    "failures": [
+      "N07",
+      "N12"
+    ]
+  }
+}

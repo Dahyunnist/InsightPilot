@@ -7,13 +7,15 @@ from sqlglot import exp
 
 
 ALLOWED_TABLES = {"orders", "refunds", "products"}
-ALLOWED_CTES = {"eligible_orders", "approved_refunds", "base"}
+ALLOWED_CTES = {"eligible_orders", "approved_refunds", "base", "periods"}
 ALLOWED_COLUMNS = {
     "order_id", "paid_amount_cents", "product_id", "category", "channel", "region",
     "ordered_at", "status", "amount_cents", "refund_cents", "group_value",
     "numerator", "denominator", "value", "numerator_cents", "denominator_cents",
+    "period_label", "start_at", "end_at",
+    "refunded_at",
 }
-ALLOWED_FUNCTIONS = {"COUNT", "SUM", "COALESCE", "NULLIF"}
+ALLOWED_FUNCTIONS = {"COUNT", "SUM", "COALESCE", "NULLIF", "SUBSTR", "SUBSTRING"}
 MAX_SQL_CHARS = 20_000
 MAX_AST_NODES = 500
 MAX_ROWS = 100
@@ -72,7 +74,12 @@ def validate_sql(sql: str) -> None:
         if type(function).__name__.upper() not in ALLOWED_FUNCTIONS:
             raise SQLPolicyError("Function is outside the allowlist")
     for star in tree.find_all(exp.Star):
-        if not isinstance(star.parent, exp.Count):
+        values_projection = (
+            isinstance(star.parent, exp.Select)
+            and star.parent.args.get("from_") is not None
+            and isinstance(star.parent.args["from_"].this, exp.Values)
+        )
+        if not isinstance(star.parent, exp.Count) and not values_projection:
             raise SQLPolicyError("Wildcard projection is not allowed")
 
     limit = tree.args.get("limit")

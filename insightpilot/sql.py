@@ -21,6 +21,69 @@ DIMENSIONS = {
 
 
 def compile_query(plan: QueryPlan) -> CompiledQuery:
+    if plan.metric_id == "approved_refund_event_amount":
+        start, end = plan.periods[0] if plan.periods else (plan.start_date, plan.end_date)
+        filters = ["r.status = 'approved'", "r.refunded_at >= ?", "r.refunded_at < ?", "o.status = 'paid'"]
+        params = [start + "T00:00:00Z", end + "T00:00:00Z"]
+        if plan.region:
+            filters.append("o.region = ?")
+            params.append(plan.region)
+        if plan.dimension not in (None, "refund_day_utc"):
+            raise ValueError("Event amount only supports UTC refund-day grouping")
+        group_expr = "substr(r.refunded_at, 1, 10)" if plan.dimension == "refund_day_utc" else "'全部'"
+        group_select = "group_value, " if plan.dimension else ""
+        grouped = "GROUP BY group_value" if plan.dimension else ""
+        order_by = "ORDER BY group_value" if plan.dimension else ""
+        sql = f"""SELECT {group_select}SUM(r.amount_cents) AS amount_cents
+FROM refunds r JOIN orders o ON o.order_id = r.order_id
+WHERE {' AND '.join(filters)}
+{grouped}
+{order_by}
+LIMIT 100"""
+        if plan.dimension:
+            sql = sql.replace("SELECT group_value,", f"SELECT {group_expr} AS group_value,")
+        return CompiledQuery(sql, tuple(params))
+
+    if plan.metric_id == "refund_amount_by_status":
+        start, end = plan.periods[0] if plan.periods else (plan.start_date, plan.end_date)
+        filters = ["r.refunded_at >= ?", "r.refunded_at < ?", "o.status = 'paid'"]
+        params = [start + "T00:00:00Z", end + "T00:00:00Z"]
+        if plan.region:
+            filters.append("o.region = ?")
+            params.append(plan.region)
+        sql = f"""SELECT r.status AS group_value, SUM(r.amount_cents) AS amount_cents
+FROM refunds r JOIN orders o ON o.order_id = r.order_id
+WHERE {' AND '.join(filters)}
+GROUP BY r.status
+ORDER BY r.status
+LIMIT 100"""
+        return CompiledQuery(sql, tuple(params))
+
+    if plan.metric_id == "approved_refund_order_rate" and len(plan.periods) > 1:
+        if len(plan.periods) != 2 or plan.dimension is not None:
+            raise ValueError("Period comparison supports exactly two periods without a dimension")
+        values = []
+        params = []
+        for index, (start, end) in enumerate(plan.periods, start=1):
+            values.append("(?, ?, ?)")
+            params.extend([f"period_{index}", start + "T00:00:00Z", end + "T00:00:00Z"])
+        region_filter = " AND o.region = ?" if plan.region else ""
+        if plan.region:
+            params.append(plan.region)
+        sql = f"""WITH periods(period_label, start_at, end_at) AS (VALUES {', '.join(values)}),
+eligible_orders AS (
+    SELECT o.order_id, p.period_label AS group_value
+    FROM orders o JOIN periods p ON o.ordered_at >= p.start_at AND o.ordered_at < p.end_at
+    WHERE o.status = 'paid'{region_filter}
+), approved_refunds AS (
+    SELECT order_id FROM refunds WHERE status = 'approved' GROUP BY order_id
+)
+SELECT b.group_value, COUNT(r.order_id) AS numerator, COUNT(*) AS denominator,
+       1.0 * COUNT(r.order_id) / NULLIF(COUNT(*), 0) AS value
+FROM eligible_orders b LEFT JOIN approved_refunds r ON r.order_id = b.order_id
+GROUP BY b.group_value ORDER BY b.group_value LIMIT 100"""
+        return CompiledQuery(sql, tuple(params))
+
     if plan.dimension not in DIMENSIONS:
         raise ValueError("Unsupported dimension")
     dim_expr, dim_alias = DIMENSIONS[plan.dimension]
@@ -36,12 +99,22 @@ def compile_query(plan: QueryPlan) -> CompiledQuery:
     group_select = "group_value, " if dim_alias else ""
     filter_sql = " AND ".join(filters)
 
-    if plan.metric_id == "approved_refund_order_rate":
+    if plan.metric_id in ("approved_refund_order_rate", "approved_refund_order_counts"):
+        if plan.metric_id == "approved_refund_order_counts":
+            select_values = "COUNT(*) AS paid_orders, COUNT(r.order_id) AS refunded_orders"
+        else:
+            select_values = (
+                "COUNT(r.order_id) AS numerator, "
+                "COUNT(*) AS denominator, "
+                "1.0 * COUNT(r.order_id) / NULLIF(COUNT(*), 0) AS value"
+            )
+    elif plan.metric_id == "approved_refund_cohort_summary":
         select_values = (
-            "COUNT(r.order_id) AS numerator, "
-            "COUNT(*) AS denominator, "
-            "1.0 * COUNT(r.order_id) / NULLIF(COUNT(*), 0) AS value"
+            "SUM(COALESCE(r.refund_cents, 0)) AS numerator_cents, "
+            "COUNT(r.order_id) AS refunded_orders, COUNT(*) AS paid_orders"
         )
+    elif plan.metric_id == "approved_refund_amount":
+        select_values = "SUM(COALESCE(r.refund_cents, 0)) AS amount_cents"
     elif plan.metric_id == "approved_refund_amount_rate":
         select_values = (
             "SUM(COALESCE(r.refund_cents, 0)) AS numerator_cents, "

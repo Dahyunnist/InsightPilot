@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,6 +30,16 @@ class InsightPilot:
         self.database_path = database_path
 
     def analyze(self, question: str) -> dict:
+        started = time.perf_counter()
+        if hasattr(self.planner, "last_call_usage"):
+            self.planner.last_call_usage = None
+        result = self._analyze(question)
+        result["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 3)
+        result["model_usage"] = getattr(self.planner, "last_call_usage", None)
+        result["model_latency_ms"] = getattr(self.planner, "last_call_latency_ms", None)
+        return result
+
+    def _analyze(self, question: str) -> dict:
         run_id = str(uuid.uuid4())
         denied = _preflight(question)
         if denied:
@@ -40,7 +51,10 @@ class InsightPilot:
         except PlanError as exc:
             return {"run_id": run_id, "status": "failed", "stage": "planning", "message": str(exc)}
         metric = METRICS[plan.metric_id]
-        compiled = compile_query(plan)
+        try:
+            compiled = compile_query(plan)
+        except ValueError as exc:
+            return {"run_id": run_id, "status": "failed", "stage": "compilation", "message": str(exc)}
         try:
             rows, data_version = execute_readonly(self.database_path, compiled)
         except QueryExecutionError as exc:
@@ -58,6 +72,7 @@ class InsightPilot:
             "metric": {"id": metric.metric_id, "name": metric.label, "formula": metric.formula,
                        "time_basis": metric.time_basis, "refund_status": metric.refund_status},
             "plan": {"start_date_inclusive": plan.start_date, "end_date_exclusive": plan.end_date,
+                     "periods": [list(period) for period in plan.periods],
                      "region": plan.region, "dimension": plan.dimension},
             "data_version": data_version,
             "generated_at_utc": datetime.now(timezone.utc).isoformat(),
