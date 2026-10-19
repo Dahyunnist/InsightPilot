@@ -18,3 +18,15 @@ python -m venv .venv
 回答带指标公式、日期区间、数据版本、参数化 SQL、结果行和独立汇总复核。所有 SQL 来自本地模板；模型只抽取结构化计划。SQLGlot AST 白名单、SQLite authorizer、只读 URI、`query_only`、2 秒执行上限、250,000 条 SQLite 虚拟机指令预算与 100 行上限共同约束查询。
 
 当前会澄清相对日期、模糊退款率和多指标问题；会拒绝写请求与个人信息请求。固定数据只有 30 单和 32 条退款，不能代表真实企业数据。扫描预算按 SQLite 虚拟机指令计，不是物理磁盘字节数。
+
+API 绑定 `127.0.0.1:8000`，提供 `POST /analysis`、`GET /runs/{id}`、`GET /health`。MCP 使用独立 loopback 端口 `127.0.0.1:8001/mcp`，暴露 `analyze_refund` 工具和指标/契约资源。两种入口与 CLI 都调用同一个 `InsightPilot` 服务。API 运行记录只保存在进程内，最多保留 100 条。
+
+API 与 MCP 服务需在两个终端分别启动：
+
+```text
+.\.venv\Scripts\python.exe -m insightpilot.api_server
+```
+
+```text
+.\.venv\Scripts\python.exe -m insightpilot.mcp_server
+```
