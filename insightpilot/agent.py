@@ -11,6 +11,7 @@ from .metrics import METRICS
 from .planner import NeedsClarification, OpenAICompatiblePlanner, PlanError
 from .runner import QueryExecutionError, execute_readonly
 from .sql import compile_query
+from .verification import verify_result
 
 
 def _preflight(question: str) -> dict | None:
@@ -44,6 +45,13 @@ class InsightPilot:
             rows, data_version = execute_readonly(self.database_path, compiled)
         except QueryExecutionError as exc:
             return {"run_id": run_id, "status": "failed", "stage": "query", "message": str(exc)}
+        try:
+            verification = verify_result(plan, rows, self.database_path)
+        except QueryExecutionError as exc:
+            return {"run_id": run_id, "status": "failed", "stage": "verification", "message": str(exc)}
+        if not verification["passed"]:
+            return {"run_id": run_id, "status": "failed", "stage": "verification",
+                    "message": "独立汇总复核未通过；已停止生成结论。", "verification": verification}
         return {
             "run_id": run_id,
             "status": "answered",
@@ -56,5 +64,6 @@ class InsightPilot:
             "sql": compiled.sql,
             "parameters": list(compiled.params),
             "rows": rows,
+            "verification": verification,
             "limitations": ["S1 只支持单指标、明确日期区间、品类或渠道分组。", "数据为固定合成样本。"],
         }

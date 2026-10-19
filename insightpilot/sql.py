@@ -38,9 +38,9 @@ def compile_query(plan: QueryPlan) -> CompiledQuery:
 
     if plan.metric_id == "approved_refund_order_rate":
         select_values = (
-            "COUNT(CASE WHEN r.order_id IS NOT NULL THEN 1 END) AS numerator, "
+            "COUNT(r.order_id) AS numerator, "
             "COUNT(*) AS denominator, "
-            "1.0 * COUNT(CASE WHEN r.order_id IS NOT NULL THEN 1 END) / NULLIF(COUNT(*), 0) AS value"
+            "1.0 * COUNT(r.order_id) / NULLIF(COUNT(*), 0) AS value"
         )
     elif plan.metric_id == "approved_refund_amount_rate":
         select_values = (
