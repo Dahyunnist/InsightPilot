@@ -1,0 +1,22 @@
+{
+  "database": "data\\insightpilot-enterprise.sqlite",
+  "data_version": "insightpilot-enterprise-v1",
+  "data_fingerprint": "f21f2b8c7d2bf95944101fc3e30182734a4b6c8bef2ef4176f29232a08f3946c",
+  "row_counts": {
+    "orders": 50000,
+    "refunds": 10454,
+    "campaign_attributions": 60429,
+    "customers": 20000,
+    "products": 600,
+    "campaigns": 20
+  },
+  "quality": {
+    "orphan_refunds": 0,
+    "late_recorded_refunds_over_1d": 9757,
+    "attribution_weight_sum_mismatches": 0,
+    "weights_outside_0_1": 0,
+    "approved_over_refund_orders": 0,
+    "orders_without_campaign_attribution": 498,
+    "campaign_attribution_coverage": 0.99004
+  }
+}

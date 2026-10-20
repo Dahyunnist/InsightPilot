@@ -20,6 +20,10 @@ class S5SemanticTests(unittest.TestCase):
         ids = {metric.metric_id for metric in retrieve_metrics("2026-10-05 到 2026-10-11 退款率是多少？")}
         self.assertEqual(ids, {"approved_refund_order_rate", "approved_refund_amount_rate"})
 
+    def test_explicit_amount_rate_synonym_retrieves_amount_rate(self):
+        ids = {metric.metric_id for metric in retrieve_metrics("指定日期批准退款金额率是多少？")}
+        self.assertEqual(ids, {"approved_refund_amount_rate"})
+
     def test_planner_rejects_dimension_outside_metric_contract(self):
         planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)
         planner._complete = lambda *_: {

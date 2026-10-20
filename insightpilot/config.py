@@ -46,11 +46,14 @@ def load_settings(root: Path | None = None) -> Settings:
         raise ValueError("LLM_TIMEOUT_SECONDS and LLM_MAX_COMPLETION_TOKENS must be numeric") from exc
     if timeout <= 0 or tokens < 1:
         raise ValueError("LLM timeout and completion token limit must be positive")
+    database = Path(os.environ.get("INSIGHTPILOT_DATABASE_PATH", "data/insightpilot-s0.sqlite"))
+    if not database.is_absolute():
+        database = root / database
     return Settings(
         api_key=os.environ["LLM_API_KEY"],
         base_url=os.environ["LLM_BASE_URL"].rstrip("/"),
         model=os.environ["LLM_MODEL"],
         timeout_seconds=timeout,
         max_completion_tokens=tokens,
-        database_path=root / "data" / "insightpilot-s0.sqlite",
+        database_path=database.resolve(),
     )

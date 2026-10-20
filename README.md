@@ -40,4 +40,12 @@ API 与 MCP 服务需在两个终端分别启动：
 
 ## S5 版本化语义目录
 
-各指标现在提供定义版本、生效日、粒度、来源表与字段血缘、适用维度、访问范围和来源文档。MCP `metrics://refund-catalog` 返回同一版本化目录。规划器把检索到的指标元数据按需注入；执行前校验维度符合该指标语义契约。未定义的 `refund_event_rate` 保持禁用，模糊“退款率”继续澄清。当前权限标签是语义元数据；API 强制授权将在 S6 实现。
+各指标现在提供定义版本、生效日、粒度、来源表与字段血缘、适用维度、访问范围和来源文档。MCP `metrics://refund-catalog` 返回同一版本化目录。规划器把检索到的指标元数据按需注入；执行前校验维度符合该指标语义契约。未定义的 `refund_event_rate` 保持禁用，模糊“退款率”继续澄清。API/MCP 的 Bearer scope 与地区约束见 S6。
+
+## S7 企业合成基准与归因
+
+原 S0 固定夹具保持不变。新增 `data/enterprise_seed.py` 生成确定性 50,000 单、约 10,000 笔退款的扩展库，含 4 地区、4 渠道、6 品类、客户分层、20 活动、多触点权重、迟到入库退款和约 1% 缺失归因。运行 `python -m data.enterprise_seed` 后，以 `INSIGHTPILOT_DATABASE_PATH=data/insightpilot-enterprise.sqlite` 切换数据。`data.enterprise_seed.quality_report()` 输出 orphan、超额退款、权重错误、迟到行和归因覆盖率。新活动归因需 enterprise 数据版本；S0 上会澄清，不会发 SQL。表粒度和字段约束见 [enterprise 数据契约](docs/enterprise-data-contract.md)。
+
+新增 `region`、`month_utc` 分组和带权多触点活动归因；组级复核用单独查询路径逐组核对。回答还带确定性 `visualization` 规范，可由 API/MCP 客户端渲染为月趋势线或分类柱图。
+
+`evals/enterprise-blind-v1.jsonl` 只放 3 道 holdout 问题；独立 `evals/enterprise-gold-v1.jsonl` 由 Python 从固定源行计算，不注入模型 prompt。先构建 enterprise 数据和 gold，再运行 `python -m insightpilot.enterprise_evaluate`；评测会各跑主策略、无语义检索、无独立复核，并记录逐题 JSONL。provider 未报告价格时只给 token，不虚构费用。

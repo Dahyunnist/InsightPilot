@@ -62,6 +62,7 @@ def execute_readonly(database_path: Path, query: CompiledQuery, cancel_event: Ev
             connection.execute("PRAGMA query_only = ON")
             version_row = connection.execute("SELECT value FROM data_meta WHERE key = 'data_version'").fetchone()
             version = version_row[0] if version_row else "unknown"
+            vm_budget = MAX_VM_STEPS * 20 if version == "insightpilot-enterprise-v1" else MAX_VM_STEPS
             deadline = time.monotonic() + QUERY_TIMEOUT_SECONDS
             execution_state = {"steps": 0, "timed_out": False, "over_budget": False}
 
@@ -70,7 +71,7 @@ def execute_readonly(database_path: Path, query: CompiledQuery, cancel_event: Ev
                 if cancel_event is not None and cancel_event.is_set():
                     execution_state["cancelled"] = True
                     return 1
-                if execution_state["steps"] > MAX_VM_STEPS:
+                if execution_state["steps"] > vm_budget:
                     execution_state["over_budget"] = True
                     return 1
                 if time.monotonic() >= deadline:
@@ -99,3 +100,24 @@ def execute_readonly(database_path: Path, query: CompiledQuery, cancel_event: Ev
                 raise QueryBudgetError("查询超过 250,000 条 SQLite 虚拟机指令预算。") from None
             raise QueryTimeoutError("查询超过 2 秒时间限制。") from None
         raise QueryExecutionError(f"只读查询失败：{exc.__class__.__name__}") from None
+
+
+def read_data_identity(database_path: Path) -> tuple[str, str | None]:
+    if not database_path.is_file():
+        raise QueryExecutionError("固定数据文件不存在。")
+    uri = "file:" + quote(database_path.resolve().as_posix(), safe="/:\\") + "?mode=ro"
+    connection = None
+    try:
+        connection = sqlite3.connect(uri, uri=True, timeout=QUERY_TIMEOUT_SECONDS)
+        connection.execute("PRAGMA query_only=ON")
+        rows = dict(connection.execute("SELECT key,value FROM data_meta WHERE key IN ('data_version','data_fingerprint')"))
+        return rows.get("data_version", "unknown"), rows.get("data_fingerprint")
+    except sqlite3.Error as exc:
+        raise QueryExecutionError(f"无法读取数据版本：{exc.__class__.__name__}") from None
+    finally:
+        if connection is not None:
+            connection.close()
+
+
+def read_data_version(database_path: Path) -> str:
+    return read_data_identity(database_path)[0]

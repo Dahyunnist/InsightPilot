@@ -6,16 +6,18 @@ import sqlglot
 from sqlglot import exp
 
 
-ALLOWED_TABLES = {"orders", "refunds", "products"}
-ALLOWED_CTES = {"eligible_orders", "approved_refunds", "base", "periods"}
+ALLOWED_TABLES = {"orders", "refunds", "products", "campaign_attributions", "campaigns"}
+ALLOWED_CTES = {"eligible_orders", "approved_refunds", "base", "periods", "attributed_refunds", "campaign_totals", "grouped", "refund_by_order"}
 ALLOWED_COLUMNS = {
     "order_id", "paid_amount_cents", "product_id", "category", "channel", "region",
     "ordered_at", "status", "amount_cents", "refund_cents", "group_value",
     "numerator", "denominator", "value", "numerator_cents", "denominator_cents",
     "period_label", "start_at", "end_at",
     "refunded_at",
+    "recorded_at", "campaign_id", "campaign_name", "weight", "attribution_weight",
+    "month_utc",
 }
-ALLOWED_FUNCTIONS = {"COUNT", "SUM", "COALESCE", "NULLIF", "SUBSTR", "SUBSTRING"}
+ALLOWED_FUNCTIONS = {"COUNT", "SUM", "COALESCE", "NULLIF", "SUBSTR", "SUBSTRING", "ABS", "ROUND", "DATETIME", "CASE", "IF"}
 MAX_SQL_CHARS = 20_000
 MAX_AST_NODES = 500
 MAX_ROWS = 100

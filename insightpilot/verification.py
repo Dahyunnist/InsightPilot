@@ -19,6 +19,65 @@ def _order_filters(plan: QueryPlan, alias: str = "o") -> tuple[str, list[str]]:
 
 
 def compile_verification_query(plan: QueryPlan) -> CompiledQuery:
+    if plan.metric_id == "approved_refund_campaign_attribution":
+        where, params = _order_filters(plan)
+        sql = f"""WITH grouped AS (
+ SELECT COALESCE(c.campaign_name,'未归因') AS group_value,
+        SUM(COALESCE(r.amount_cents,0)*CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END) AS numerator_cents
+ FROM orders o LEFT JOIN refunds r ON r.order_id=o.order_id AND r.status='approved'
+ LEFT JOIN campaign_attributions a ON a.order_id=o.order_id
+ LEFT JOIN campaigns c ON c.campaign_id=a.campaign_id
+ WHERE {where}
+ GROUP BY COALESCE(c.campaign_name,'未归因')
+)
+SELECT group_value,numerator_cents,SUM(numerator_cents) OVER () AS denominator_cents
+FROM grouped ORDER BY group_value LIMIT 100"""
+        return CompiledQuery(sql, tuple(params))
+    if plan.metric_id == "refund_amount_by_status" and plan.dimension == "refund_status":
+        start, end = plan.periods[0] if plan.periods else (plan.start_date, plan.end_date)
+        filters = ["r.refunded_at>=?", "r.refunded_at<?", "o.status='paid'"]
+        params = [start + "T00:00:00Z", end + "T00:00:00Z"]
+        if plan.region:
+            filters.append("o.region=?")
+            params.append(plan.region)
+        return CompiledQuery(f"SELECT r.status AS group_value,SUM(r.amount_cents) AS amount_cents FROM refunds r JOIN orders o ON o.order_id=r.order_id WHERE {' AND '.join(filters)} GROUP BY r.status ORDER BY group_value LIMIT 100", tuple(params))
+    if plan.dimension is not None and plan.metric_id != "approved_refund_event_amount":
+        expressions = {"category": "p.category", "channel": "o.channel", "region": "o.region",
+                      "month_utc": "substr(o.ordered_at,1,7)"}
+        expression = expressions.get(plan.dimension)
+        if expression is None:
+            raise ValueError("No grouped verifier exists for this dimension")
+        where, params = _order_filters(plan)
+        join_product = " LEFT JOIN products p ON p.product_id=o.product_id" if plan.dimension == "category" else ""
+        if plan.metric_id == "approved_refund_order_rate":
+            value_expr = "1.0*SUM(CASE WHEN r.order_id IS NULL THEN 0 ELSE 1 END)/NULLIF(COUNT(*),0)"
+        else:
+            value_expr = "SUM(COALESCE(r.refund_cents,0))*1.0/NULLIF(SUM(o.paid_amount_cents),0)"
+        sql = f"""WITH refund_by_order AS (
+ SELECT order_id,SUM(amount_cents) AS refund_cents FROM refunds WHERE status='approved' GROUP BY order_id
+)
+SELECT {expression} AS group_value,
+       COUNT(*) AS paid_orders,
+       SUM(CASE WHEN r.order_id IS NULL THEN 0 ELSE 1 END) AS refunded_orders,
+       SUM(CASE WHEN r.order_id IS NULL THEN 0 ELSE 1 END) AS numerator,
+       COUNT(*) AS denominator,
+       SUM(COALESCE(r.refund_cents,0)) AS numerator_cents,
+       SUM(o.paid_amount_cents) AS denominator_cents,
+       {value_expr} AS value,
+       SUM(COALESCE(r.refund_cents,0)) AS amount_cents
+FROM orders o{join_product}
+LEFT JOIN refund_by_order r ON r.order_id=o.order_id
+WHERE {where}
+GROUP BY {expression} ORDER BY group_value LIMIT 100"""
+        return CompiledQuery(sql, tuple(params))
+    if plan.metric_id == "approved_refund_event_amount" and plan.dimension == "refund_day_utc":
+        start, end = plan.periods[0] if plan.periods else (plan.start_date, plan.end_date)
+        filters = ["r.status='approved'", "r.refunded_at>=?", "r.refunded_at<?", "o.status='paid'"]
+        params = [start + "T00:00:00Z", end + "T00:00:00Z"]
+        if plan.region:
+            filters.append("o.region=?")
+            params.append(plan.region)
+        return CompiledQuery(f"SELECT substr(r.refunded_at,1,10) AS group_value,SUM(r.amount_cents) AS amount_cents FROM refunds r JOIN orders o ON o.order_id=r.order_id WHERE {' AND '.join(filters)} GROUP BY group_value ORDER BY group_value LIMIT 100", tuple(params))
     if plan.metric_id == "approved_refund_order_rate" and len(plan.periods) > 1:
         if len(plan.periods) != 2:
             raise ValueError("Period comparison requires two ranges")
@@ -129,7 +188,57 @@ FROM periods p LIMIT 100"""
 def verify_result(plan: QueryPlan, rows: list[dict], database_path, cancel_event: Event | None = None) -> dict:
     control_rows, _ = execute_readonly(database_path, compile_verification_query(plan), cancel_event)
     if not control_rows:
-        return {"passed": False, "reason": "independent_check_returned_no_row"}
+        empty_match = not rows
+        return {"passed": empty_match, "method": "independent_empty_group_set",
+                "checks": {"empty_results_match": empty_match}}
+
+    if plan.dimension is not None and plan.metric_id != "approved_refund_campaign_attribution":
+        actual = {row.get("group_value"): row for row in rows}
+        expected = {row.get("group_value"): row for row in control_rows}
+        checks = {"groups_match": actual.keys() == expected.keys()}
+        if checks["groups_match"]:
+            if plan.metric_id == "approved_refund_amount_contribution":
+                total = sum(row.get("numerator_cents") or 0 for row in control_rows)
+                checks["group_values_match"] = all(
+                    actual[key].get("numerator_cents") == expected[key].get("numerator_cents")
+                    and actual[key].get("denominator_cents") == total
+                    and (total == 0 and actual[key].get("value") is None
+                         or total != 0 and abs(actual[key].get("value") - expected[key].get("numerator_cents") / total) <= 1e-9)
+                    for key in actual
+                )
+                passed = all(checks.values())
+                return {"passed": passed, "method": "independent_grouped_aggregation", "checks": checks, "control": control_rows}
+            fields = {
+                "approved_refund_order_rate": ("numerator", "denominator", "value"),
+                "approved_refund_amount_rate": ("numerator_cents", "denominator_cents", "value"),
+                "approved_refund_amount_contribution": ("numerator_cents", "denominator_cents", "value"),
+                "approved_refund_amount": ("amount_cents",),
+                "approved_refund_order_counts": ("paid_orders", "refunded_orders"),
+                "approved_refund_cohort_summary": ("numerator_cents", "refunded_orders", "paid_orders"),
+                "approved_refund_event_amount": ("amount_cents",),
+                "refund_amount_by_status": ("amount_cents",),
+            }.get(plan.metric_id, ())
+            checks["group_values_match"] = bool(fields) and all(
+                (actual[key].get(field) == expected[key].get(field)
+                 or field == "value" and actual[key].get(field) is not None and expected[key].get(field) is not None
+                 and abs(actual[key][field] - expected[key][field]) <= 1e-9)
+                for key in actual for field in fields
+            )
+        passed = all(checks.values())
+        return {"passed": passed, "method": "independent_grouped_aggregation", "checks": checks, "control": control_rows}
+
+    if plan.metric_id == "approved_refund_campaign_attribution":
+        actual = {row["group_value"]: row.get("numerator_cents") for row in rows}
+        expected = {row["group_value"]: row.get("numerator_cents") for row in control_rows}
+        passed = actual.keys() == expected.keys() and all(abs((actual[key] or 0) - (expected[key] or 0)) < 1e-7 for key in actual)
+        denominator = control_rows[0].get("denominator_cents") or 0
+        ratios_sum = sum(row.get("value") or 0 for row in rows)
+        passed = passed and abs(sum(actual.values()) - denominator) < 1e-7 and (denominator == 0 or abs(ratios_sum - 1.0) < 1e-9)
+        return {"passed": passed, "method": "independent_weighted_campaign_aggregation",
+                "checks": {"campaign_amounts_match": actual.keys() == expected.keys() and all(abs((actual[key] or 0) - (expected[key] or 0)) < 1e-7 for key in actual),
+                           "attributed_total_matches": abs(sum(actual.values()) - denominator) < 1e-7,
+                           "contribution_sums_to_one": denominator == 0 or abs(ratios_sum - 1.0) < 1e-9},
+                "control": control_rows}
 
     if plan.metric_id == "refund_amount_by_status" or (
         plan.metric_id == "approved_refund_order_rate" and len(plan.periods) > 1

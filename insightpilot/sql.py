@@ -17,10 +17,45 @@ DIMENSIONS = {
     None: ("'全部'", None),
     "category": ("p.category", "category"),
     "channel": ("o.channel", "channel"),
+    "region": ("o.region", "region"),
+    "month_utc": ("substr(o.ordered_at, 1, 7)", "month_utc"),
 }
 
 
 def compile_query(plan: QueryPlan) -> CompiledQuery:
+    if plan.metric_id == "approved_refund_campaign_attribution":
+        if plan.dimension not in (None, "campaign"):
+            raise ValueError("Campaign attribution only supports campaign grouping")
+        filters = ["o.status = 'paid'", "o.ordered_at >= ?", "o.ordered_at < ?"]
+        params = [plan.start_date + "T00:00:00Z", plan.end_date + "T00:00:00Z"]
+        if plan.region:
+            filters.append("o.region = ?")
+            params.append(plan.region)
+        sql = f"""WITH eligible_orders AS (
+    SELECT o.order_id
+    FROM orders o WHERE {' AND '.join(filters)}
+), approved_refunds AS (
+    SELECT order_id, SUM(amount_cents) AS refund_cents
+    FROM refunds WHERE status='approved' GROUP BY order_id
+), base AS (
+    SELECT e.order_id, COALESCE(r.refund_cents,0) AS refund_cents
+    FROM eligible_orders e LEFT JOIN approved_refunds r ON r.order_id=e.order_id
+), attributed_refunds AS (
+    SELECT b.order_id, b.refund_cents,
+           CASE WHEN a.campaign_id IS NULL THEN '未归因' ELSE c.campaign_name END AS group_value,
+           CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END AS attribution_weight
+    FROM base b
+    LEFT JOIN campaign_attributions a ON a.order_id=b.order_id
+    LEFT JOIN campaigns c ON c.campaign_id=a.campaign_id
+), campaign_totals AS (
+    SELECT group_value, SUM(refund_cents*attribution_weight) AS numerator_cents
+    FROM attributed_refunds GROUP BY group_value
+)
+SELECT group_value, numerator_cents, SUM(numerator_cents) OVER () AS denominator_cents,
+       1.0*numerator_cents/NULLIF(SUM(numerator_cents) OVER (),0) AS value
+FROM campaign_totals ORDER BY group_value LIMIT 100"""
+        return CompiledQuery(sql, tuple(params))
+
     if plan.metric_id == "approved_refund_event_amount":
         start, end = plan.periods[0] if plan.periods else (plan.start_date, plan.end_date)
         filters = ["r.status = 'approved'", "r.refunded_at >= ?", "r.refunded_at < ?", "o.status = 'paid'"]

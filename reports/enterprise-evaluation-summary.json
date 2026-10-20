@@ -1,0 +1,35 @@
+{
+  "created_at_utc": "2026-10-20T02:35:48.890457+00:00",
+  "data_version": "insightpilot-enterprise-v1",
+  "case_count": 3,
+  "passed": 3,
+  "metric_accuracy": 3,
+  "dimension_accuracy": 3,
+  "numeric_accuracy": 3,
+  "sql_verified": 3,
+  "p50_elapsed_ms": 4137.805,
+  "p95_elapsed_ms": 9484.855,
+  "mean_total_tokens": 1138.33,
+  "token_cases": 3,
+  "cost_estimate": null,
+  "cost_note": "当前未配置供应商单价，只报告 provider token 用量。",
+  "failures": [],
+  "ablations": {
+    "without_semantic_retrieval_passed": 1,
+    "without_semantic_retrieval_total": 3,
+    "without_independent_verification_numerically_correct": 2,
+    "without_independent_verification_total": 3,
+    "without_verifier_sql_verified": 0,
+    "without_semantic_retrieval_failures": [
+      "B01",
+      "B03"
+    ],
+    "without_independent_verification_failures": [
+      "B02"
+    ]
+  },
+  "task_completion_rate": 1.0,
+  "sql_safe_execution": 3,
+  "mean_model_latency_ms": 3246.836,
+  "data_fingerprint": "f21f2b8c7d2bf95944101fc3e30182734a4b6c8bef2ef4176f29232a08f3946c"
+}

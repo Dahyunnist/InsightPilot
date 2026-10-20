@@ -49,7 +49,7 @@ class OpenAICompatiblePlanner:
             "Convert each inclusive final calendar date to the next date as exclusive end. "
             "For comparison, return start_date, end_date_exclusive and comparison_periods as a list of two [start, exclusive_end] ranges. "
             "Return the shortest valid JSON. If question has no explicit calendar date(s), no single metric, requests multiple metrics, or cannot be grounded, set clarify=true and explain briefly. "
-            "Allowed dimension: null, category, channel, refund_day_utc, refund_status. Allowed region: a literal from user or null. "
+            "Allowed dimensions come from candidate_metrics.valid_dimensions. Allowed region: a literal from user or null. "
             'Return keys: clarify (boolean), clarification (string), metric_id, start_date, end_date_exclusive, comparison_periods, region, dimension.'
         )
         body = {
@@ -143,7 +143,7 @@ class OpenAICompatiblePlanner:
         if any(date.fromisoformat(period_start) >= date.fromisoformat(period_end) for period_start, period_end in source_periods):
             raise NeedsClarification("结束日期必须晚于开始日期。")
         dimension = result.get("dimension")
-        if dimension not in (None, "category", "channel", "refund_day_utc", "refund_status"):
+        if dimension not in (None, "category", "channel", "region", "month_utc", "refund_day_utc", "refund_status", "campaign"):
             raise PlanError("LLM selected a dimension outside the allowed set")
         if dimension is not None and dimension not in METRICS[metric_id].valid_dimensions:
             raise PlanError("LLM selected a dimension outside the metric's semantic contract")

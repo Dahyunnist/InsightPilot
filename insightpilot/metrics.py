@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, replace
 
 
 @dataclass(frozen=True)
@@ -21,6 +21,7 @@ class Metric:
     access_scopes: tuple[str, ...] = ("refund:read",)
     definition_source: str = "docs/product-contract.md#指标字典与口径"
     example_question: str = ""
+    required_data_versions: tuple[str, ...] = ()
 
 
 METRICS = {
@@ -68,7 +69,23 @@ METRICS = {
         "下单时间（UTC）", "仅 approved", valid_dimensions=(),
         example_question="按下单日期汇总退款金额和去重订单数？",
     ),
+    "approved_refund_campaign_attribution": Metric(
+        "approved_refund_campaign_attribution", "批准退款金额多触点活动归因",
+        "订单批准退款金额按有效 campaign touch 权重分摊；缺失 attribution 单独列示",
+        "下单时间（UTC）", "仅 approved", grain="订单 × campaign attribution",
+        source_tables=("orders", "refunds", "campaign_attributions", "campaigns"),
+        lineage=("orders.order_id", "refunds.amount_cents", "refunds.status",
+                 "campaign_attributions.weight", "campaigns.campaign_name"),
+        valid_dimensions=("campaign",), definition_source="docs/product-contract.md#多触点活动归因",
+        example_question="比较各活动带来的批准退款金额贡献？",
+        required_data_versions=("insightpilot-enterprise-v1",),
+    ),
 }
+
+_COHORT_DIMS = ("category", "channel", "region", "month_utc")
+for _key in ("approved_refund_order_rate", "approved_refund_amount_rate",
+             "approved_refund_amount_contribution", "approved_refund_amount"):
+    METRICS[_key] = replace(METRICS[_key], valid_dimensions=_COHORT_DIMS)
 
 
 def retrieve_metrics(question: str) -> list[Metric]:
@@ -77,6 +94,8 @@ def retrieve_metrics(question: str) -> list[Metric]:
     scores = {key: 0 for key in METRICS}
     if "按下单日期" in q and "退款订单数" in q:
         scores["approved_refund_cohort_summary"] = 10
+    if any(term in q.lower() for term in ("campaign", "活动归因", "营销活动", "投放活动")):
+        scores["approved_refund_campaign_attribution"] = 12
     if any(term in q for term in ("每天", "按退款日期", "退款事件日")):
         scores["approved_refund_event_amount"] = 10
     if any(term in q for term in ("退款状态", "待处理金额", "批准和待处理", "按状态")):
@@ -85,11 +104,11 @@ def retrieve_metrics(question: str) -> list[Metric]:
         scores["approved_refund_order_counts"] = 10
     if any(term in q for term in ("贡献", "占比", "贡献度")):
         scores["approved_refund_amount_contribution"] += 5
-    if any(term in q for term in ("金额", "实付", "销售额")):
+    if any(term in q for term in ("金额率", "金额退款率", "实付", "销售额")) or ("金额" in q and "退款率" in q):
         scores["approved_refund_amount_rate"] += 4
     if any(term in q for term in ("订单率", "订单数", "多少单")):
         scores["approved_refund_order_rate"] += 4
-    if "批准退款金额" in q and "退款率" not in q and not any(term in q for term in ("贡献", "占比")):
+    if "批准退款金额" in q and not any(term in q for term in ("退款率", "金额率")) and not any(term in q for term in ("贡献", "占比")):
         scores["approved_refund_amount"] += 6
     if "退款率" in q:
         scores["approved_refund_order_rate"] += 1
@@ -101,17 +120,19 @@ def retrieve_metrics(question: str) -> list[Metric]:
 
 def catalog_document() -> dict:
     """Return a deterministic, versioned semantic catalog for clients and audit."""
-    from dataclasses import asdict
-
     return {
         "catalog_version": "insightpilot-semantic-catalog-v1",
         "data_contract_version": "insightpilot-s0-v1",
+        "data_contract_versions": ["insightpilot-s0-v1", "insightpilot-enterprise-v1"],
         "metrics": [asdict(METRICS[key]) for key in sorted(METRICS)],
         "dimensions": {
             "category": {"source": "products.category", "grain": "product", "sensitivity": "internal"},
             "channel": {"source": "orders.channel", "grain": "order", "sensitivity": "internal"},
             "refund_day_utc": {"source": "refunds.refunded_at", "grain": "UTC day", "sensitivity": "internal"},
             "refund_status": {"source": "refunds.status", "grain": "refund record", "sensitivity": "internal"},
+            "region": {"source": "orders.region", "grain": "order", "sensitivity": "internal"},
+            "month_utc": {"source": "orders.ordered_at", "grain": "UTC month", "sensitivity": "internal"},
+            "campaign": {"source": "campaigns.campaign_name", "grain": "weighted attribution", "sensitivity": "internal"},
         },
         "excluded_definitions": {
             "refund_event_rate": "未有冻结公式、分母或生效版本；禁止自动替换成订单率/金额率。"

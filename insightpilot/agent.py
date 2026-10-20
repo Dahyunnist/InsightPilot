@@ -11,9 +11,26 @@ from threading import Event
 
 from .metrics import METRICS
 from .planner import NeedsClarification, OpenAICompatiblePlanner, PlanError
-from .runner import QueryCancelledError, QueryExecutionError, execute_readonly
+from .runner import QueryCancelledError, QueryExecutionError, execute_readonly, read_data_identity
 from .sql import compile_query
 from .verification import verify_result
+
+
+def _visualization(plan, rows: list[dict]) -> dict | None:
+    if plan.dimension is None or not rows:
+        return None
+    if "value" in rows[0]:
+        value_key, unit = "value", "ratio"
+    elif "amount_cents" in rows[0]:
+        value_key, unit = "amount_cents", "cents"
+    else:
+        value_key, unit = "numerator_cents", "cents"
+    return {
+        "type": "line" if plan.dimension in ("month_utc", "refund_day_utc") else "bar",
+        "x": {"field": "group_value", "label": plan.dimension},
+        "y": {"field": value_key, "unit": unit},
+        "data": [{"group_value": row.get("group_value"), value_key: row.get(value_key)} for row in rows],
+    }
 
 
 def _preflight(question: str) -> dict | None:
@@ -61,6 +78,16 @@ class InsightPilot:
             plan = type(plan)(plan.metric_id, plan.start_date, plan.end_date, authorized_region, plan.dimension, plan.periods)
         metric = METRICS[plan.metric_id]
         try:
+            dataset_version, data_fingerprint = read_data_identity(self.database_path)
+        except QueryExecutionError as exc:
+            if metric.required_data_versions:
+                return {"run_id": run_id, "status": "failed", "stage": "dataset", "message": str(exc)}
+            dataset_version = "unknown"
+        if metric.required_data_versions and dataset_version not in metric.required_data_versions:
+            return {"run_id": run_id, "status": "clarify", "stage": "dataset",
+                    "message": "该指标需要企业扩展数据集；请配置 INSIGHTPILOT_DATABASE_PATH。",
+                    "required_data_versions": list(metric.required_data_versions), "actual_data_version": dataset_version}
+        try:
             compiled = compile_query(plan)
         except ValueError as exc:
             return {"run_id": run_id, "status": "failed", "stage": "compilation", "message": str(exc)}
@@ -91,10 +118,12 @@ class InsightPilot:
                      "periods": [list(period) for period in plan.periods],
                      "region": plan.region, "dimension": plan.dimension},
             "data_version": data_version,
+            "data_fingerprint": data_fingerprint,
             "generated_at_utc": datetime.now(timezone.utc).isoformat(),
             "sql": compiled.sql,
             "parameters": list(compiled.params),
             "rows": rows,
+            "visualization": _visualization(plan, rows),
             "verification": verification,
-            "limitations": ["S1 只支持单指标、明确日期区间、品类或渠道分组。", "数据为固定合成样本。"],
+            "limitations": ["只回答语义目录支持的单指标和维度。", "当前数据为可复现的合成样本。"],
         }
