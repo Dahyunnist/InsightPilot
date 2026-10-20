@@ -105,7 +105,7 @@
     "failure_analysis": "Five natural-language variants had no metric candidate before model call; one prompt-injection paraphrase was not recognized. All six failed before model planning."
   },
   "v7_independent_holdout": {
-    "status": "frozen_pending_model_run",
+    "status": "completed_with_one_ambiguous_gold_case",
     "holdout": "enterprise-blind-v7",
     "dataset_seed": 20261022,
     "dataset_fingerprint": "f89ed6e14cc59ce0b9ea71ceef3e7b28dcfa6e1b3b348ee30c5c04964176ba38",
@@ -118,7 +118,19 @@
     "maximum_peak_reserve_usd": 0.09144,
     "remaining_global_cap_before_run_usd": 3.76744605,
     "blind_questions_sha256": "caf7b3b56a64d787ea9b25e1913324e43b8c6032e35c489bb37ec25106aa4889",
-    "gold_sha256": "dabbffb5097e2c5c680304b74f34980695b050539e62d95ec344b5956094d6bc"
+    "gold_sha256": "dabbffb5097e2c5c680304b74f34980695b050539e62d95ec344b5956094d6bc",
+    "main_strict_passed": "19/20",
+    "answerable_passed": "10/11",
+    "guard_passed": "9/9",
+    "sql_verified": "10/11",
+    "ablations_passed": {"without_semantic_retrieval": "14/20", "without_verifier": "9/20"},
+    "api_request_attempts_all_arms": 43,
+    "total_tokens_all_arms": 44269,
+    "peak_list_price_estimate_usd": 0.0404901,
+    "reserved_usd": 0.0786384,
+    "remaining_budget_for_this_run_usd": 0.0213616,
+    "remaining_global_cap_after_run_usd": 3.72695595,
+    "failed_case_review": "X01 omitted the approved refund status; model asked a reasonable clarification. Frozen gold classified it as answerable. Kept as strict failure; no post-hoc score change."
   },
   "v5_combined_peak_list_price_estimate_usd": 0.06221355,
   "unreserved_budget_after_v5_usd": 3.79755285,
