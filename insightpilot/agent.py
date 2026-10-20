@@ -70,8 +70,8 @@ class InsightPilot:
         result["response_model"] = getattr(self.planner, "last_response_model", None)
         status = result.get("status")
         terminal_stage = result.get("stage")
-        stages = ["preflight", "planning", "compilation", "query", "verification", "answer"]
-        completed_through = {"answered": 5, "clarify": -1, "refused": -1, "failed": -1, "cancelled": -1}.get(status, -1)
+        stages = ["preflight", "planning", "dataset", "compilation", "query", "verification", "answer"]
+        completed_through = {"answered": 6, "clarify": -1, "refused": -1, "failed": -1, "cancelled": -1}.get(status, -1)
         if status == "failed":
             completed_through = stages.index(terminal_stage) - 1 if terminal_stage in stages else -1
         if status == "cancelled":
@@ -85,6 +85,13 @@ class InsightPilot:
              "blocked" if stage == terminal_stage or (status == "answered" and stage == "answer") else "not_reached"}
             for index, stage in enumerate(stages)
         ]
+        result["model_budget"] = {
+            "max_calls": 2,
+            "calls_used": result["model_call_count"],
+            "max_prompt_chars_per_call": 12_000,
+            "max_completion_tokens_per_call": min(getattr(getattr(self.planner, "settings", None),
+                                                            "max_completion_tokens", 1200), 1200),
+        }
         return result
 
     def _analyze(self, question: str, *, run_id: str | None = None, cancel_event: Event | None = None,

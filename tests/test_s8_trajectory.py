@@ -21,7 +21,10 @@ class S8TrajectoryTests(unittest.TestCase):
             database = create_database(Path(directory) / "fixture.sqlite")
             result = InsightPilot(FixedPlanner(), database).analyze("refunds by category")
         self.assertEqual(result["status"], "answered")
-        self.assertEqual([step["outcome"] for step in result["trajectory"]], ["passed"] * 6)
+        self.assertEqual([step["stage"] for step in result["trajectory"]],
+                         ["preflight", "planning", "dataset", "compilation", "query", "verification", "answer"])
+        self.assertEqual([step["outcome"] for step in result["trajectory"]], ["passed"] * 7)
+        self.assertEqual(result["model_budget"]["max_calls"], 2)
         self.assertNotIn("question", str(result["trajectory"]))
 
     def test_refusal_trajectory_stops_at_preflight(self):

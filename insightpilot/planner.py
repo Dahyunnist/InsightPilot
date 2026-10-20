@@ -13,6 +13,9 @@ from datetime import date
 from .config import Settings
 from .metrics import METRICS, REGION_VALUES, retrieve_metrics
 
+_MAX_CALLS_PER_ANALYSIS = 2
+_MAX_PROMPT_CHARS_PER_CALL = 12_000
+
 
 @dataclass(frozen=True)
 class QueryPlan:
@@ -45,6 +48,8 @@ class OpenAICompatiblePlanner:
         self.last_response_model: str | None = None
 
     def _complete(self, question: str, candidates: list[str], allowed_metric_ids: list[str]) -> dict:
+        if self.last_call_count >= _MAX_CALLS_PER_ANALYSIS:
+            raise PlanError("analysis model-call budget reached")
         self.last_call_count += 1
         self.last_response_model = None
         self.last_call_created_at = None
@@ -69,6 +74,9 @@ class OpenAICompatiblePlanner:
                                                             "allowed_metric_ids": allowed_metric_ids}, ensure_ascii=False)},
             ],
         }
+        if len(system) + len(body["messages"][1]["content"]) > _MAX_PROMPT_CHARS_PER_CALL:
+            self.last_call_count -= 1
+            raise PlanError("analysis model prompt exceeds 12,000-character budget")
         request = urllib.request.Request(
             self.settings.base_url + "/chat/completions",
             data=json.dumps(body).encode("utf-8"),

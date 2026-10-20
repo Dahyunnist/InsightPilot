@@ -54,6 +54,6 @@ def load_settings(root: Path | None = None) -> Settings:
         base_url=os.environ["LLM_BASE_URL"].rstrip("/"),
         model=os.environ["LLM_MODEL"],
         timeout_seconds=timeout,
-        max_completion_tokens=tokens,
+        max_completion_tokens=min(tokens, 1200),
         database_path=database.resolve(),
     )
