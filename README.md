@@ -56,6 +56,8 @@ S12 根据 v2 暴露的问题修复生效日期校验、地区字面值规范化
 
 S13 已冻结修复后 v3 holdout：11 题，4 道需数值回答，均核对指标生效日期；独立 Python gold、数据指纹与题目哈希见 [v3 manifest](evals/enterprise-holdout-manifest-v3.json)。冻结与静态验证记录见 [S13 学习记录](docs/learning/stage-S13.md)。模型运行在冻结提交之后进行。
 
+S14 v3 三轮结果为 33/33，含 12 次正确数值模型回答；题目级 Wilson 区间与小样本边界、两组消融和 24 次实际模型调用记录见 [v3 评测报告](reports/enterprise-v3/evaluation.md)。这只支持当前合成 holdout，不支持客户总体泛化、生产竞争力或 Agentic-RL。
+
 ## S8 轨迹与奖励
 
 每次分析记录六个确定性阶段的状态，不保存问题或模型思维链。企业评测按独立 gold 计算指标、维度、数值和复核奖励；该分数用于诊断，不代表强化学习。设计与边界见 [S8 学习记录](docs/learning/stage-S8.md)。
