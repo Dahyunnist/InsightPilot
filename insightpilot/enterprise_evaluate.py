@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import statistics
@@ -109,7 +110,7 @@ def _cluster_bootstrap_ci(results: list[dict], seed: int = 91427, iterations: in
 
 
 def run(output: Path, root: Path, database: Path | None = None, repeats: int = 1,
-        blind_path: Path | None = None, gold_path: Path | None = None) -> dict:
+        blind_path: Path | None = None, gold_path: Path | None = None, reuse_existing: bool = False) -> dict:
     if repeats < 1 or repeats > 10:
         raise ValueError("repeats must be between 1 and 10")
     settings = load_settings(root)
@@ -132,35 +133,66 @@ def run(output: Path, root: Path, database: Path | None = None, repeats: int = 1
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if manifest["data_fingerprint"] != data_fingerprint or manifest["case_count"] != len(cases):
         raise ValueError("holdout manifest does not match dataset or case count")
+    if (manifest["blind_questions_sha256"] != hashlib.sha256(blind_path.read_bytes()).hexdigest() or
+            manifest["gold_sha256"] != hashlib.sha256(gold_path.read_bytes()).hexdigest()):
+        raise ValueError("holdout files differ from frozen manifest hashes")
     main_results, latencies, model_latencies, tokens = [], [], [], []
-    for repeat_index in range(1, repeats + 1):
-        for case in cases:
-            result = InsightPilot(OpenAICompatiblePlanner(settings), settings.database_path).analyze(case["question"])
-            comparison = _compare(case, gold_by_id[case["case_id"]], result)
-            main_results.append({**comparison, "repeat_index": repeat_index,
-                                 "question": case["question"], "result": result})
-            if isinstance(result.get("elapsed_ms"), (int, float)):
-                latencies.append(result["elapsed_ms"])
-            if isinstance(result.get("model_latency_ms"), (int, float)):
-                model_latencies.append(result["model_latency_ms"])
-            usage = result.get("model_usage")
-            if isinstance(usage, dict) and isinstance(usage.get("total_tokens"), int):
-                tokens.append(usage["total_tokens"])
-    (output / "enterprise-evaluation-raw.jsonl").write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in main_results) + "\n", encoding="utf-8")
+    main_path = output / "enterprise-evaluation-raw.jsonl"
+    if reuse_existing and main_path.exists():
+        existing = [json.loads(line) for line in main_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        expected_keys = {(case["case_id"], repeat) for repeat in range(1, repeats + 1) for case in cases}
+        if ({(row["case_id"], row["repeat_index"]) for row in existing} != expected_keys or any(
+                row.get("question") != next(c["question"] for c in cases if c["case_id"] == row["case_id"])
+                for row in existing)):
+            raise ValueError("existing main-arm records do not match this frozen holdout")
+        for row in existing:
+            case = next(c for c in cases if c["case_id"] == row["case_id"])
+            checked = _compare(case, gold_by_id[row["case_id"]], row["result"])
+            if checked["passed"] != row["passed"]:
+                raise ValueError("existing main-arm score differs from frozen oracle")
+        main_results = existing
+    else:
+        for repeat_index in range(1, repeats + 1):
+            for case in cases:
+                result = InsightPilot(OpenAICompatiblePlanner(settings), settings.database_path).analyze(case["question"])
+                comparison = _compare(case, gold_by_id[case["case_id"]], result)
+                main_results.append({**comparison, "repeat_index": repeat_index,
+                                     "question": case["question"], "result": result})
+        main_path.write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in main_results) + "\n", encoding="utf-8")
+    for row in main_results:
+        result = row["result"]
+        if isinstance(result.get("elapsed_ms"), (int, float)):
+            latencies.append(result["elapsed_ms"])
+        if isinstance(result.get("model_latency_ms"), (int, float)):
+            model_latencies.append(result["model_latency_ms"])
+        usage = result.get("model_usage")
+        if isinstance(usage, dict) and isinstance(usage.get("total_tokens"), int):
+            tokens.append(usage["total_tokens"])
 
     gold_by_id = {row["case_id"]: row for row in gold_rows}
     no_retrieval, no_verifier = [], []
-    for case in cases:
-        baseline_result = InsightPilot(OpenAICompatiblePlanner(settings, use_metric_retrieval=False), settings.database_path).analyze(case["question"])
-        no_retrieval.append({**_compare(case, gold_by_id[case["case_id"]], baseline_result), "result": baseline_result})
-        planner = OpenAICompatiblePlanner(settings)
-        result = _without_verification(planner, settings.database_path, case["question"])
-        comparison = _compare(case, gold_by_id[case["case_id"]], {**result, "verification": {"passed": True}})
-        comparison["sql_verified"] = False
-        comparison["passed"] = result.get("status") == "answered" and comparison["metric_ok"] and comparison["numeric_ok"]
-        no_verifier.append({**comparison, "result": result})
-    (output / "enterprise-ablation-no-retrieval.jsonl").write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in no_retrieval) + "\n", encoding="utf-8")
-    (output / "enterprise-ablation-no-verifier.jsonl").write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in no_verifier) + "\n", encoding="utf-8")
+    no_retrieval_path, no_verifier_path = output / "enterprise-ablation-no-retrieval.jsonl", output / "enterprise-ablation-no-verifier.jsonl"
+    reuse_ablation = reuse_existing and no_retrieval_path.exists() and no_verifier_path.exists()
+    if reuse_ablation:
+        no_retrieval = [json.loads(line) for line in no_retrieval_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        no_verifier = [json.loads(line) for line in no_verifier_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        if {row["case_id"] for row in no_retrieval} != set(gold_by_id) or {row["case_id"] for row in no_verifier} != set(gold_by_id):
+            raise ValueError("existing ablation records do not match this frozen holdout")
+    else:
+        for case in cases:
+            baseline_result = InsightPilot(OpenAICompatiblePlanner(settings, use_metric_retrieval=False), settings.database_path).analyze(case["question"])
+            no_retrieval.append({**_compare(case, gold_by_id[case["case_id"]], baseline_result), "result": baseline_result})
+            planner = OpenAICompatiblePlanner(settings)
+            result = _without_verification(planner, settings.database_path, case["question"])
+            comparison = _compare(case, gold_by_id[case["case_id"]], {**result, "verification": {"passed": True}})
+            comparison["sql_verified"] = False
+            if gold_by_id[case["case_id"]].get("expected_status", "answered") == "answered":
+                comparison["reward"] = round(comparison["reward"] - 1.0, 2)
+                comparison["passed"] = (result.get("status") == "answered" and comparison["metric_ok"] and
+                                         comparison["dimension_ok"] and comparison["numeric_ok"] and comparison["region_ok"])
+            no_verifier.append({**comparison, "result": result})
+        no_retrieval_path.write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in no_retrieval) + "\n", encoding="utf-8")
+        no_verifier_path.write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in no_verifier) + "\n", encoding="utf-8")
 
     ordered = sorted(latencies)
     per_case = {}
@@ -169,19 +201,31 @@ def run(output: Path, root: Path, database: Path | None = None, repeats: int = 1
         per_case[case["case_id"]] = {"passed": sum(row["passed"] for row in attempts), "attempts": len(attempts),
                                       "pass_rate": sum(row["passed"] for row in attempts) / len(attempts),
                                       "statuses": {status: sum(row["result"].get("status") == status for row in attempts)
-                                                   for status in sorted({row["result"].get("status", "missing") for row in attempts})}}
-    per_repeat = [{"repeat_index": repeat, "passed": sum(row["passed"] for row in main_results if row["repeat_index"] == repeat),
-                   "attempts": len(cases)} for repeat in range(1, repeats + 1)]
+                                                   for status in sorted({row["result"].get("status", "missing") for row in attempts})},
+                                      "outcomes_by_repeat": [{"repeat_index": row["repeat_index"], "passed": row["passed"],
+                                                              "status": row["result"].get("status"),
+                                                              "metric_id": row["result"].get("metric", {}).get("id"),
+                                                              "dimension": row["result"].get("plan", {}).get("dimension"),
+                                                              "region": row["result"].get("plan", {}).get("region"),
+                                                              "numeric_ok": row["numeric_ok"],
+                                                              "sql_verified": row["sql_verified"]} for row in attempts]}
+    per_repeat = [{"repeat_index": repeat,
+                   "passed": sum(row["passed"] for row in main_results if row["repeat_index"] == repeat),
+                   "attempts": len(cases),
+                   "failed_case_ids": [row["case_id"] for row in main_results
+                                       if row["repeat_index"] == repeat and not row["passed"]]}
+                  for repeat in range(1, repeats + 1)]
     summary = {
         "created_at_utc": datetime.now(timezone.utc).isoformat(), "holdout_id": manifest["holdout_id"],
         "data_version": dataset_version,
         "data_fingerprint": data_fingerprint,
+        "model": settings.model,
         "case_count": len(cases), "repeat_count": repeats, "attempt_count": len(main_results),
         "passed": sum(row["passed"] for row in main_results),
-        "task_completion_rate": sum(row["passed"] for row in main_results) / len(cases) if cases else None,
-        "metric_accuracy": sum(row["metric_ok"] for row in main_results),
-        "dimension_accuracy": sum(row["dimension_ok"] for row in main_results),
-        "numeric_accuracy": sum(row["numeric_ok"] for row in main_results),
+        "task_completion_rate": sum(row["passed"] for row in main_results) / len(main_results) if main_results else None,
+        "metric_accuracy": sum(row["metric_ok"] is True for row in main_results),
+        "dimension_accuracy": sum(row["dimension_ok"] is True for row in main_results),
+        "numeric_accuracy": sum(row["numeric_ok"] is True for row in main_results),
         "sql_verified": sum(row["sql_verified"] for row in main_results),
         "mean_reward": round(statistics.mean(row["reward"] for row in main_results), 3) if main_results else None,
         "sql_safe_execution": sum(row["status_ok"] and row["sql_verified"] for row in main_results),
@@ -191,13 +235,14 @@ def run(output: Path, root: Path, database: Path | None = None, repeats: int = 1
         "elapsed_ms_distribution": _distribution(latencies),
         "model_latency_ms_distribution": _distribution(model_latencies),
         "total_tokens_distribution": _distribution(tokens),
-        "token_cases": len(tokens), "cost_estimate": None, "cost_note": "当前未配置供应商单价，只报告 provider token 用量。",
+        "model_call_count": len(model_latencies), "token_cases": len(tokens),
+        "cost_estimate": None, "cost_note": "供应商未提供可核验单价；不估算费用。",
         "failures": [row["case_id"] for row in main_results if not row["passed"]],
         "ablations": {
             "without_semantic_retrieval_passed": sum(row["passed"] for row in no_retrieval),
             "without_semantic_retrieval_total": len(no_retrieval),
             "without_semantic_retrieval_failures": [row["case_id"] for row in no_retrieval if not row["passed"]],
-            "without_independent_verification_numerically_correct": sum(row["passed"] for row in no_verifier),
+            "without_independent_verification_passed": sum(row["passed"] for row in no_verifier),
             "without_independent_verification_total": len(no_verifier),
             "without_independent_verification_failures": [row["case_id"] for row in no_verifier if not row["passed"]],
             "without_verifier_sql_verified": 0,
@@ -214,8 +259,10 @@ def main() -> None:
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--blind", type=Path, default=None)
     parser.add_argument("--gold", type=Path, default=None)
+    parser.add_argument("--reuse-existing", action="store_true")
     args = parser.parse_args()
-    print(json.dumps(run(args.output, Path.cwd(), args.database, args.repeats, args.blind, args.gold), ensure_ascii=False, indent=2))
+    print(json.dumps(run(args.output, Path.cwd(), args.database, args.repeats, args.blind, args.gold,
+                         args.reuse_existing), ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

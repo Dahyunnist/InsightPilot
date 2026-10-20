@@ -50,6 +50,8 @@ API 与 MCP 服务需在两个终端分别启动：
 
 历史 `evals/enterprise-blind-v1.jsonl` 只有 3 道题，结果保留供审计，不作为泛化证据。S10 新增 11 道未运行过模型的 `enterprise-blind-v2`，gold 由独立 Python 逻辑生成，题集 manifest 记录哈希和精确题泄漏检查。评测报告与边界见 [S10 学习记录](docs/learning/stage-S10.md)。
 
+S11 对 v2 每题运行三轮真实模型评测；原始 21/33 结果、逐题波动、bootstrap 区间、token 与延迟分布见 [重复评测报告](reports/enterprise-v2/evaluation.md)。事后审计发现三道题的日期早于指标生效日，原始 gold/分数保留并明确标为无效口径样本；v2 不再作盲 holdout。
+
 ## S8 轨迹与奖励
 
 每次分析记录六个确定性阶段的状态，不保存问题或模型思维链。企业评测按独立 gold 计算指标、维度、数值和复核奖励；该分数用于诊断，不代表强化学习。设计与边界见 [S8 学习记录](docs/learning/stage-S8.md)。
