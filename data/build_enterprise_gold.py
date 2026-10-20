@@ -139,7 +139,7 @@ def build_gold(database: Path, output: Path, blind_path: Path | None = None) -> 
     region_orders = {o[0] for o in orders if o[1] == "华东" and o[4] == "paid"}
     region_total = sum(approved_by_order[o] for o in region_orders)
     region_attributed: dict[str, float] = defaultdict(float)
-    for order_id in region_orders:
+    for order_id in sorted(region_orders):
         touches = links.get(order_id)
         if not touches:
             region_attributed["未归因"] += approved_by_order[order_id]
@@ -156,7 +156,7 @@ def build_gold(database: Path, output: Path, blind_path: Path | None = None) -> 
     c_zero_orders = {o[0] for o in orders if o[1] == "华南" and o[4] == "paid" and o[3].startswith("2026-11-10")}
     assert c_zero_orders and not any(order_id in c_zero_orders for order_id in approved_orders)
     c_zero_groups: dict[str, float] = defaultdict(float)
-    for order_id in c_zero_orders:
+    for order_id in sorted(c_zero_orders):
         touches = links.get(order_id)
         if not touches:
             c_zero_groups["未归因"] += 0
@@ -189,7 +189,7 @@ def build_gold(database: Path, output: Path, blind_path: Path | None = None) -> 
                        "2026-10-01" <= o[3][:10] < "2027-01-01"}
     c_region_total = sum(approved_by_order[o] for o in c_region_orders)
     c_attributed: dict[str, float] = defaultdict(float)
-    for order_id in c_region_orders:
+    for order_id in sorted(c_region_orders):
         touches = links.get(order_id)
         if not touches:
             c_attributed["未归因"] += approved_by_order[order_id]

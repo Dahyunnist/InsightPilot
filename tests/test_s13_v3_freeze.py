@@ -1,6 +1,9 @@
 import json
+import os
 from pathlib import Path
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -73,6 +76,23 @@ class S13V3FreezeTests(unittest.TestCase):
         self.assertTrue(all(row["passed"] for row in results), results)
         self.assertEqual(manifest["c08_late_recorded_refunds_over_1d"],
                          json.loads(MANIFEST.read_text(encoding="utf-8"))["c08_late_recorded_refunds_over_1d"])
+
+    def test_v3_weighted_gold_hash_is_stable_across_hash_seeds(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            database = create_enterprise_database(root / "enterprise.sqlite", order_count=5000)
+            blind = root / "enterprise-blind-v3.jsonl"
+            gold = root / "enterprise-gold-v3.jsonl"
+            shutil.copyfile(BLIND, blind)
+            script = ("import sys; from pathlib import Path; from data.build_enterprise_gold import build_gold; "
+                      "build_gold(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))")
+            hashes = []
+            for seed in ("17", "293"):
+                env = dict(os.environ, PYTHONHASHSEED=seed)
+                subprocess.run([sys.executable, "-c", script, str(database), str(gold), str(blind)],
+                               cwd=ROOT, env=env, check=True, capture_output=True, text=True)
+                hashes.append(sha256_text(gold))
+        self.assertEqual(hashes[0], hashes[1])
 
     def test_v3_guard_cases_match_expected_status(self):
         planner = object.__new__(OpenAICompatiblePlanner)
