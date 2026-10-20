@@ -6,11 +6,14 @@ from unittest.mock import MagicMock, patch
 
 from insightpilot.enterprise_evaluate import _compare
 from insightpilot.freeze import sha256_text
-from insightpilot.planner import OpenAICompatiblePlanner
+from insightpilot.planner import OpenAICompatiblePlanner, QueryPlan
 from insightpilot.config import Settings
 from insightpilot.current_benchmark import _reserve_experiment_budget
-from data.build_enterprise_v4 import build as build_v4
+from insightpilot.runner import execute_readonly
+from insightpilot.sql import compile_query
+from data.build_enterprise_v5 import SPECS as V5_SPECS, build as build_v5
 from data.enterprise_seed import create_enterprise_database
+from data.build_enterprise_v4 import build as build_v4
 
 
 class S15BenchmarkAuditTests(unittest.TestCase):
@@ -43,6 +46,19 @@ class S15BenchmarkAuditTests(unittest.TestCase):
         self.assertTrue(_compare(self.case, gold, {"status": "refused", "reason": "restricted_personal_data"})["passed"])
         self.assertFalse(_compare(self.case, gold, {"status": "refused", "reason": "prompt_injection_attempt"})["passed"])
 
+    def test_unsupported_scope_and_multiple_metrics_clarify_before_model_call(self):
+        settings = Settings("test", "https://example.invalid/v1", "test-model", 1, 100, Path("unused"))
+        questions = (
+            ("2026-10-01 到 2026-10-31 按下单日期汇总退款金额和退款订单数。", "不支持按下单日期逐日分组"),
+            ("统计 2026-10-01 至 2026-10-31 的批准退款订单率，并同时报告批准退款金额率。", "一次处理一个指标"),
+        )
+        for question, message in questions:
+            planner = OpenAICompatiblePlanner(settings)
+            with patch("insightpilot.planner.urllib.request.urlopen") as request:
+                with self.assertRaisesRegex(ValueError, message):
+                    planner.plan(question)
+            request.assert_not_called()
+
     def test_text_hash_is_stable_across_newline_formats(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -68,6 +84,40 @@ class S15BenchmarkAuditTests(unittest.TestCase):
         by_id = {row["case_id"]: row for row in gold}
         self.assertEqual(by_id["N15"]["expected"]["全部"], {"numerator": 0, "denominator": 0, "value": None})
         self.assertEqual(by_id["G12"]["expected_reason"], "prompt_injection_attempt")
+
+    def test_v5_builder_uses_independent_synthetic_gold_and_freeze_hashes(self):
+        source = Path(__file__).resolve().parents[1] / "evals/enterprise-blind-v5.jsonl"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            evals = root / "evals"
+            evals.mkdir()
+            blind = evals / source.name
+            blind.write_bytes(source.read_bytes())
+            database = create_enterprise_database(root / "enterprise.sqlite", order_count=5000)
+            gold_path = evals / "enterprise-gold-v5.jsonl"
+            manifest_path = evals / "enterprise-holdout-manifest-v5.json"
+            manifest = build_v5(database, blind, gold_path, manifest_path)
+            gold = [json.loads(line) for line in gold_path.read_text(encoding="utf-8").splitlines()]
+            by_id = {row["case_id"]: row for row in gold}
+            for case_id, (metric, dimension, region, start, end) in V5_SPECS.items():
+                plan = QueryPlan(metric, start, end, region, dimension, ((start, end),))
+                rows, _ = execute_readonly(database, compile_query(plan))
+                expected = by_id[case_id]
+                comparison = _compare(
+                    {"case_id": case_id}, expected,
+                    {"status": "answered", "metric": {"id": metric},
+                     "plan": {"dimension": dimension, "region": region,
+                              "start_date_inclusive": start, "end_date_exclusive": end},
+                     "rows": rows, "verification": {"passed": True}},
+                )
+                self.assertTrue(comparison["numeric_ok"], case_id)
+        self.assertEqual(manifest["case_count"], 20)
+        self.assertEqual(manifest["answerable_case_count"], 11)
+        self.assertEqual(manifest["exact_prompt_overlap_count"], 0)
+        self.assertEqual(by_id["X07"]["expected_status"], "clarify")
+        self.assertEqual(by_id["X12"]["expected"]["全部"],
+                         {"numerator_cents": None, "denominator_cents": None, "value": None})
+        self.assertEqual(by_id["X19"]["expected_reason"], "prompt_injection_attempt")
 
     def test_invalid_json_retry_records_both_actual_requests(self):
         settings = Settings("test", "https://example.invalid/v1", "test-model", 1, 100, Path("unused"))
