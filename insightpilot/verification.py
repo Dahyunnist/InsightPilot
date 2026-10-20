@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from threading import Event
+
 from .planner import QueryPlan
 from .runner import execute_readonly
 from .sql import CompiledQuery
@@ -124,8 +126,8 @@ FROM periods p LIMIT 100"""
     raise ValueError("No verifier exists for this metric")
 
 
-def verify_result(plan: QueryPlan, rows: list[dict], database_path) -> dict:
-    control_rows, _ = execute_readonly(database_path, compile_verification_query(plan))
+def verify_result(plan: QueryPlan, rows: list[dict], database_path, cancel_event: Event | None = None) -> dict:
+    control_rows, _ = execute_readonly(database_path, compile_verification_query(plan), cancel_event)
     if not control_rows:
         return {"passed": False, "reason": "independent_check_returned_no_row"}
 

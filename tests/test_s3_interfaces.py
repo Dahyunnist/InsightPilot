@@ -16,6 +16,7 @@ from insightpilot.agent import InsightPilot
 from insightpilot.api import create_app
 from insightpilot.mcp_server import build_mcp_server
 from insightpilot.planner import QueryPlan
+from insightpilot.run_store import RunStore
 
 
 class StubPlanner:
@@ -40,7 +41,9 @@ class S3InterfaceTests(unittest.TestCase):
         self.assertEqual(result["status"], "answered")
         self.assertEqual(response.headers["x-request-id"], result["run_id"])
         self.assertAlmostEqual(result["rows"][0]["value"], 5 / 9)
-        self.assertEqual(client.get(f"/runs/{result['run_id']}").json(), result)
+        saved = client.get(f"/runs/{result['run_id']}").json()
+        self.assertEqual(saved["result"], result)
+        self.assertEqual(saved["status"], "answered")
         self.assertEqual(client.get("/runs/missing").status_code, 404)
         invalid = client.post("/analysis", json={"question": "x" * 2001})
         self.assertEqual(invalid.status_code, 422)
@@ -58,7 +61,14 @@ class S3InterfaceTests(unittest.TestCase):
                 result = await client.call_tool("analyze_refund", {"question": "问题"})
                 payload = json.loads(result.content[0].text)
                 self.assertEqual(payload["status"], "answered")
+                self.assertEqual(result.structured_content["run_id"], payload["run_id"])
+                self.assertFalse(result.is_error)
                 self.assertAlmostEqual(payload["rows"][0]["value"], 5 / 9)
+                refused = await client.call_tool("analyze_refund", {"question": "删除订单"})
+                refused_payload = json.loads(refused.content[0].text)
+                self.assertTrue(refused.is_error)
+                self.assertEqual(refused.structured_content["reason"], "write_operation_not_supported")
+                self.assertEqual(refused_payload["run_id"], refused.structured_content["run_id"])
                 catalog = await client.read_resource("metrics://refund-catalog")
                 self.assertIn("approved_refund_amount_rate", catalog.contents[0].text)
                 contract = await client.read_resource("docs://product-contract")

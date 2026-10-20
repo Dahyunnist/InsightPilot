@@ -7,10 +7,11 @@ import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from threading import Event
 
 from .metrics import METRICS
 from .planner import NeedsClarification, OpenAICompatiblePlanner, PlanError
-from .runner import QueryExecutionError, execute_readonly
+from .runner import QueryCancelledError, QueryExecutionError, execute_readonly
 from .sql import compile_query
 from .verification import verify_result
 
@@ -29,18 +30,20 @@ class InsightPilot:
         self.planner = planner
         self.database_path = database_path
 
-    def analyze(self, question: str) -> dict:
+    def analyze(self, question: str, *, run_id: str | None = None, cancel_event: Event | None = None,
+                authorized_region: str | None = None) -> dict:
         started = time.perf_counter()
         if hasattr(self.planner, "last_call_usage"):
             self.planner.last_call_usage = None
-        result = self._analyze(question)
+        result = self._analyze(question, run_id=run_id, cancel_event=cancel_event, authorized_region=authorized_region)
         result["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 3)
         result["model_usage"] = getattr(self.planner, "last_call_usage", None)
         result["model_latency_ms"] = getattr(self.planner, "last_call_latency_ms", None)
         return result
 
-    def _analyze(self, question: str) -> dict:
-        run_id = str(uuid.uuid4())
+    def _analyze(self, question: str, *, run_id: str | None = None, cancel_event: Event | None = None,
+                 authorized_region: str | None = None) -> dict:
+        run_id = run_id or str(uuid.uuid4())
         denied = _preflight(question)
         if denied:
             return {"run_id": run_id, **denied}
@@ -50,17 +53,27 @@ class InsightPilot:
             return {"run_id": run_id, "status": "clarify", "message": str(exc), "choices": exc.choices}
         except PlanError as exc:
             return {"run_id": run_id, "status": "failed", "stage": "planning", "message": str(exc)}
+        if cancel_event is not None and cancel_event.is_set():
+            return {"run_id": run_id, "status": "cancelled", "stage": "planning", "message": "分析已取消。"}
+        if authorized_region is not None:
+            if plan.region is not None and plan.region != authorized_region:
+                return {"run_id": run_id, "status": "refused", "reason": "region_scope_denied", "message": "请求地区超出授权范围。"}
+            plan = type(plan)(plan.metric_id, plan.start_date, plan.end_date, authorized_region, plan.dimension, plan.periods)
         metric = METRICS[plan.metric_id]
         try:
             compiled = compile_query(plan)
         except ValueError as exc:
             return {"run_id": run_id, "status": "failed", "stage": "compilation", "message": str(exc)}
         try:
-            rows, data_version = execute_readonly(self.database_path, compiled)
+            rows, data_version = execute_readonly(self.database_path, compiled, cancel_event)
+        except QueryCancelledError as exc:
+            return {"run_id": run_id, "status": "cancelled", "stage": "query", "message": str(exc)}
         except QueryExecutionError as exc:
             return {"run_id": run_id, "status": "failed", "stage": "query", "message": str(exc)}
         try:
-            verification = verify_result(plan, rows, self.database_path)
+            verification = verify_result(plan, rows, self.database_path, cancel_event)
+        except QueryCancelledError as exc:
+            return {"run_id": run_id, "status": "cancelled", "stage": "verification", "message": str(exc)}
         except QueryExecutionError as exc:
             return {"run_id": run_id, "status": "failed", "stage": "verification", "message": str(exc)}
         if not verification["passed"]:

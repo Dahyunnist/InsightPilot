@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 import time
+from threading import Event
 from pathlib import Path
 from urllib.parse import quote
 
@@ -20,6 +21,10 @@ class QueryTimeoutError(QueryExecutionError):
 
 
 class QueryBudgetError(QueryExecutionError):
+    pass
+
+
+class QueryCancelledError(QueryExecutionError):
     pass
 
 
@@ -41,7 +46,9 @@ def _authorize(action: int, arg1: str | None, arg2: str | None, _database: str |
     return sqlite3.SQLITE_DENY
 
 
-def execute_readonly(database_path: Path, query: CompiledQuery) -> tuple[list[dict], str]:
+def execute_readonly(database_path: Path, query: CompiledQuery, cancel_event: Event | None = None) -> tuple[list[dict], str]:
+    if cancel_event is not None and cancel_event.is_set():
+        raise QueryCancelledError("分析已取消。")
     if not database_path.is_file():
         raise QueryExecutionError("固定数据文件不存在；先运行 python data/seed.py。")
     try:
@@ -60,6 +67,9 @@ def execute_readonly(database_path: Path, query: CompiledQuery) -> tuple[list[di
 
             def check_progress() -> int:
                 execution_state["steps"] += PROGRESS_OP_INTERVAL
+                if cancel_event is not None and cancel_event.is_set():
+                    execution_state["cancelled"] = True
+                    return 1
                 if execution_state["steps"] > MAX_VM_STEPS:
                     execution_state["over_budget"] = True
                     return 1
@@ -83,6 +93,8 @@ def execute_readonly(database_path: Path, query: CompiledQuery) -> tuple[list[di
         raise
     except sqlite3.Error as exc:
         if isinstance(exc, sqlite3.OperationalError) and "interrupted" in str(exc).lower():
+            if 'execution_state' in locals() and execution_state.get("cancelled"):
+                raise QueryCancelledError("分析已取消。") from None
             if 'execution_state' in locals() and execution_state["over_budget"]:
                 raise QueryBudgetError("查询超过 250,000 条 SQLite 虚拟机指令预算。") from None
             raise QueryTimeoutError("查询超过 2 秒时间限制。") from None
