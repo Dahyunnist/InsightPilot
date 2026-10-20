@@ -54,10 +54,18 @@ class InsightPilot:
         started = time.perf_counter()
         if hasattr(self.planner, "last_call_usage"):
             self.planner.last_call_usage = None
+            self.planner.last_call_count = 0
+            self.planner.last_calls = []
+            self.planner.last_call_latency_ms = None
+            self.planner.last_response_model = None
+            self.planner.last_call_created_at = None
         result = self._analyze(question, run_id=run_id, cancel_event=cancel_event, authorized_region=authorized_region)
         result["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 3)
         result["model_usage"] = getattr(self.planner, "last_call_usage", None)
         result["model_latency_ms"] = getattr(self.planner, "last_call_latency_ms", None)
+        result["model_call_count"] = getattr(self.planner, "last_call_count", 0)
+        result["model_calls"] = list(getattr(self.planner, "last_calls", []))
+        result["response_model"] = getattr(self.planner, "last_response_model", None)
         status = result.get("status")
         terminal_stage = result.get("stage")
         stages = ["preflight", "planning", "compilation", "query", "verification", "answer"]

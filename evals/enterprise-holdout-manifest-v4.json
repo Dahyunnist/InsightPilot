@@ -1,0 +1,53 @@
+{
+  "holdout_id": "enterprise-blind-v4",
+  "case_count": 30,
+  "answerable_case_count": 16,
+  "deterministic_guard_case_count": 13,
+  "model_clarification_case_count": 1,
+  "data_version": "insightpilot-enterprise-v1",
+  "deterministic_guard_case_ids": [
+    "G01",
+    "G02",
+    "G03",
+    "G04",
+    "G05",
+    "G06",
+    "G07",
+    "G08",
+    "G09",
+    "G11",
+    "G12",
+    "G13",
+    "G14"
+  ],
+  "model_clarification_case_ids": [
+    "G10"
+  ],
+  "data_fingerprint": "c2d4e473ae87a03f0c252c464b1d1fac393b7da58fbc982935708137d622aa92",
+  "blind_questions_sha256": "9267c7e7dce0f1d86b95f3ac962e7c73019a64ed056e56547bb01678aff01530",
+  "gold_sha256": "6aaa7016f5f53045502a7a143d9a0b1a26eecc2a0681ccf97ddf09df3f38b6a5",
+  "exact_prompt_overlap_count": 0,
+  "oracle": "Python source-row aggregation; independent of generated SQL and model output",
+  "scope": "合成数据、当前指标目录、单次运行；语义相似不等于调参泄漏证明",
+  "coverage": {
+    "time_boundaries": [
+      "single_day",
+      "month_end",
+      "quarter_window",
+      "empty_future_window"
+    ],
+    "metrics": [
+      "approved_refund_amount_rate",
+      "approved_refund_order_rate"
+    ],
+    "slices": [
+      "category",
+      "channel",
+      "region",
+      "month_utc",
+      "region_filter"
+    ],
+    "clarifications": 10,
+    "refusals": 4
+  }
+}

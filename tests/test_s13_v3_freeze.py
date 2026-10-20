@@ -1,4 +1,3 @@
-import hashlib
 import json
 from pathlib import Path
 import shutil
@@ -9,6 +8,7 @@ from data.build_enterprise_gold import build_gold
 from data.enterprise_seed import create_enterprise_database
 from insightpilot.agent import InsightPilot, _preflight
 from insightpilot.enterprise_evaluate import _compare
+from insightpilot.freeze import sha256_text
 from insightpilot.metrics import METRICS
 from insightpilot.planner import NeedsClarification, OpenAICompatiblePlanner, QueryPlan
 
@@ -27,8 +27,8 @@ class S13V3FreezeTests(unittest.TestCase):
         self.assertEqual(manifest["holdout_id"], "enterprise-blind-v3")
         self.assertEqual(manifest["case_count"], 11)
         self.assertEqual(manifest["answerable_case_count"], 4)
-        self.assertEqual(manifest["blind_questions_sha256"], hashlib.sha256(BLIND.read_bytes()).hexdigest())
-        self.assertEqual(manifest["gold_sha256"], hashlib.sha256(GOLD.read_bytes()).hexdigest())
+        self.assertEqual(manifest["blind_questions_sha256"], sha256_text(BLIND))
+        self.assertEqual(manifest["gold_sha256"], sha256_text(GOLD))
         self.assertEqual(manifest["exact_question_overlap_with_s4_development"], [])
         self.assertEqual(manifest["exact_question_overlap_with_prior_enterprise_evaluation"], [])
         self.assertGreater(manifest["c08_late_recorded_refunds_over_1d"], 0)

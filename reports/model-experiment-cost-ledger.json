@@ -1,0 +1,20 @@
+{
+  "cap_usd": 4.0,
+  "historical_report_inventory": {
+    "has_existing_ledger": false,
+    "tokenized_attempts_found": 76,
+    "reported_prompt_tokens": 33116,
+    "reported_completion_tokens": 46348,
+    "reported_total_tokens": 79464,
+    "worst_peak_all_cache_miss_estimate_usd": 0.065552,
+    "reserve_for_missing_retry_or_usage_records_usd": 0.034448,
+    "basis": "all checked-in JSONL with usage fields; conservatively priced at peak miss/output rates"
+  },
+  "prior_experiment_reserve_usd": 0.10,
+  "max_prompt_tokens_per_request": 2000,
+  "max_attempts_per_case": 2,
+  "pricing_source": "https://api-docs.deepseek.com/quick_start/pricing/",
+  "current_v4_run": {
+    "status": "not_started"
+  }
+}

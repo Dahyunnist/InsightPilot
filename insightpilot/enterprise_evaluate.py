@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 import statistics
@@ -16,6 +15,7 @@ from dataclasses import replace
 
 from .agent import InsightPilot, _preflight
 from .config import load_settings
+from .freeze import sha256_text
 from .metrics import REGION_VALUES
 from .planner import OpenAICompatiblePlanner
 from .runner import execute_readonly, read_data_identity
@@ -34,20 +34,32 @@ def _compare(case: dict, gold: dict, result: dict) -> dict:
     expected_status = gold.get("expected_status", "answered")
     if expected_status != "answered":
         status_ok = result.get("status") == expected_status
-        return {"case_id": case["case_id"], "status_ok": status_ok, "expected_status": expected_status,
+        reason_ok = "expected_reason" not in gold or result.get("reason") == gold["expected_reason"]
+        return {"case_id": case["case_id"], "status_ok": status_ok, "reason_ok": reason_ok,
+                "expected_status": expected_status,
                 "metric_ok": None, "dimension_ok": None, "region_ok": None, "numeric_ok": None,
-                "sql_verified": False, "reward": 1.0 if status_ok else 0.0, "passed": status_ok}
+                "date_window_ok": None, "sql_verified": False,
+                "reward": 1.0 if status_ok and reason_ok else 0.0,
+                "passed": status_ok and reason_ok}
     expected_metric = gold["metric"]
     metric_ok = result.get("metric", {}).get("id") == expected_metric
-    rows = {row.get("group_value"): row for row in result.get("rows", [])}
     expected = gold["expected"]
+    result_rows = result.get("rows", [])
+    rows = {row.get("group_value"): row for row in result_rows}
+    if set(expected) == {"全部"} and len(result_rows) == 1 and result_rows[0].get("group_value") is None:
+        rows = {"全部": result_rows[0]}
     numeric_ok = set(rows) == set(expected) and all(
         all(_matches(rows[group].get(field), value) for field, value in row.items())
         for group, row in expected.items()
     )
     verification = result.get("verification", {}).get("passed") is True
     status_ok = result.get("status") == "answered"
-    region_ok = "region" not in gold or result.get("plan", {}).get("region") == gold["region"]
+    plan = result.get("plan", {})
+    dimension_ok = plan.get("dimension") == gold.get("dimension")
+    region_ok = plan.get("region") == gold.get("region")
+    date_window_ok = ("analysis_start" not in gold or
+                      (plan.get("start_date_inclusive") == gold["analysis_start"] and
+                       plan.get("end_date_exclusive") == gold["analysis_end_exclusive"]))
     reward = (0.5 if metric_ok else 0) + (0.5 if result.get("plan", {}).get("dimension") == gold["dimension"] else 0)
     reward += 1.0 if numeric_ok else 0
     reward += 1.0 if verification else 0
@@ -57,10 +69,11 @@ def _compare(case: dict, gold: dict, result: dict) -> dict:
         reward -= 1.0
     reward += 0.5 if region_ok else 0
     return {"case_id": case["case_id"], "status_ok": status_ok,
-            "metric_ok": metric_ok, "dimension_ok": result.get("plan", {}).get("dimension") == gold["dimension"],
+            "metric_ok": metric_ok, "dimension_ok": dimension_ok,
             "region_ok": region_ok, "numeric_ok": numeric_ok, "sql_verified": verification,
+            "date_window_ok": date_window_ok,
             "reward": round(reward, 2),
-            "passed": result.get("status") == "answered" and metric_ok and numeric_ok and verification and region_ok}
+            "passed": status_ok and metric_ok and dimension_ok and numeric_ok and verification and region_ok and date_window_ok}
 
 
 def _without_verification(planner, database_path, question: str) -> dict:
@@ -103,7 +116,8 @@ def _compare_without_verification(case: dict, gold: dict, result: dict) -> tuple
     if gold.get("expected_status", "answered") == "answered":
         comparison["reward"] = round(comparison["reward"] - 1.0, 2)
         comparison["passed"] = (result.get("status") == "answered" and comparison["metric_ok"] and
-                                 comparison["dimension_ok"] and comparison["numeric_ok"] and comparison["region_ok"])
+                                 comparison["dimension_ok"] and comparison["numeric_ok"] and comparison["region_ok"] and
+                                 comparison["date_window_ok"])
     return comparison, adjustment
 
 
@@ -164,8 +178,8 @@ def run(output: Path, root: Path, database: Path | None = None, repeats: int = 1
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if manifest["data_fingerprint"] != data_fingerprint or manifest["case_count"] != len(cases):
         raise ValueError("holdout manifest does not match dataset or case count")
-    if (manifest["blind_questions_sha256"] != hashlib.sha256(blind_path.read_bytes()).hexdigest() or
-            manifest["gold_sha256"] != hashlib.sha256(gold_path.read_bytes()).hexdigest()):
+    if (manifest["blind_questions_sha256"] != sha256_text(blind_path) or
+            manifest["gold_sha256"] != sha256_text(gold_path)):
         raise ValueError("holdout files differ from frozen manifest hashes")
     main_results, latencies, model_latencies, tokens = [], [], [], []
     main_path = output / "enterprise-evaluation-raw.jsonl"
@@ -257,13 +271,22 @@ def run(output: Path, root: Path, database: Path | None = None, repeats: int = 1
     answerable_successes = sum(per_case[case_id]["pass_rate"] == 1.0 for case_id in answerable_ids)
 
     def arm_measurements(rows):
-        usage = [row["result"].get("model_usage") or {} for row in rows]
-        calls = [row["result"].get("model_latency_ms") for row in rows
-                 if isinstance(row["result"].get("model_latency_ms"), (int, float))]
+        call_records = [call for row in rows for call in row["result"].get("model_calls", [])]
+        usage = [call.get("usage") or {} for call in call_records]
+        if not call_records:
+            usage = [row["result"].get("model_usage") or {} for row in rows]
+        calls = [call.get("latency_ms") for call in call_records
+                 if isinstance(call.get("latency_ms"), (int, float))]
+        if not calls:
+            calls = [row["result"].get("model_latency_ms") for row in rows
+                     if isinstance(row["result"].get("model_latency_ms"), (int, float))]
         elapsed = [row["result"].get("elapsed_ms") for row in rows
                    if isinstance(row["result"].get("elapsed_ms"), (int, float))]
         token_counts = [item["total_tokens"] for item in usage if isinstance(item.get("total_tokens"), int)]
-        return {"model_call_count": max(len(calls), len(token_counts)), "total_tokens": sum(token_counts),
+        model_call_count = sum(row["result"].get("model_call_count", 0) for row in rows)
+        if not model_call_count:
+            model_call_count = max(len(calls), len(token_counts))
+        return {"model_call_count": model_call_count, "total_tokens": sum(token_counts),
                 "model_latency_ms_distribution": _distribution(calls),
                 "elapsed_ms_distribution": _distribution(elapsed),
                 "total_tokens_distribution": _distribution(token_counts)}
@@ -336,8 +359,8 @@ def refresh_no_verifier_arm(output: Path, root: Path, database: Path | None,
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if (dataset_version != "insightpilot-enterprise-v1" or fingerprint != manifest["data_fingerprint"] or
             manifest["case_count"] != len(cases) or
-            manifest["blind_questions_sha256"] != hashlib.sha256(blind_path.read_bytes()).hexdigest() or
-            manifest["gold_sha256"] != hashlib.sha256(gold_path.read_bytes()).hexdigest()):
+            manifest["blind_questions_sha256"] != sha256_text(blind_path) or
+            manifest["gold_sha256"] != sha256_text(gold_path)):
         raise ValueError("frozen holdout, oracle, or database fingerprint mismatch")
     rows = []
     for case in cases:

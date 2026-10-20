@@ -40,8 +40,14 @@ class OpenAICompatiblePlanner:
         self.use_metric_retrieval = use_metric_retrieval
         self.last_call_usage: dict | None = None
         self.last_call_latency_ms: float | None = None
+        self.last_call_count = 0
+        self.last_calls: list[dict] = []
+        self.last_response_model: str | None = None
 
     def _complete(self, question: str, candidates: list[str], allowed_metric_ids: list[str]) -> dict:
+        self.last_call_count += 1
+        self.last_response_model = None
+        self.last_call_created_at = None
         metric_context = [asdict(METRICS[item]) for item in candidates]
         system = (
             "Extract exactly one analytics query plan as JSON. Never produce SQL. "
@@ -80,6 +86,13 @@ class OpenAICompatiblePlanner:
                     key: usage[key] for key in ("prompt_tokens", "completion_tokens", "total_tokens")
                     if isinstance(usage.get(key), int)
                 }
+                for key in ("prompt_cache_hit_tokens", "prompt_cache_miss_tokens"):
+                    if isinstance(usage.get(key), int):
+                        self.last_call_usage[key] = usage[key]
+            self.last_response_model = payload.get("model") if isinstance(payload.get("model"), str) else None
+            created = payload.get("created")
+            if isinstance(created, int):
+                self.last_call_created_at = created
             content = payload["choices"][0]["message"]["content"]
             result = json.loads(content)
             if not isinstance(result, dict):
@@ -94,8 +107,18 @@ class OpenAICompatiblePlanner:
             raise PlanError("LLM returned an invalid structured response") from None
         finally:
             self.last_call_latency_ms = round((time.perf_counter() - started) * 1000, 3)
+            self.last_calls.append({
+                "latency_ms": self.last_call_latency_ms,
+                "usage": self.last_call_usage,
+                "response_model": self.last_response_model,
+                "created_at": self.last_call_created_at,
+            })
 
     def plan(self, question: str) -> QueryPlan:
+        self.last_call_count = 0
+        self.last_calls = []
+        self.last_response_model = None
+        self.last_call_created_at = None
         q = question.strip()
         if not q:
             raise NeedsClarification("请提供分析问题。")

@@ -36,6 +36,8 @@ API 与 MCP 服务需在两个终端分别启动：
 
 ## S4 黄金集评测
 
+S4 的 16/16 是历史结果：12 次正常回答调用模型；2 次澄清与 2 次拒绝由确定性 guard 处理。旧简历和演示文本曾把 16 次都写成正常回答，本次已更正。
+
 `evals/cases.jsonl` 固定 12 个正常分析、2 个澄清和 2 个拒绝用例。运行上方评测命令会逐条调用 `.env` 配置的模型，并生成 `reports/evaluation-raw.jsonl`、`reports/retrieval-ablation-raw.jsonl`、`reports/evaluation-summary.json`。原始结果包含 SQL 与查询证据；只在本地保存，不应上传客户数据或密钥。当前结果见 [评测报告](reports/evaluation.md)。演示流程和简历描述见 [五分钟演示](docs/demo.md) 与 [简历要点](docs/resume-bullets.md)。
 
 ## S5 版本化语义目录
@@ -57,6 +59,8 @@ S12 根据 v2 暴露的问题修复生效日期校验、地区字面值规范化
 S13 已冻结修复后 v3 holdout：11 题，4 道需数值回答，均核对指标生效日期；独立 Python gold、数据指纹与题目哈希见 [v3 manifest](evals/enterprise-holdout-manifest-v3.json)。冻结与静态验证记录见 [S13 学习记录](docs/learning/stage-S13.md)。模型运行在冻结提交之后进行。
 
 S14 v3 三轮结果为 33/33，含 12 次正确数值模型回答；题目级 Wilson 区间与小样本边界、两组消融和 24 次实际模型调用记录见 [v3 评测报告](reports/enterprise-v3/evaluation.md)。这只支持当前合成 holdout，不支持客户总体泛化、生产竞争力或 Agentic-RL。
+
+当前统一基准为 v4：30 道独立合成题、16 道数值回答、13 道确定性 guard、1 道模型澄清；独立 Python gold、同题规则基线和真实模型逐题结果见 [当前评测](reports/current-benchmark/evaluation.md)。运行步骤见 [快速启动与复现](docs/quickstart-evaluation.md)。S4、v2、v3 保留为历史记录，不与 v4 混算。
 
 ## S8 轨迹与奖励
 

@@ -10,6 +10,8 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from insightpilot.freeze import sha256_text
+
 
 def build_gold(database: Path, output: Path, blind_path: Path | None = None) -> None:
     connection = sqlite3.connect(database)
@@ -252,7 +254,7 @@ def build_gold(database: Path, output: Path, blind_path: Path | None = None) -> 
     manifest = {"holdout_id": blind_path.stem, "case_count": len(rows),
                 "data_version": meta["data_version"], "data_fingerprint": meta["data_fingerprint"],
                 "blind_questions_sha256": hashlib.sha256(blind.encode("utf-8")).hexdigest(),
-                "gold_sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
+                "gold_sha256": sha256_text(output),
                 "exact_question_overlap_with_s4_development": overlap,
                 "exact_question_overlap_with_prior_enterprise_evaluation": prior_overlap,
                 "leakage_check": "exact normalized question overlap only; semantic overlap is possible",
