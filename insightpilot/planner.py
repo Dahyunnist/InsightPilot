@@ -99,6 +99,12 @@ class OpenAICompatiblePlanner:
         q = question.strip()
         if not q:
             raise NeedsClarification("请提供分析问题。")
+        if re.search(r"截至.{0,12}(?:当时|当日).{0,12}(?:可见|入库|记录)|(?:当时|当日).{0,12}(?:可见|入库|记录)", q):
+            raise NeedsClarification("当前数据没有历史入库快照；请改问退款发生时间或当前口径。")
+        if (any(term in q for term in ("各地区", "按地区", "地区维度", "地区")) and "渠道" in q):
+            raise NeedsClarification("当前一次只支持一个分组维度；请先选地区或渠道。")
+        if sum(region in q for region in ("华东", "华南", "华北", "西南")) > 1:
+            raise NeedsClarification("当前一次只支持一个地区筛选；请分开查询。")
         if re.search(r"上周|本周|昨天|今天|最近\s*\d+\s*天", q):
             raise NeedsClarification("请提供明确的起止日期；S1 不猜测相对时间的业务时区。")
         if "退款率" in q and any(term in q for term in ("贡献", "贡献度")):
