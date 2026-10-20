@@ -1,0 +1,29 @@
+{
+  "holdout_id": "enterprise-blind-v3",
+  "case_count": 11,
+  "data_version": "insightpilot-enterprise-v1",
+  "data_fingerprint": "c2d4e473ae87a03f0c252c464b1d1fac393b7da58fbc982935708137d622aa92",
+  "blind_questions_sha256": "165adb1e5cd1fd43910f80e8b7f6ae8f0968a2a4a2483345b01108ca103622fc",
+  "gold_sha256": "2e44953a9bfd4124192104c3b8795e563954d8112c006a09a388f0d87aed3cd8",
+  "exact_question_overlap_with_s4_development": [],
+  "exact_question_overlap_with_prior_enterprise_evaluation": [],
+  "leakage_check": "exact normalized question overlap only; semantic overlap is possible",
+  "oracle": "independent Python aggregation from source rows; clarification/refusal labels reviewed against deterministic guards",
+  "answerable_case_count": 4,
+  "effective_window_check": "all numeric answer cases start on or after each metric effective_from",
+  "coverage": {
+    "C01": "ambiguous_metric_definition",
+    "C02": "late_recording_as_of_request",
+    "C03": "unsupported_cross_dimension",
+    "C04": "campaign_zero_denominator",
+    "C05": "empty_cohort",
+    "C06": "personal_data_refusal",
+    "C07": "prompt_injection_refusal",
+    "C08": "late_refund_event_time",
+    "C09": "regional_multi_touch_attribution",
+    "C10": "invalid_date",
+    "C11": "conflicting_region_filters"
+  },
+  "late_event_fixture_rows_over_1d": 168,
+  "c08_late_recorded_refunds_over_1d": 126
+}
