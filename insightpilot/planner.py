@@ -188,6 +188,9 @@ class OpenAICompatiblePlanner:
         requested_regions = [value for value in REGION_VALUES if value in q]
         if requested_regions:
             region = requested_regions[0]
+            explicit_region_group = any(term in q for term in ("按地区", "各地区", "地区维度", "分地区", "每个地区"))
+            if dimension == "region" and not explicit_region_group:
+                dimension = None
         elif region is not None:
             raise PlanError("LLM selected a region not stated by the user")
         return QueryPlan(metric_id, start.isoformat(), end.isoformat(), region, dimension, source_periods)

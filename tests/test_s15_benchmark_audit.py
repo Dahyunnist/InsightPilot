@@ -86,7 +86,7 @@ class S15BenchmarkAuditTests(unittest.TestCase):
             responses.append(response)
         with patch("insightpilot.planner.urllib.request.urlopen", side_effect=responses) as request:
             plan = planner.plan("2026-10-01 到 2026-10-07 华东批准退款订单率")
-        self.assertEqual(plan.dimension, "region")
+        self.assertIsNone(plan.dimension)
         self.assertEqual(request.call_count, 2)
         self.assertEqual(planner.last_call_count, 2)
         self.assertEqual(len(planner.last_calls), 2)

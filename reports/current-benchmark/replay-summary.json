@@ -1,0 +1,41 @@
+{
+  "replayed": true,
+  "api_calls_made": 0,
+  "case_count": 30,
+  "passed": 26,
+  "failures": [
+    {
+      "case_id": "N06",
+      "status": "answered",
+      "dimension_ok": false,
+      "numeric_ok": false,
+      "reason_ok": null
+    },
+    {
+      "case_id": "N09",
+      "status": "clarify",
+      "dimension_ok": true,
+      "numeric_ok": false,
+      "reason_ok": null
+    },
+    {
+      "case_id": "N12",
+      "status": "clarify",
+      "dimension_ok": false,
+      "numeric_ok": false,
+      "reason_ok": null
+    },
+    {
+      "case_id": "N13",
+      "status": "answered",
+      "dimension_ok": false,
+      "numeric_ok": false,
+      "reason_ok": null
+    }
+  ],
+  "api_request_attempts": 18,
+  "estimated_list_price_usd": 0.01397944,
+  "question_sha256": "9267c7e7dce0f1d86b95f3ac962e7c73019a64ed056e56547bb01678aff01530",
+  "gold_sha256": "6aaa7016f5f53045502a7a143d9a0b1a26eecc2a0681ccf97ddf09df3f38b6a5",
+  "data_fingerprint": "c2d4e473ae87a03f0c252c464b1d1fac393b7da58fbc982935708137d622aa92"
+}

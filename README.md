@@ -60,7 +60,7 @@ S13 已冻结修复后 v3 holdout：11 题，4 道需数值回答，均核对指
 
 S14 v3 三轮结果为 33/33，含 12 次正确数值模型回答；题目级 Wilson 区间与小样本边界、两组消融和 24 次实际模型调用记录见 [v3 评测报告](reports/enterprise-v3/evaluation.md)。这只支持当前合成 holdout，不支持客户总体泛化、生产竞争力或 Agentic-RL。
 
-当前统一基准为 v4：30 道独立合成题、16 道数值回答、13 道确定性 guard、1 道模型澄清；独立 Python gold、同题规则基线和真实模型逐题结果见 [当前评测](reports/current-benchmark/evaluation.md)。运行步骤见 [快速启动与复现](docs/quickstart-evaluation.md)。S4、v2、v3 保留为历史记录，不与 v4 混算。
+当前统一基准为 v4：30 道独立合成题、16 道数值回答、13 道确定性 guard、1 道模型澄清；独立 Python gold、同题规则基线和真实模型逐题结果见 [当前评测](reports/current-benchmark/evaluation.md)。评分漏洞与 v4 复盘见 [S15 学习记录](docs/learning/stage-S15.md)，启动与无模型复现见 [快速启动](docs/quickstart-evaluation.md)。S4、v2、v3 保留为历史记录，不与 v4 混算。
 
 ## S8 轨迹与奖励
 

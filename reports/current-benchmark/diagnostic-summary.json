@@ -1,0 +1,133 @@
+{
+  "created_at_utc": "2026-10-20T09:53:08.827747+00:00",
+  "mode": "diagnostic",
+  "model_requested": "deepseek-v4-flash",
+  "holdout_id": "enterprise-blind-v4",
+  "question_sha256": "9267c7e7dce0f1d86b95f3ac962e7c73019a64ed056e56547bb01678aff01530",
+  "gold_sha256": "6aaa7016f5f53045502a7a143d9a0b1a26eecc2a0681ccf97ddf09df3f38b6a5",
+  "data_version": "insightpilot-enterprise-v1",
+  "data_fingerprint": "c2d4e473ae87a03f0c252c464b1d1fac393b7da58fbc982935708137d622aa92",
+  "case_count": 4,
+  "attempt_count": 4,
+  "passed": 4,
+  "case_accuracy": 1.0,
+  "expected_answerable_count": 4,
+  "expected_answerable_passed": 4,
+  "expected_guard_count": 0,
+  "actual_guard_handled_count": 0,
+  "guard_passed": 0,
+  "actual_rule_answer_cases": 0,
+  "actual_model_call_cases": 4,
+  "actual_model_answer_cases": 4,
+  "actual_model_answer_passed": 4,
+  "actual_model_clarifications": 0,
+  "actual_model_refusals": 0,
+  "status_counts": {
+    "answered": 4
+  },
+  "clarify_count": 0,
+  "refused_count": 0,
+  "expected_clarify_count": 0,
+  "clarify_passed": 0,
+  "expected_refusal_count": 0,
+  "refusal_passed": 0,
+  "sql_verified_answers": 4,
+  "elapsed_ms_p50": 3284.405,
+  "elapsed_ms_p95": 3994.017,
+  "failures_by_status_stage_reason": [],
+  "cases": [
+    {
+      "case_id": "N06",
+      "passed": true,
+      "status_ok": true,
+      "reason_ok": null,
+      "metric_ok": true,
+      "dimension_ok": true,
+      "region_ok": true,
+      "date_window_ok": true,
+      "numeric_ok": true,
+      "sql_verified": true,
+      "status": "answered",
+      "stage": null,
+      "reason": null,
+      "model_call_count": 1
+    },
+    {
+      "case_id": "N09",
+      "passed": true,
+      "status_ok": true,
+      "reason_ok": null,
+      "metric_ok": true,
+      "dimension_ok": true,
+      "region_ok": true,
+      "date_window_ok": true,
+      "numeric_ok": true,
+      "sql_verified": true,
+      "status": "answered",
+      "stage": null,
+      "reason": null,
+      "model_call_count": 1
+    },
+    {
+      "case_id": "N12",
+      "passed": true,
+      "status_ok": true,
+      "reason_ok": null,
+      "metric_ok": true,
+      "dimension_ok": true,
+      "region_ok": true,
+      "date_window_ok": true,
+      "numeric_ok": true,
+      "sql_verified": true,
+      "status": "answered",
+      "stage": null,
+      "reason": null,
+      "model_call_count": 1
+    },
+    {
+      "case_id": "N13",
+      "passed": true,
+      "status_ok": true,
+      "reason_ok": null,
+      "metric_ok": true,
+      "dimension_ok": true,
+      "region_ok": true,
+      "date_window_ok": true,
+      "numeric_ok": true,
+      "sql_verified": true,
+      "status": "answered",
+      "stage": null,
+      "reason": null,
+      "model_call_count": 1
+    }
+  ],
+  "model_usage_and_cost": {
+    "api_request_attempts": 4,
+    "responses_with_token_usage": 4,
+    "prompt_tokens": 1900,
+    "completion_tokens": 2142,
+    "total_tokens": 4042,
+    "prompt_cache_hit_tokens": 768,
+    "prompt_cache_miss_tokens": 1132,
+    "model_request_latency_ms_p50": 3135.153,
+    "model_request_latency_ms_p95": 3469.923,
+    "estimated_list_price_usd": 0.00291461,
+    "price_estimate_complete": true,
+    "pricing_basis": {
+      "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+      "model_alias": "deepseek-v4-flash (legacy alias; provider routes to V4.1 Flash)",
+      "rates_usd_per_million": {
+        "peak": {
+          "cache_hit_input": 0.006,
+          "cache_miss_input": 0.3,
+          "output": 1.2
+        },
+        "off_peak": {
+          "cache_hit_input": 0.003,
+          "cache_miss_input": 0.15,
+          "output": 0.6
+        }
+      }
+    }
+  }
+}

@@ -25,9 +25,12 @@ python -m venv .venv
 ```powershell
 .\.venv\Scripts\python.exe -m insightpilot.current_benchmark --mode baseline
 .\.venv\Scripts\python.exe -m insightpilot.current_benchmark --mode model
+.\.venv\Scripts\python.exe -m insightpilot.current_benchmark --mode replay
 ```
 
 模型臂会逐题调用当前 `.env` 模型；guard 直接拦截的问题不会产生模型请求。原始轨迹和汇总分别写入 `reports/current-benchmark/baseline-raw.jsonl`、`model-raw.jsonl`、`baseline-summary.json`、`model-summary.json`。汇总按实际 HTTP 请求次数、响应 token、缓存 token、模型时延和 DeepSeek 官方费率估算成本。账户抵扣与实扣金额不可从响应 token 推知。
+
+`replay` 会校验已保存模型轨迹、严格评分、冻结哈希、数据指纹和成本账本，不会再次请求模型。已完成的模型臂会拒绝重复调用；要重做实验，必须创建新冻结题集并单独占用账本预算。
 
 ## 4. 运行 API 演示
 

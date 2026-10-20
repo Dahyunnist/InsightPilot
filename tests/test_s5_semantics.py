@@ -24,6 +24,23 @@ class S5SemanticTests(unittest.TestCase):
         ids = {metric.metric_id for metric in retrieve_metrics("指定日期批准退款金额率是多少？")}
         self.assertEqual(ids, {"approved_refund_amount_rate"})
 
+    def test_paid_amount_ratio_does_not_retrieve_plain_refund_amount(self):
+        for question in ("批准退款金额占实付金额的比率", "批准退款金额与实付金额之比"):
+            with self.subTest(question=question):
+                ids = {metric.metric_id for metric in retrieve_metrics(question)}
+                self.assertEqual(ids, {"approved_refund_amount_rate"})
+
+    def test_region_filter_is_not_misread_as_region_group(self):
+        planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)
+        planner._complete = lambda *_: {
+            "clarify": False, "metric_id": "approved_refund_order_rate",
+            "start_date": "2026-11-01", "end_date_exclusive": "2026-12-01",
+            "comparison_periods": [], "region": "华南", "dimension": "region",
+        }
+        plan = planner.plan("2026-11-01 到 2026-11-30 华南批准退款订单率是多少？")
+        self.assertEqual(plan.region, "华南")
+        self.assertIsNone(plan.dimension)
+
     def test_planner_rejects_dimension_outside_metric_contract(self):
         planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)
         planner._complete = lambda *_: {
