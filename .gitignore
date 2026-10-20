@@ -4,3 +4,4 @@ __pycache__/
 *.py[cod]
 data/insightpilot-runs.sqlite*
 data/insightpilot-enterprise.sqlite*
+data/insightpilot-enterprise-v6.sqlite*

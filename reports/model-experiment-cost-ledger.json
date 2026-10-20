@@ -78,6 +78,22 @@
     "remaining_budget_for_this_run_usd": 0.46998475,
     "limitation": "Same frozen holdout was used after a constrained-cap diagnostic; this is not an independent replication."
   },
+  "v6_independent_holdout": {
+    "status": "frozen_pending_model_run",
+    "holdout": "enterprise-blind-v6",
+    "dataset_seed": 20261021,
+    "dataset_fingerprint": "464a37d126bd87e044f62988864ac95e48b79a0b0c81ac2f7d87ad9b405728bd",
+    "model": "DeepSeek Flash configured by local environment",
+    "max_completion_tokens": 1024,
+    "per_request_prompt_ceiling": 2000,
+    "max_api_calls": 50,
+    "cap_usd": 0.10,
+    "per_call_peak_reserve_usd": 0.0018288,
+    "maximum_peak_reserve_usd": 0.09144,
+    "remaining_global_cap_before_run_usd": 3.79755285,
+    "blind_questions_sha256": "f8a914ebc1c10eae7137b465f7226cbf6b2eff21030744b2ab7487864548524c",
+    "gold_sha256": "a8043f59fba2b9d071c452a1a8604b4f4786e528928bec3d4aba08f04bdce182"
+  },
   "v5_combined_peak_list_price_estimate_usd": 0.06221355,
   "unreserved_budget_after_v5_usd": 3.79755285,
   "v5_pricing_basis": {

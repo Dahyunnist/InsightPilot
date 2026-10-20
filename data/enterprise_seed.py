@@ -52,14 +52,15 @@ def _iso(value: datetime) -> str:
     return value.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def create_enterprise_database(path: str | Path, order_count: int = ORDER_COUNT) -> Path:
+def create_enterprise_database(path: str | Path, order_count: int = ORDER_COUNT,
+                               seed: int = SEED) -> Path:
     if order_count < 1000:
         raise ValueError("enterprise benchmark needs at least 1,000 orders")
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():
         path.unlink()
-    rng = random.Random(SEED)
+    rng = random.Random(seed)
     products = [(f"p{i:04}", CATEGORIES[i % len(CATEGORIES)]) for i in range(1, 601)]
     customers = [(f"c{i:06}", ("new", "returning", "vip")[i % 3], f"synthetic-{i}@example.invalid", f"139{i:08d}")
                  for i in range(1, 20_001)]
@@ -101,7 +102,7 @@ def create_enterprise_database(path: str | Path, order_count: int = ORDER_COUNT)
                 state = rng.choices(("approved", "pending", "rejected"), (0.79, 0.13, 0.08))[0]
                 refunds.append((f"r{len(refunds)+1:08}", order_id, _iso(event), _iso(recorded), amount, state))
 
-    fingerprint_payload = {"data_version": DATA_VERSION, "seed": SEED, "snapshot_at": SNAPSHOT_AT,
+    fingerprint_payload = {"data_version": DATA_VERSION, "seed": seed, "snapshot_at": SNAPSHOT_AT,
                            "products": products, "customers": customers, "campaigns": CAMPAIGNS,
                            "orders": orders, "refunds": refunds, "campaign_attributions": attributions}
     fingerprint = hashlib.sha256(json.dumps(fingerprint_payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")).hexdigest()
@@ -115,7 +116,7 @@ def create_enterprise_database(path: str | Path, order_count: int = ORDER_COUNT)
         conn.executemany("INSERT INTO orders VALUES (?,?,?,?,?,?,?,?)", orders)
         conn.executemany("INSERT INTO refunds VALUES (?,?,?,?,?,?)", refunds)
         conn.executemany("INSERT INTO campaign_attributions VALUES (?,?,?)", attributions)
-        meta = [("data_version", DATA_VERSION), ("data_fingerprint", fingerprint), ("timezone", "UTC"), ("seed", str(SEED)),
+        meta = [("data_version", DATA_VERSION), ("data_fingerprint", fingerprint), ("timezone", "UTC"), ("seed", str(seed)),
                 ("order_count", str(order_count)), ("refund_count", str(len(refunds))),
                 ("snapshot_at", SNAPSHOT_AT)]
         conn.executemany("INSERT INTO data_meta VALUES (?,?)", meta)
@@ -162,8 +163,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default="data/insightpilot-enterprise.sqlite")
     parser.add_argument("--orders", type=int, default=ORDER_COUNT)
+    parser.add_argument("--seed", type=int, default=SEED)
     args = parser.parse_args()
-    database = create_enterprise_database(args.output, args.orders)
+    database = create_enterprise_database(args.output, args.orders, args.seed)
     print(json.dumps({"database": str(database), **quality_report(database)}, ensure_ascii=False, indent=2))
 
 

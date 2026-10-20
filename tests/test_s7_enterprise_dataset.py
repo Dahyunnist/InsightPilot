@@ -56,6 +56,12 @@ class S7EnterpriseDatasetTests(unittest.TestCase):
         self.assertEqual(quality_report(second)["row_counts"], report["row_counts"])
         self.assertEqual(quality_report(second)["data_fingerprint"], report["data_fingerprint"])
         self.assertEqual(quality_report(second)["data_fingerprint"], report["data_fingerprint"])
+        third = create_enterprise_database(self.root / "enterprise-seed-2.sqlite",
+                                           order_count=5000, seed=20261021)
+        self.assertNotEqual(quality_report(third)["data_fingerprint"], report["data_fingerprint"])
+        fourth = create_enterprise_database(self.root / "enterprise-seed-2-repeat.sqlite",
+                                            order_count=5000, seed=20261021)
+        self.assertEqual(quality_report(fourth)["data_fingerprint"], quality_report(third)["data_fingerprint"])
 
     def test_campaign_multi_touch_query_is_independently_verified(self):
         plan = QueryPlan("approved_refund_campaign_attribution", "2026-01-01", "2027-01-01", None, "campaign")

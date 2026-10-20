@@ -22,6 +22,54 @@ from .runner import execute_readonly, read_data_identity
 from .sql import compile_query
 
 
+class EvaluationBudget:
+    """Worst-case request reservation for a short synthetic evaluation."""
+
+    def __init__(self, cap_usd: float = 0.10, max_calls: int = 50,
+                 prompt_tokens: int = 2000, completion_tokens: int = 1024):
+        self.cap_usd = cap_usd
+        self.max_calls = max_calls
+        self.prompt_tokens = prompt_tokens
+        self.completion_tokens = completion_tokens
+        self.calls = 0
+        self.reserved_usd = 0.0
+        self.estimated_usd = 0.0
+
+    @property
+    def per_call_usd(self) -> float:
+        return self.prompt_tokens * 0.30 / 1_000_000 + self.completion_tokens * 1.20 / 1_000_000
+
+    def reserve(self) -> None:
+        if self.calls >= self.max_calls or self.reserved_usd + self.per_call_usd > self.cap_usd:
+            raise RuntimeError("evaluation API budget exhausted before request")
+        self.calls += 1
+        self.reserved_usd += self.per_call_usd
+
+    def record(self, usage: dict | None) -> None:
+        if not isinstance(usage, dict):
+            self.estimated_usd += self.per_call_usd
+            return
+        prompt = usage.get("prompt_tokens")
+        completion = usage.get("completion_tokens")
+        if isinstance(prompt, int) and isinstance(completion, int):
+            self.estimated_usd += prompt * 0.30 / 1_000_000 + completion * 1.20 / 1_000_000
+        else:
+            self.estimated_usd += self.per_call_usd
+
+
+class BudgetedPlanner(OpenAICompatiblePlanner):
+    def __init__(self, settings, budget: EvaluationBudget, *, use_metric_retrieval: bool = True):
+        super().__init__(settings, use_metric_retrieval=use_metric_retrieval)
+        self.budget = budget
+
+    def _complete(self, question: str, candidates: list[str], allowed_metric_ids: list[str]) -> dict:
+        self.budget.reserve()
+        try:
+            return super()._complete(question, candidates, allowed_metric_ids)
+        finally:
+            self.budget.record(self.last_call_usage)
+
+
 def _matches(actual, expected, tolerance: float = 1e-6) -> bool:
     if expected is None:
         return actual is None
@@ -159,6 +207,9 @@ def run(output: Path, root: Path, database: Path | None = None, repeats: int = 1
     if repeats < 1 or repeats > 10:
         raise ValueError("repeats must be between 1 and 10")
     settings = load_settings(root)
+    if settings.max_completion_tokens > 1024:
+        settings = replace(settings, max_completion_tokens=1024)
+    budget = EvaluationBudget()
     if database is not None:
         settings = replace(settings, database_path=database.resolve())
     if not settings.database_path.is_file():
@@ -199,7 +250,7 @@ def run(output: Path, root: Path, database: Path | None = None, repeats: int = 1
     else:
         for repeat_index in range(1, repeats + 1):
             for case in cases:
-                result = InsightPilot(OpenAICompatiblePlanner(settings), settings.database_path).analyze(case["question"])
+                result = InsightPilot(BudgetedPlanner(settings, budget), settings.database_path).analyze(case["question"])
                 comparison = _compare(case, gold_by_id[case["case_id"]], result)
                 main_results.append({**comparison, "repeat_index": repeat_index,
                                      "question": case["question"], "result": result})
@@ -232,9 +283,9 @@ def run(output: Path, root: Path, database: Path | None = None, repeats: int = 1
         no_verifier_path.write_text("\n".join(json.dumps(row, ensure_ascii=False) for row in no_verifier) + "\n", encoding="utf-8")
     else:
         for case in cases:
-            baseline_result = InsightPilot(OpenAICompatiblePlanner(settings, use_metric_retrieval=False), settings.database_path).analyze(case["question"])
+            baseline_result = InsightPilot(BudgetedPlanner(settings, budget, use_metric_retrieval=False), settings.database_path).analyze(case["question"])
             no_retrieval.append({**_compare(case, gold_by_id[case["case_id"]], baseline_result), "result": baseline_result})
-            planner = OpenAICompatiblePlanner(settings)
+            planner = BudgetedPlanner(settings, budget)
             result = _without_verification(planner, settings.database_path, case["question"])
             comparison, adjustment = _compare_without_verification(case, gold_by_id[case["case_id"]], result)
             entry = {**comparison, "result": result}
@@ -326,7 +377,12 @@ def run(output: Path, root: Path, database: Path | None = None, repeats: int = 1
         "model_latency_ms_distribution": _distribution(model_latencies),
         "total_tokens_distribution": _distribution(tokens),
         "model_call_count": len(model_latencies), "token_cases": len(tokens),
-        "cost_estimate": None, "cost_note": "供应商未提供可核验单价；不估算费用。",
+        "cost_estimate": round(budget.estimated_usd, 8),
+        "cost_note": "按 DeepSeek Flash 峰值未缓存输入 $0.30/M、输出 $1.20/M 估算；非账单。",
+        "budget": {"cap_usd": budget.cap_usd, "calls": budget.calls, "max_calls": budget.max_calls,
+                   "per_call_worst_case_usd": round(budget.per_call_usd, 8),
+                   "reserved_usd": round(budget.reserved_usd, 8),
+                   "remaining_usd": round(max(0, budget.cap_usd - budget.reserved_usd), 8)},
         "failures": [row["case_id"] for row in main_results if not row["passed"]],
         "ablations": {
             "without_semantic_retrieval_passed": sum(row["passed"] for row in no_retrieval),
