@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, replace
 
+REGION_VALUES = ("华东", "华南", "华北", "西南")
+
 
 @dataclass(frozen=True)
 class Metric:
@@ -96,7 +98,7 @@ def retrieve_metrics(question: str) -> list[Metric]:
         scores["approved_refund_cohort_summary"] = 10
     if any(term in q.lower() for term in ("campaign", "活动归因", "营销活动", "投放活动")):
         scores["approved_refund_campaign_attribution"] = 12
-    if any(term in q for term in ("每天", "按退款日期", "退款事件日")):
+    if any(term in q for term in ("每天", "按退款日期", "退款事件日", "退款发生日", "退款发生时间")):
         scores["approved_refund_event_amount"] = 10
     if any(term in q for term in ("退款状态", "待处理金额", "批准和待处理", "按状态")):
         scores["refund_amount_by_status"] = 10
@@ -130,7 +132,8 @@ def catalog_document() -> dict:
             "channel": {"source": "orders.channel", "grain": "order", "sensitivity": "internal"},
             "refund_day_utc": {"source": "refunds.refunded_at", "grain": "UTC day", "sensitivity": "internal"},
             "refund_status": {"source": "refunds.status", "grain": "refund record", "sensitivity": "internal"},
-            "region": {"source": "orders.region", "grain": "order", "sensitivity": "internal"},
+            "region": {"source": "orders.region", "grain": "order", "sensitivity": "internal",
+                       "values": list(REGION_VALUES)},
             "month_utc": {"source": "orders.ordered_at", "grain": "UTC month", "sensitivity": "internal"},
             "campaign": {"source": "campaigns.campaign_name", "grain": "weighted attribution", "sensitivity": "internal"},
         },

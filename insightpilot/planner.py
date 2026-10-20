@@ -11,7 +11,7 @@ from dataclasses import asdict, dataclass
 from datetime import date
 
 from .config import Settings
-from .metrics import METRICS, retrieve_metrics
+from .metrics import METRICS, REGION_VALUES, retrieve_metrics
 
 
 @dataclass(frozen=True)
@@ -132,6 +132,10 @@ class OpenAICompatiblePlanner:
             raise NeedsClarification("请选退款订单率或退款金额率。", ["approved_refund_order_rate", "approved_refund_amount_rate"])
         if use_metric_retrieval and not candidates:
             raise NeedsClarification("未识别到 S1 支持的退款率或退款金额贡献指标。")
+        if candidates and all(any(period[0] < metric.effective_from for period in source_periods)
+                              for metric in candidates):
+            versions = ", ".join(sorted({metric.effective_from for metric in candidates}))
+            raise NeedsClarification(f"所选指标定义自 {versions} 起生效；请提供该日期之后的时间窗。")
         candidate_ids = [metric.metric_id for metric in candidates]
         allowed_metric_ids = candidate_ids if use_metric_retrieval else list(METRICS)
         try:
@@ -145,6 +149,8 @@ class OpenAICompatiblePlanner:
         metric_id = result.get("metric_id")
         if metric_id not in allowed_metric_ids:
             raise PlanError("LLM selected a metric outside the retrieved candidates")
+        if any(period[0] < METRICS[metric_id].effective_from for period in source_periods):
+            raise NeedsClarification(f"指标定义自 {METRICS[metric_id].effective_from} 起生效；请提供该日期之后的时间窗。")
         start, end = (date.fromisoformat(value) for value in source_periods[0])
         if any(date.fromisoformat(period_start) >= date.fromisoformat(period_end) for period_start, period_end in source_periods):
             raise NeedsClarification("结束日期必须晚于开始日期。")
@@ -156,4 +162,9 @@ class OpenAICompatiblePlanner:
         region = result.get("region")
         if region is not None and (not isinstance(region, str) or len(region) > 30):
             raise PlanError("LLM returned an invalid region filter")
+        requested_regions = [value for value in REGION_VALUES if value in q]
+        if requested_regions:
+            region = requested_regions[0]
+        elif region is not None:
+            raise PlanError("LLM selected a region not stated by the user")
         return QueryPlan(metric_id, start.isoformat(), end.isoformat(), region, dimension, source_periods)

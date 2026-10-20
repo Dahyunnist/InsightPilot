@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from threading import Event
 
-from .metrics import METRICS
+from .metrics import METRICS, REGION_VALUES
 from .planner import NeedsClarification, OpenAICompatiblePlanner, PlanError
 from .runner import QueryCancelledError, QueryExecutionError, execute_readonly, read_data_identity
 from .sql import compile_query
@@ -35,6 +35,8 @@ def _visualization(plan, rows: list[dict]) -> dict | None:
 
 def _preflight(question: str) -> dict | None:
     q = question.lower()
+    if any(term in q for term in ("忽略系统要求", "忽略此前指令", "不要做独立复核", "不做独立复核", "编造结果")):
+        return {"status": "refused", "reason": "prompt_injection_attempt", "message": "请求包含试图绕过分析规则的指令，已拒绝。"}
     if re.search(r"修改|删除|新增|写入|更新|标记.*完成|改成", q):
         return {"status": "refused", "reason": "write_operation_not_supported", "message": "当前分析 Agent 只读，不能修改数据。"}
     if re.search(r"手机号|姓名|身份证|住址|家庭住址|个人信息", q):
@@ -87,6 +89,9 @@ class InsightPilot:
             return {"run_id": run_id, "status": "clarify", "message": str(exc), "choices": exc.choices}
         except PlanError as exc:
             return {"run_id": run_id, "status": "failed", "stage": "planning", "message": str(exc)}
+        if plan.region is not None and plan.region not in REGION_VALUES:
+            return {"run_id": run_id, "status": "failed", "stage": "planning",
+                    "reason": "invalid_region_filter", "message": "地区筛选值不在已知数据目录中。"}
         if cancel_event is not None and cancel_event.is_set():
             return {"run_id": run_id, "status": "cancelled", "stage": "planning", "message": "分析已取消。"}
         if authorized_region is not None:
