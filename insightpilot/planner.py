@@ -122,7 +122,8 @@ class OpenAICompatiblePlanner:
         q = question.strip()
         if not q:
             raise NeedsClarification("请提供分析问题。")
-        if "按下单日期汇总" in q and any(term in q for term in ("退款订单数", "退款订单数量")):
+        if any(term in q for term in ("按下单日期汇总", "按订单创建日期", "订单创建日期按日")) and any(
+                term in q for term in ("退款订单数", "退款订单数量", "退款订单")):
             raise NeedsClarification("当前指标目录不支持按下单日期逐日分组；请改为整体 cohort 汇总或按已支持维度查询。")
         if "订单率" in q and "金额率" in q:
             raise NeedsClarification("S1 一次处理一个指标；请分别询问批准退款订单率或金额率。")

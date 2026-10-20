@@ -94,27 +94,35 @@ def retrieve_metrics(question: str) -> list[Metric]:
     """Rank metrics by explicit business-language cues; never pick vague refund rate."""
     q = question.lower()
     scores = {key: 0 for key in METRICS}
-    if "按下单日期" in q and "退款订单数" in q:
+    if any(term in q for term in ("按下单日期", "按订单创建日期", "订单创建日期按日")) and "退款订单数" in q:
         scores["approved_refund_cohort_summary"] = 10
-    if any(term in q.lower() for term in ("campaign", "活动归因", "营销活动", "投放活动")):
+    if any(term in q for term in ("campaign", "活动归因", "营销活动", "投放活动", "广告活动")):
         scores["approved_refund_campaign_attribution"] = 12
-    if any(term in q for term in ("每天", "按退款日期", "退款事件日", "退款发生日", "退款发生时间")):
+    if any(term in q for term in ("每天", "逐日", "按退款日期", "退款日期", "退款事件日", "退款事件日期",
+                                  "退款发生日", "退款发生时间")):
         scores["approved_refund_event_amount"] = 10
-    if any(term in q for term in ("退款状态", "待处理金额", "批准和待处理", "按状态")):
+    if any(term in q for term in ("退款状态", "退款处理状态", "退款处理结果", "待处理金额", "批准和待处理", "按状态")):
         scores["refund_amount_by_status"] = 10
-    if any(term in q for term in ("已支付订单和批准退款订单", "订单数和批准退款", "退款订单数量")):
+    if any(term in q for term in ("已支付订单和批准退款订单", "已付款订单和发生批准退款的订单",
+                                  "订单数和批准退款", "退款订单数量")):
         scores["approved_refund_order_counts"] = 10
-    if any(term in q for term in ("贡献", "占比", "贡献度")):
+    elif "订单数" in q and "退款" in q and any(term in q for term in ("已支付", "已付款", "付款成功")):
+        scores["approved_refund_order_counts"] = 10
+    if any(term in q for term in ("贡献", "占比", "贡献度", "份额")):
         scores["approved_refund_amount_contribution"] += 5
-    if any(term in q for term in ("金额率", "金额退款率", "实付", "销售额")) or ("金额" in q and "退款率" in q):
+    if any(term in q for term in ("金额率", "金额退款率", "实付", "实收金额", "销售额", "金额之比")) or ("金额" in q and "退款率" in q):
         scores["approved_refund_amount_rate"] += 4
-    if any(term in q for term in ("订单率", "订单数", "多少单")):
+    if any(term in q for term in ("订单率", "订单比例", "订单占比", "订单数", "多少单")):
         scores["approved_refund_order_rate"] += 4
+    elif "订单" in q and any(term in q for term in ("比例", "占比", "比率")):
+        scores["approved_refund_order_rate"] += 4
+    if any(term in q for term in ("退款日期", "退款发生日期", "实际退款日期")):
+        scores["approved_refund_event_amount"] += 8
     if "批准退款金额" in q and not any(term in q for term in
                                          ("退款率", "金额率", "占实付", "实付金额", "比例", "比率")) and not any(
                                              term in q for term in ("贡献", "占比")):
         scores["approved_refund_amount"] += 6
-    if "退款率" in q:
+    if "退款率" in q or "退款比例" in q:
         scores["approved_refund_order_rate"] += 1
         scores["approved_refund_amount_rate"] += 1
     best = max(scores.values(), default=0)

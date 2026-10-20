@@ -5,3 +5,4 @@ __pycache__/
 data/insightpilot-runs.sqlite*
 data/insightpilot-enterprise.sqlite*
 data/insightpilot-enterprise-v6.sqlite*
+data/insightpilot-enterprise-v7.sqlite*
