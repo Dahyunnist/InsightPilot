@@ -1,0 +1,973 @@
+{
+  "created_at_utc": "2026-10-20T10:51:04.294334+00:00",
+  "holdout_id": "enterprise-blind-v5",
+  "data_version": "insightpilot-enterprise-v1",
+  "data_fingerprint": "c2d4e473ae87a03f0c252c464b1d1fac393b7da58fbc982935708137d622aa92",
+  "model": "deepseek-v4-flash",
+  "case_count": 20,
+  "repeat_count": 1,
+  "attempt_count": 20,
+  "passed": 17,
+  "task_completion_rate": 0.85,
+  "unique_case_passed": 17,
+  "unique_case_total": 20,
+  "unique_case_wilson_95_ci": [
+    0.6396,
+    0.9476
+  ],
+  "answerable_case_passed": 8,
+  "answerable_case_total": 11,
+  "answerable_case_wilson_95_ci": [
+    0.4343,
+    0.9025
+  ],
+  "deterministic_guard_case_count": 9,
+  "metric_accuracy": 8,
+  "dimension_accuracy": 10,
+  "numeric_accuracy": 8,
+  "sql_verified": 8,
+  "mean_reward": 1.975,
+  "sql_safe_execution": 8,
+  "per_case": {
+    "X01": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "answered": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "answered",
+          "metric_id": "approved_refund_order_rate",
+          "dimension": "category",
+          "region": null,
+          "numeric_ok": true,
+          "sql_verified": true
+        }
+      ]
+    },
+    "X02": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "answered": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "answered",
+          "metric_id": "approved_refund_amount_rate",
+          "dimension": "channel",
+          "region": null,
+          "numeric_ok": true,
+          "sql_verified": true
+        }
+      ]
+    },
+    "X03": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "answered": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "answered",
+          "metric_id": "approved_refund_campaign_attribution",
+          "dimension": "campaign",
+          "region": null,
+          "numeric_ok": true,
+          "sql_verified": true
+        }
+      ]
+    },
+    "X04": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "answered": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "answered",
+          "metric_id": "approved_refund_event_amount",
+          "dimension": "refund_day_utc",
+          "region": null,
+          "numeric_ok": true,
+          "sql_verified": true
+        }
+      ]
+    },
+    "X05": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "answered": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "answered",
+          "metric_id": "refund_amount_by_status",
+          "dimension": "refund_status",
+          "region": null,
+          "numeric_ok": true,
+          "sql_verified": true
+        }
+      ]
+    },
+    "X06": {
+      "passed": 0,
+      "attempts": 1,
+      "pass_rate": 0.0,
+      "statuses": {
+        "failed": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": false,
+          "status": "failed",
+          "metric_id": null,
+          "dimension": null,
+          "region": null,
+          "numeric_ok": false,
+          "sql_verified": false
+        }
+      ]
+    },
+    "X07": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "clarify": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "clarify",
+          "metric_id": null,
+          "dimension": null,
+          "region": null,
+          "numeric_ok": null,
+          "sql_verified": false
+        }
+      ]
+    },
+    "X08": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "answered": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "answered",
+          "metric_id": "approved_refund_amount_contribution",
+          "dimension": "category",
+          "region": null,
+          "numeric_ok": true,
+          "sql_verified": true
+        }
+      ]
+    },
+    "X09": {
+      "passed": 0,
+      "attempts": 1,
+      "pass_rate": 0.0,
+      "statuses": {
+        "failed": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": false,
+          "status": "failed",
+          "metric_id": null,
+          "dimension": null,
+          "region": null,
+          "numeric_ok": false,
+          "sql_verified": false
+        }
+      ]
+    },
+    "X10": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "answered": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "answered",
+          "metric_id": "approved_refund_campaign_attribution",
+          "dimension": "campaign",
+          "region": "华东",
+          "numeric_ok": true,
+          "sql_verified": true
+        }
+      ]
+    },
+    "X11": {
+      "passed": 0,
+      "attempts": 1,
+      "pass_rate": 0.0,
+      "statuses": {
+        "failed": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": false,
+          "status": "failed",
+          "metric_id": null,
+          "dimension": null,
+          "region": null,
+          "numeric_ok": false,
+          "sql_verified": false
+        }
+      ]
+    },
+    "X12": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "answered": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "answered",
+          "metric_id": "approved_refund_amount_rate",
+          "dimension": null,
+          "region": null,
+          "numeric_ok": true,
+          "sql_verified": true
+        }
+      ]
+    },
+    "X13": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "clarify": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "clarify",
+          "metric_id": null,
+          "dimension": null,
+          "region": null,
+          "numeric_ok": null,
+          "sql_verified": false
+        }
+      ]
+    },
+    "X14": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "clarify": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "clarify",
+          "metric_id": null,
+          "dimension": null,
+          "region": null,
+          "numeric_ok": null,
+          "sql_verified": false
+        }
+      ]
+    },
+    "X15": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "clarify": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "clarify",
+          "metric_id": null,
+          "dimension": null,
+          "region": null,
+          "numeric_ok": null,
+          "sql_verified": false
+        }
+      ]
+    },
+    "X16": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "clarify": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "clarify",
+          "metric_id": null,
+          "dimension": null,
+          "region": null,
+          "numeric_ok": null,
+          "sql_verified": false
+        }
+      ]
+    },
+    "X17": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "clarify": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "clarify",
+          "metric_id": null,
+          "dimension": null,
+          "region": null,
+          "numeric_ok": null,
+          "sql_verified": false
+        }
+      ]
+    },
+    "X18": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "refused": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "refused",
+          "metric_id": null,
+          "dimension": null,
+          "region": null,
+          "numeric_ok": null,
+          "sql_verified": false
+        }
+      ]
+    },
+    "X19": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "refused": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "refused",
+          "metric_id": null,
+          "dimension": null,
+          "region": null,
+          "numeric_ok": null,
+          "sql_verified": false
+        }
+      ]
+    },
+    "X20": {
+      "passed": 1,
+      "attempts": 1,
+      "pass_rate": 1.0,
+      "statuses": {
+        "refused": 1
+      },
+      "outcomes_by_repeat": [
+        {
+          "repeat_index": 1,
+          "passed": true,
+          "status": "refused",
+          "metric_id": null,
+          "dimension": null,
+          "region": null,
+          "numeric_ok": null,
+          "sql_verified": false
+        }
+      ]
+    }
+  },
+  "per_repeat": [
+    {
+      "repeat_index": 1,
+      "passed": 17,
+      "attempts": 20,
+      "failed_case_ids": [
+        "X06",
+        "X09",
+        "X11"
+      ]
+    }
+  ],
+  "case_cluster_bootstrap_95_ci": [
+    0.7,
+    1
+  ],
+  "confidence_interval_note": "按题目聚类 bootstrap；刻意分层的合成 holdout 非随机总体样本，区间仅描述本集不确定性。",
+  "elapsed_ms_distribution": {
+    "count": 20,
+    "min": 0.029,
+    "median": 1838.703,
+    "p95": 5696.171,
+    "max": 6197.865,
+    "mean": 2324.501
+  },
+  "model_backed_elapsed_ms_distribution": {
+    "count": 11,
+    "min": 1626.308,
+    "median": 5104.69,
+    "p95": 6197.865,
+    "max": 6197.865,
+    "mean": 4226.304
+  },
+  "model_latency_ms_distribution": {
+    "count": 11,
+    "min": 1568.691,
+    "median": 2404.775,
+    "p95": 2981.39,
+    "max": 2981.39,
+    "mean": 2354.303
+  },
+  "total_tokens_distribution": {
+    "count": 11,
+    "min": 707,
+    "median": 903,
+    "p95": 992,
+    "max": 992,
+    "mean": 904.636
+  },
+  "model_call_count": 11,
+  "token_cases": 11,
+  "cost_estimate": null,
+  "cost_note": "供应商未提供可核验单价；不估算费用。",
+  "failures": [
+    "X06",
+    "X09",
+    "X11"
+  ],
+  "ablations": {
+    "without_semantic_retrieval_passed": 10,
+    "without_semantic_retrieval_total": 20,
+    "without_semantic_retrieval_failures": [
+      "X01",
+      "X02",
+      "X03",
+      "X04",
+      "X05",
+      "X06",
+      "X08",
+      "X09",
+      "X10",
+      "X11"
+    ],
+    "without_independent_verification_passed": 9,
+    "without_independent_verification_total": 20,
+    "without_independent_verification_failures": [
+      "X01",
+      "X02",
+      "X03",
+      "X04",
+      "X05",
+      "X06",
+      "X08",
+      "X09",
+      "X10",
+      "X11",
+      "X12"
+    ],
+    "without_verifier_sql_verified": 0,
+    "without_semantic_retrieval_measurements": {
+      "model_call_count": 21,
+      "total_tokens": 17640,
+      "model_latency_ms_distribution": {
+        "count": 21,
+        "min": 2267.578,
+        "median": 2804.565,
+        "p95": 3131.87,
+        "max": 3153.371,
+        "mean": 2812.669
+      },
+      "elapsed_ms_distribution": {
+        "count": 20,
+        "min": 0.026,
+        "median": 3856.635,
+        "p95": 6064.849,
+        "max": 6168.554,
+        "mean": 2955.326
+      },
+      "total_tokens_distribution": {
+        "count": 21,
+        "min": 738,
+        "median": 844,
+        "p95": 850,
+        "max": 850,
+        "mean": 840
+      }
+    },
+    "without_semantic_retrieval_failure_paths": [
+      {
+        "case_id": "X01",
+        "status": "failed",
+        "stage": "planning",
+        "reason": null,
+        "trajectory": [
+          {
+            "stage": "preflight",
+            "outcome": "passed"
+          },
+          {
+            "stage": "planning",
+            "outcome": "blocked"
+          },
+          {
+            "stage": "compilation",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "query",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "verification",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "answer",
+            "outcome": "not_reached"
+          }
+        ]
+      },
+      {
+        "case_id": "X02",
+        "status": "failed",
+        "stage": "planning",
+        "reason": null,
+        "trajectory": [
+          {
+            "stage": "preflight",
+            "outcome": "passed"
+          },
+          {
+            "stage": "planning",
+            "outcome": "blocked"
+          },
+          {
+            "stage": "compilation",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "query",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "verification",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "answer",
+            "outcome": "not_reached"
+          }
+        ]
+      },
+      {
+        "case_id": "X03",
+        "status": "failed",
+        "stage": "planning",
+        "reason": null,
+        "trajectory": [
+          {
+            "stage": "preflight",
+            "outcome": "passed"
+          },
+          {
+            "stage": "planning",
+            "outcome": "blocked"
+          },
+          {
+            "stage": "compilation",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "query",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "verification",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "answer",
+            "outcome": "not_reached"
+          }
+        ]
+      },
+      {
+        "case_id": "X04",
+        "status": "failed",
+        "stage": "planning",
+        "reason": null,
+        "trajectory": [
+          {
+            "stage": "preflight",
+            "outcome": "passed"
+          },
+          {
+            "stage": "planning",
+            "outcome": "blocked"
+          },
+          {
+            "stage": "compilation",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "query",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "verification",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "answer",
+            "outcome": "not_reached"
+          }
+        ]
+      },
+      {
+        "case_id": "X05",
+        "status": "failed",
+        "stage": "planning",
+        "reason": null,
+        "trajectory": [
+          {
+            "stage": "preflight",
+            "outcome": "passed"
+          },
+          {
+            "stage": "planning",
+            "outcome": "blocked"
+          },
+          {
+            "stage": "compilation",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "query",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "verification",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "answer",
+            "outcome": "not_reached"
+          }
+        ]
+      },
+      {
+        "case_id": "X06",
+        "status": "failed",
+        "stage": "planning",
+        "reason": null,
+        "trajectory": [
+          {
+            "stage": "preflight",
+            "outcome": "passed"
+          },
+          {
+            "stage": "planning",
+            "outcome": "blocked"
+          },
+          {
+            "stage": "compilation",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "query",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "verification",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "answer",
+            "outcome": "not_reached"
+          }
+        ]
+      },
+      {
+        "case_id": "X08",
+        "status": "failed",
+        "stage": "planning",
+        "reason": null,
+        "trajectory": [
+          {
+            "stage": "preflight",
+            "outcome": "passed"
+          },
+          {
+            "stage": "planning",
+            "outcome": "blocked"
+          },
+          {
+            "stage": "compilation",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "query",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "verification",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "answer",
+            "outcome": "not_reached"
+          }
+        ]
+      },
+      {
+        "case_id": "X09",
+        "status": "failed",
+        "stage": "planning",
+        "reason": null,
+        "trajectory": [
+          {
+            "stage": "preflight",
+            "outcome": "passed"
+          },
+          {
+            "stage": "planning",
+            "outcome": "blocked"
+          },
+          {
+            "stage": "compilation",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "query",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "verification",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "answer",
+            "outcome": "not_reached"
+          }
+        ]
+      },
+      {
+        "case_id": "X10",
+        "status": "failed",
+        "stage": "planning",
+        "reason": null,
+        "trajectory": [
+          {
+            "stage": "preflight",
+            "outcome": "passed"
+          },
+          {
+            "stage": "planning",
+            "outcome": "blocked"
+          },
+          {
+            "stage": "compilation",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "query",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "verification",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "answer",
+            "outcome": "not_reached"
+          }
+        ]
+      },
+      {
+        "case_id": "X11",
+        "status": "failed",
+        "stage": "planning",
+        "reason": null,
+        "trajectory": [
+          {
+            "stage": "preflight",
+            "outcome": "passed"
+          },
+          {
+            "stage": "planning",
+            "outcome": "blocked"
+          },
+          {
+            "stage": "compilation",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "query",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "verification",
+            "outcome": "not_reached"
+          },
+          {
+            "stage": "answer",
+            "outcome": "not_reached"
+          }
+        ]
+      }
+    ],
+    "without_independent_verification_measurements": {
+      "model_call_count": 11,
+      "total_tokens": 9646,
+      "model_latency_ms_distribution": null,
+      "elapsed_ms_distribution": {
+        "count": 20,
+        "min": 0.008,
+        "median": 1778.4,
+        "p95": 5837.626,
+        "max": 6030.698,
+        "mean": 1717.983
+      },
+      "total_tokens_distribution": {
+        "count": 11,
+        "min": 730,
+        "median": 833,
+        "p95": 1032,
+        "max": 1032,
+        "mean": 876.909
+      }
+    },
+    "without_independent_verification_failure_paths": [
+      {
+        "case_id": "X01",
+        "status": "answered",
+        "stage": null,
+        "reason": null,
+        "trajectory": null
+      },
+      {
+        "case_id": "X02",
+        "status": "answered",
+        "stage": null,
+        "reason": null,
+        "trajectory": null
+      },
+      {
+        "case_id": "X03",
+        "status": "answered",
+        "stage": null,
+        "reason": null,
+        "trajectory": null
+      },
+      {
+        "case_id": "X04",
+        "status": "answered",
+        "stage": null,
+        "reason": null,
+        "trajectory": null
+      },
+      {
+        "case_id": "X05",
+        "status": "answered",
+        "stage": null,
+        "reason": null,
+        "trajectory": null
+      },
+      {
+        "case_id": "X06",
+        "status": "answered",
+        "stage": null,
+        "reason": null,
+        "trajectory": null
+      },
+      {
+        "case_id": "X08",
+        "status": "answered",
+        "stage": null,
+        "reason": null,
+        "trajectory": null
+      },
+      {
+        "case_id": "X09",
+        "status": "failed",
+        "stage": "ablation",
+        "reason": "PlanError",
+        "trajectory": null
+      },
+      {
+        "case_id": "X10",
+        "status": "failed",
+        "stage": "ablation",
+        "reason": "PlanError",
+        "trajectory": null
+      },
+      {
+        "case_id": "X11",
+        "status": "failed",
+        "stage": "ablation",
+        "reason": "PlanError",
+        "trajectory": null
+      },
+      {
+        "case_id": "X12",
+        "status": "answered",
+        "stage": null,
+        "reason": null,
+        "trajectory": null
+      }
+    ]
+  }
+}

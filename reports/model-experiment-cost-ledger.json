@@ -10,7 +10,7 @@
     "reserve_for_missing_retry_or_usage_records_usd": 0.034448,
     "basis": "all checked-in JSONL with usage fields; conservatively priced at peak miss/output rates"
   },
-  "prior_experiment_reserve_usd": 0.1,
+  "prior_experiment_reserve_usd": 0.16221355,
   "max_prompt_tokens_per_request": 2000,
   "max_attempts_per_case": 2,
   "pricing_source": "https://api-docs.deepseek.com/quick_start/pricing/",
@@ -45,5 +45,43 @@
     "actual_estimated_list_price_usd": 0.00291461,
     "reserved_worst_case_usd": 0.0073152,
     "remaining_unreserved_budget_usd": 3.8597664
+  },
+  "v5_capacity_diagnostic": {
+    "status": "completed_diagnostic",
+    "holdout": "enterprise-blind-v5",
+    "model": "deepseek-v4-flash",
+    "max_completion_tokens": 512,
+    "strict_passed": "17/20",
+    "api_request_attempts": 50,
+    "total_tokens": 44223,
+    "peak_list_price_estimate_usd": 0.0321983,
+    "failed_cases": [
+      "X06",
+      "X09",
+      "X11"
+    ],
+    "interpretation": "These three cases exhausted the temporary 512-token output cap; preserve as constrained-run evidence, not as the default-config acceptance score."
+  },
+  "current_v5_run": {
+    "status": "completed",
+    "holdout": "enterprise-blind-v5",
+    "model": "deepseek-v4-flash",
+    "max_completion_tokens": 1024,
+    "strict_passed": "20/20",
+    "answerable_passed": "11/11",
+    "guard_passed": "9/9",
+    "sql_verified": "11/11",
+    "api_request_attempts": 38,
+    "total_tokens": 38947,
+    "peak_list_price_estimate_usd": 0.03001525,
+    "reserve_usd": 0.5,
+    "remaining_budget_for_this_run_usd": 0.46998475,
+    "limitation": "Same frozen holdout was used after a constrained-cap diagnostic; this is not an independent replication."
+  },
+  "v5_combined_peak_list_price_estimate_usd": 0.06221355,
+  "unreserved_budget_after_v5_usd": 3.79755285,
+  "v5_pricing_basis": {
+    "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "method": "Peak DeepSeek Flash list rates: $0.006/M cache-hit input, $0.30/M cache-miss input, $1.20/M output; actual cache-hit/miss and output tokens. Estimate is not provider invoice."
   }
 }
