@@ -53,3 +53,7 @@ API 与 MCP 服务需在两个终端分别启动：
 ## S8 轨迹与奖励
 
 每次分析记录六个确定性阶段的状态，不保存问题或模型思维链。企业评测按独立 gold 计算指标、维度、数值和复核奖励；该分数用于诊断，不代表强化学习。设计与边界见 [S8 学习记录](docs/learning/stage-S8.md)。
+
+## S9 冻结集策略实验
+
+运行 `.venv/Scripts/python -m insightpilot.strategy_experiment`，从配对消融估计检索动作奖励，用 B03 冻结评估。当前训练偏向语义检索，但冻结集没有胜过固定检索基线；不支持 Agentic-RL 声明。详见 [S9 学习记录](docs/learning/stage-S9.md) 和 [策略报告](reports/strategy-experiment.json)。

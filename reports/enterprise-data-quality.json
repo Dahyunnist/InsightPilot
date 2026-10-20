@@ -1,7 +1,8 @@
 {
   "database": "data\\insightpilot-enterprise.sqlite",
   "data_version": "insightpilot-enterprise-v1",
-  "data_fingerprint": "f21f2b8c7d2bf95944101fc3e30182734a4b6c8bef2ef4176f29232a08f3946c",
+  "data_fingerprint": "c2d4e473ae87a03f0c252c464b1d1fac393b7da58fbc982935708137d622aa92",
+  "snapshot_at": "2027-03-01T00:00:00Z",
   "row_counts": {
     "orders": 50000,
     "refunds": 10454,

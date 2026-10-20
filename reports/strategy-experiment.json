@@ -1,0 +1,23 @@
+{
+  "method": "offline_paired_terminal_reward_action_value",
+  "train_case_ids": [
+    "B01",
+    "B02"
+  ],
+  "frozen_holdout_case_ids": [
+    "B03"
+  ],
+  "action_mean_reward_train": {
+    "semantic_retrieval": 3.0,
+    "no_retrieval": 2.25
+  },
+  "learned_action": "semantic_retrieval",
+  "frozen_holdout_mean_reward": {
+    "learned_policy": 3.0,
+    "always_semantic_retrieval": 3.0
+  },
+  "frozen_holdout_gain": 0.0,
+  "reproducible_policy_gain": false,
+  "agentic_rl_claim_supported": false,
+  "reason": "N=1 冻结用例且策略未胜过固定检索基线；该离线单步奖励实验不构成 Agentic-RL。"
+}

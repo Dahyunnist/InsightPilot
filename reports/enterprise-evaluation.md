@@ -2,7 +2,7 @@
 
 评测日期：2026-10-20。使用固定 `insightpilot-enterprise-v1`、当前 `.env` 模型配置。
 
-数据 fingerprint：`f21f2b8c7d2bf95944101fc3e30182734a4b6c8bef2ef4176f29232a08f3946c`。
+数据 fingerprint：`c2d4e473ae87a03f0c252c464b1d1fac393b7da58fbc982935708137d622aa92`。
 
 ## 数据与质量
 
