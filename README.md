@@ -35,3 +35,7 @@ API 与 MCP 服务需在两个终端分别启动：
 ## S4 黄金集评测
 
 `evals/cases.jsonl` 固定 12 个正常分析、2 个澄清和 2 个拒绝用例。运行上方评测命令会逐条调用 `.env` 配置的模型，并生成 `reports/evaluation-raw.jsonl`、`reports/retrieval-ablation-raw.jsonl`、`reports/evaluation-summary.json`。原始结果包含 SQL 与查询证据；只在本地保存，不应上传客户数据或密钥。当前结果见 [评测报告](reports/evaluation.md)。演示流程和简历描述见 [五分钟演示](docs/demo.md) 与 [简历要点](docs/resume-bullets.md)。
+
+## S5 版本化语义目录
+
+各指标现在提供定义版本、生效日、粒度、来源表与字段血缘、适用维度、访问范围和来源文档。MCP `metrics://refund-catalog` 返回同一版本化目录。规划器把检索到的指标元数据按需注入；执行前校验维度符合该指标语义契约。未定义的 `refund_event_rate` 保持禁用，模糊“退款率”继续澄清。当前权限标签是语义元数据；API 强制授权将在 S6 实现。

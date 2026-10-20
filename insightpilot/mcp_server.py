@@ -9,7 +9,7 @@ from mcp.server import MCPServer
 
 from .agent import InsightPilot
 from .config import load_settings
-from .metrics import METRICS
+from .metrics import METRICS, catalog_document
 from .planner import OpenAICompatiblePlanner
 
 
@@ -25,7 +25,7 @@ def build_mcp_server(core: InsightPilot, contract_path: Path | None = None) -> M
     @server.resource("metrics://refund-catalog")
     def refund_metric_catalog() -> str:
         """Versioned metric definitions available to the analyzer."""
-        return json.dumps([metric.__dict__ for metric in METRICS.values()], ensure_ascii=False, indent=2)
+        return json.dumps(catalog_document(), ensure_ascii=False, indent=2)
 
     @server.resource("docs://product-contract")
     def product_contract() -> str:

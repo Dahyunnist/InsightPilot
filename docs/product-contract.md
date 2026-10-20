@@ -29,6 +29,8 @@
 | `approved_refund_amount` | 批准退款金额之和 | 按查询明示的订单 cohort 或退款事件时间过滤 |
 | `approved_refund_amount_contribution` | 分组批准退款金额 / 同切片全部批准退款金额 | 分母为零时返回 null/不可计算 |
 
+语义目录版本为 `insightpilot-semantic-catalog-v1`。每个已支持指标同时发布 `definition_version`、`effective_from`、grain、源表、字段 lineage、合法维度、访问 scope、契约来源和示例问法。规划只注入候选指标定义。MCP 目录资源与 CLI/API 使用相同对象。`refund_event_rate` 仍禁用，直到产品负责人冻结公式、时间归属、分母与生效版本。
+
 金额用整数分计算，展示层才转元。比例用未舍入值比较，黄金集允许误差见每题 `tolerance`；零分母返回 `null`，不得写作 0%。`N01` 的“订单退款率”、`N02` 的“金额退款率”说明两种含义；`A01`、`A02` 覆盖口径/范围缺失。至少存在三种可区分口径：退款订单率、退款金额率、退款事件率。
 
 ## 固定评测集

@@ -145,6 +145,8 @@ class OpenAICompatiblePlanner:
         dimension = result.get("dimension")
         if dimension not in (None, "category", "channel", "refund_day_utc", "refund_status"):
             raise PlanError("LLM selected a dimension outside the allowed set")
+        if dimension is not None and dimension not in METRICS[metric_id].valid_dimensions:
+            raise PlanError("LLM selected a dimension outside the metric's semantic contract")
         region = result.get("region")
         if region is not None and (not isinstance(region, str) or len(region) > 30):
             raise PlanError("LLM returned an invalid region filter")
