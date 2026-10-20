@@ -49,3 +49,7 @@ API 与 MCP 服务需在两个终端分别启动：
 新增 `region`、`month_utc` 分组和带权多触点活动归因；组级复核用单独查询路径逐组核对。回答还带确定性 `visualization` 规范，可由 API/MCP 客户端渲染为月趋势线或分类柱图。
 
 `evals/enterprise-blind-v1.jsonl` 只放 3 道 holdout 问题；独立 `evals/enterprise-gold-v1.jsonl` 由 Python 从固定源行计算，不注入模型 prompt。先构建 enterprise 数据和 gold，再运行 `python -m insightpilot.enterprise_evaluate`；评测会各跑主策略、无语义检索、无独立复核，并记录逐题 JSONL。provider 未报告价格时只给 token，不虚构费用。
+
+## S8 轨迹与奖励
+
+每次分析记录六个确定性阶段的状态，不保存问题或模型思维链。企业评测按独立 gold 计算指标、维度、数值和复核奖励；该分数用于诊断，不代表强化学习。设计与边界见 [S8 学习记录](docs/learning/stage-S8.md)。

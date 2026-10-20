@@ -37,9 +37,18 @@ def _compare(case: dict, gold: dict, result: dict) -> dict:
         for group, row in expected.items()
     )
     verification = result.get("verification", {}).get("passed") is True
-    return {"case_id": case["case_id"], "status_ok": result.get("status") == "answered",
+    status_ok = result.get("status") == "answered"
+    reward = (0.5 if metric_ok else 0) + (0.5 if result.get("plan", {}).get("dimension") == gold["dimension"] else 0)
+    reward += 1.0 if numeric_ok else 0
+    reward += 1.0 if verification else 0
+    if not status_ok and result.get("status") in ("refused", "clarify"):
+        reward += 0.25
+    if result.get("stage") in ("query", "verification") and result.get("status") == "failed":
+        reward -= 1.0
+    return {"case_id": case["case_id"], "status_ok": status_ok,
             "metric_ok": metric_ok, "dimension_ok": result.get("plan", {}).get("dimension") == gold["dimension"],
             "numeric_ok": numeric_ok, "sql_verified": verification,
+            "reward": round(reward, 2),
             "passed": result.get("status") == "answered" and metric_ok and numeric_ok and verification}
 
 
@@ -110,6 +119,7 @@ def run(output: Path, root: Path, database: Path | None = None) -> dict:
         "dimension_accuracy": sum(row["dimension_ok"] for row in main_results),
         "numeric_accuracy": sum(row["numeric_ok"] for row in main_results),
         "sql_verified": sum(row["sql_verified"] for row in main_results),
+        "mean_reward": round(statistics.mean(row["reward"] for row in main_results), 3) if main_results else None,
         "sql_safe_execution": sum(row["status_ok"] and row["sql_verified"] for row in main_results),
         "p50_elapsed_ms": ordered[(len(ordered)-1)//2] if ordered else None,
         "p95_elapsed_ms": ordered[max(0, math.ceil(.95*len(ordered))-1)] if ordered else None,

@@ -56,6 +56,23 @@ class InsightPilot:
         result["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 3)
         result["model_usage"] = getattr(self.planner, "last_call_usage", None)
         result["model_latency_ms"] = getattr(self.planner, "last_call_latency_ms", None)
+        status = result.get("status")
+        terminal_stage = result.get("stage")
+        stages = ["preflight", "planning", "compilation", "query", "verification", "answer"]
+        completed_through = {"answered": 5, "clarify": -1, "refused": -1, "failed": -1, "cancelled": -1}.get(status, -1)
+        if status == "failed":
+            completed_through = stages.index(terminal_stage) - 1 if terminal_stage in stages else -1
+        if status == "cancelled":
+            completed_through = stages.index(terminal_stage) - 1 if terminal_stage in stages else -1
+        if status == "refused":
+            terminal_stage = "preflight"
+        elif status == "clarify":
+            terminal_stage = "planning"
+        result["trajectory"] = [
+            {"stage": stage, "outcome": "passed" if index <= completed_through else
+             "blocked" if stage == terminal_stage or (status == "answered" and stage == "answer") else "not_reached"}
+            for index, stage in enumerate(stages)
+        ]
         return result
 
     def _analyze(self, question: str, *, run_id: str | None = None, cancel_event: Event | None = None,
