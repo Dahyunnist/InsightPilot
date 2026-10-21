@@ -6,6 +6,8 @@
 
 需要 Python 3.11+。SQL 策略使用 SQLGlot。根目录 `.env` 需包含 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`；可选 `LLM_TIMEOUT_SECONDS`、`LLM_MAX_COMPLETION_TOKENS`。`.env` 已加入忽略列表，不应提交密钥。
 
+首次配置可复制 `.env.example` 为 `.env` 并填写模型服务配置。`.env.example` 只含空白占位值。
+
 ```text
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
