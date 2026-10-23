@@ -1,0 +1,61 @@
+{
+  "stage": "IP-4",
+  "created_at": "2026-10-23",
+  "model_calls_this_review": 0,
+  "global_model_budget_remaining_usd": 3.69709005,
+  "independent_validation_sets": {
+    "refunds": {"cases": 6, "answerable": 4, "guard": 2, "blind_sha256": "87ed4ca5dd0d3d63ce6897f4b93a89d06027da8056955f50b9331bc79bd8bddb", "gold_sha256": "3ec995a51fbad415ce956fa477de15df741ef95dcc868ed3c14f8ecae42e1eae"},
+    "marketing_roi": {"cases": 6, "answerable": 4, "guard": 2, "blind_sha256": "475a7684c67051c6ba50194746461172dd49628b5f5c06bd3809fe7ef10bbe24", "gold_sha256": "5cc3696127c6184a2909b5bf61606a6a888d431a9833829e3b10d3b3b636c0b3"},
+    "gold_method": "Independent Python source-row/event ledger, cross-checked against compiled read-only SQLite SQL; gold is scored outside the Agent request.",
+    "data_version": "insightpilot-multidomain-v1",
+    "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580"
+  },
+  "strict_rule_baseline": {
+    "suite": "reports/domain-validation-v1.json",
+    "sqlite": "12/12",
+    "postgresql_tenant_a": "12/12",
+    "postgresql_tenant_b": "12/12",
+    "per_domain_per_backend": {"refunds": "6/6", "marketing_roi": "6/6"},
+    "answerable_per_arm": "8/8",
+    "guard_per_arm": "4/4",
+    "false_refusals": 0,
+    "unauthorized_or_false_accepts": 0,
+    "unsupported_region_accepts": 0,
+    "newly_replayed_in_this_review": "SQLite only; saved report contains both PostgreSQL tenant arms"
+  },
+  "saved_model_evaluation": {
+    "suite": "reports/domain-validation-model-blind-report.json",
+    "sqlite": "12/12",
+    "postgresql_tenant_a": "12/12",
+    "postgresql_tenant_b": "12/12",
+    "calls": 24,
+    "estimated_peak_price_usd": 0.0172782,
+    "note": "Historical saved run; not repeated in this review."
+  },
+  "historical_ablation": {
+    "suite": "reports/enterprise-v5/enterprise-evaluation-summary.json",
+    "holdout_cases": 20,
+    "without_semantic_retrieval": "10/20",
+    "without_independent_verification": "9/20",
+    "primary_cases_passed": "17/20",
+    "note": "Prior single-run, model-backed ablation on another synthetic holdout. Descriptive only; not causal proof or part of this 12-question set."
+  },
+  "ip4_frozen_results": {
+    "seal": "reports/ip4-freeze-seal.json",
+    "seal_check": "passed; 7 sealed files match",
+    "rule_sqlite": "12/12",
+    "rule_postgresql_per_tenant": "12/12",
+    "saved_model_sqlite": "12/12",
+    "saved_model_postgresql_tenant_a": "10/12; IP4-R01 and IP4-R02 failed at query stage",
+    "saved_model_postgresql_tenant_b": "12/12",
+    "failure_root_cause": "unknown; saved model report has no redacted query details",
+    "changed_or_rerun": false
+  },
+  "limitations": [
+    "The independent domain set has 12 designed synthetic questions; backend repeats do not increase independent sample size.",
+    "Confidence intervals are wide and do not estimate production accuracy.",
+    "Rule baseline is not evidence of model generalization.",
+    "Retrieval/verifier ablations use another holdout and do not isolate causal effects.",
+    "Compose container test could not run because the Docker Hub image pull timed out."
+  ]
+}

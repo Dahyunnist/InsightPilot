@@ -32,6 +32,8 @@
 | 旧 IP4 模型结果 | `reports/ip4-model-blind-verification.json` | tenant-a 10/12；R01/R02 在 query 阶段失败 |
 | R01/R02 开发诊断 | `reports/ip4-r01-r02-dev-diagnostic.json` | RulePlanner 在 SQLite 与两个 PG tenant 均通过；RLS scope 探针 |
 | IP-1/IP-2 PostgreSQL 权限验收 | `reports/ip1-ip2-postgres-acceptance-v1.json` | reader 列授权、8 表 RLS、跨租户、敏感列、DDL/DML、注入、边界、上下文清理、超时与池恢复 |
+| IP-3 HTTP 压测 | `reports/ip3-http-acceptance-v1.json` | 本机真实 HTTP 合成压测；Compose 镜像拉取受网络阻断，未声称容器内通过 |
+| IP-4 独立集比较 | `reports/ip4-stage-comparison-v1.json` | 冻结哈希、双后端规则基线、历史消融、拒答/误接受与样本限制 |
 | 费用账本 | `reports/model-experiment-cost-ledger.json` | 请求与 token 记录、估价方法及剩余预算 |
 | 阶段说明 | `docs/learning/stage-IP4.md` | IP4 冻结、失败边界和分域复验背景 |
 
@@ -54,3 +56,5 @@
 ## 提交记录
 
 分域盲评阶段提交：`e65091b`（记录分域模型盲评与成本）。本验收文档与复现脚本随最终验收提交；最终提交哈希由本次交付回报。
+
+IP-3/IP-4 补记：IP-3 本机真实 HTTP 测量通过，但 Compose 容器验收因 Docker Hub 拉取超时未完成；IP-4 哈希封存及独立集复核通过。详见 `docs/learning/stage-IP3.md` 与 `docs/learning/stage-IP4.md`。

@@ -85,3 +85,11 @@ IP4 离线盲集、独立 SQL/Python gold、SQLite 规则基线、同一 FastAPI
 已按预注册执行一轮：SQLite、PostgreSQL tenant-a、tenant-b 各 12/12；每臂 refunds 6/6、marketing ROI 6/6。24 次请求，输入 14,874 tokens、输出 10,680 tokens；按峰价并将输入全按未缓存估算 $0.0172782，账本余 $3.69709005。三臂 answerable 均 8/8、guard 均 4/4；false refusal 0、false accept 0。逐题独立 oracle、compiled SQL、严格分数、拒答及 usage 见 `reports/domain-validation-model-blind-report.json`。旧 IP4 未重跑、未调分；账本与预注册 SHA 在 `reports/model-experiment-cost-ledger.json` 中。
 
 单轮评测完成：SQLite、PostgreSQL tenant-a、tenant-b 各 12/12；每臂 refunds 6/6、marketing ROI 6/6。24 次请求，输入 14,874 tokens、输出 10,680 tokens；按峰价未缓存输入估算 $0.0172782，账本余 $3.69709005。三臂 answerable 均 8/8、guard 均 4/4；false refusal 0，false accept 0。每题 scorer、独立 oracle、SQL 和 usage 见 `reports/domain-validation-model-blind-report.json`。旧 IP4 冻结结果不变。
+
+## IP-4 阶段复核
+
+独立集含退款与 marketing ROI 两域，各 4 道可答题、2 道 guard。Python 行/事件账本生成 gold，并在 Agent 外评分；blind/gold 哈希分开锁定。SQLite 规则基线两域均 6/6。保存的 PostgreSQL 规则报告中，tenant-a、tenant-b 两域亦各 6/6。false refusal、guard false accept、不支持地区误接受均为 0。旧模型盲评仍保留 SQLite、tenant-b 各 12/12，tenant-a 10/12；冻结失败 IP4-R01/R02 根因未知。
+
+语义检索关闭 10/20、独立验证关闭 9/20、主臂 17/20，来自另一份企业合成 holdout 的单轮历史消融。仅作描述，不与本轮 12 道独立题混合，也不证明因果增益。汇总见 `reports/ip4-stage-comparison-v1.json`。样本小，不能推断生产准确率或总体泛化。
+
+本轮没有模型调用，费用账本未变，预算余 $3.69709005。旧 IP4 冻结文件和报告未改；封存校验 7 项通过。
