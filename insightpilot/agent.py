@@ -54,11 +54,9 @@ class InsightPilot:
         self.database_path = database_path
         self.query_engine = query_engine or SQLiteQueryEngine(database_path)
         self.tenant_id = tenant_id or getattr(self.query_engine, "tenant_id", None)
-        if hasattr(self.query_engine, "tenant_id") and not self.tenant_id:
-            raise ValueError("PostgreSQL query execution requires a trusted tenant_id.")
 
     def analyze(self, question: str, *, run_id: str | None = None, cancel_event: Event | None = None,
-                authorized_region: str | None = None) -> dict:
+                authorized_region: str | None = None, tenant_id: str | None = None) -> dict:
         started = time.perf_counter()
         if hasattr(self.planner, "last_call_usage"):
             self.planner.last_call_usage = None
@@ -67,7 +65,8 @@ class InsightPilot:
             self.planner.last_call_latency_ms = None
             self.planner.last_response_model = None
             self.planner.last_call_created_at = None
-        result = self._analyze(question, run_id=run_id, cancel_event=cancel_event, authorized_region=authorized_region)
+        result = self._analyze(question, run_id=run_id, cancel_event=cancel_event,
+                               authorized_region=authorized_region, tenant_id=tenant_id)
         result["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 3)
         result["model_usage"] = getattr(self.planner, "last_call_usage", None)
         result["model_latency_ms"] = getattr(self.planner, "last_call_latency_ms", None)
@@ -101,7 +100,7 @@ class InsightPilot:
         return result
 
     def _analyze(self, question: str, *, run_id: str | None = None, cancel_event: Event | None = None,
-                 authorized_region: str | None = None) -> dict:
+                 authorized_region: str | None = None, tenant_id: str | None = None) -> dict:
         run_id = run_id or str(uuid.uuid4())
         denied = _preflight(question)
         if denied:
@@ -122,8 +121,9 @@ class InsightPilot:
                 return {"run_id": run_id, "status": "refused", "reason": "region_scope_denied", "message": "请求地区超出授权范围。"}
             plan = type(plan)(plan.metric_id, plan.start_date, plan.end_date, authorized_region, plan.dimension, plan.periods)
         metric = METRICS[plan.metric_id]
+        trusted_tenant_id = tenant_id or self.tenant_id
         try:
-            dataset_version, data_fingerprint = self.query_engine.read_data_identity(tenant_id=self.tenant_id)
+            dataset_version, data_fingerprint = self.query_engine.read_data_identity(tenant_id=trusted_tenant_id)
             if not isinstance(self.query_engine, SQLiteQueryEngine):
                 verifier_version, verifier_fingerprint = SQLiteQueryEngine(
                     self.database_path).read_data_identity()
@@ -146,7 +146,7 @@ class InsightPilot:
             return {"run_id": run_id, "status": "failed", "stage": "compilation", "message": str(exc)}
         try:
             rows, _backend = self.query_engine.execute_readonly(
-                compiled, tenant_id=self.tenant_id, cancel_event=cancel_event)
+                compiled, tenant_id=trusted_tenant_id, cancel_event=cancel_event)
         except QueryCancelledError as exc:
             return {"run_id": run_id, "status": "cancelled", "stage": "query", "message": str(exc)}
         except QueryExecutionError as exc:

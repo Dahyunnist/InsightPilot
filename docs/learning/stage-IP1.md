@@ -16,7 +16,7 @@ PostgreSQL 16.15 经真实 FastAPI → InsightPilot → `PostgresQueryEngine` �
 
 ## 边界与部署
 
-默认配置仍使用 SQLite。设置 `INSIGHTPILOT_DATABASE_URL` 和 `INSIGHTPILOT_TENANT_ID` 后，FastAPI 使用 PostgreSQL。tenant ID 是受信任的静态部署配置，不接受 HTTP 请求体或问题指定；同一进程的认证主体到 tenant 映射仍需后续设计。PG 数据身份必须与 SQLite verifier 一致，否则请求失败。
+默认配置仍使用 SQLite。设置 `INSIGHTPILOT_DATABASE_URL` 与 `INSIGHTPILOT_API_TENANT_TOKENS` 后，FastAPI 使用 PostgreSQL。后者是服务端 JSON 映射，将 bearer credential 映射到 tenant ID；请求体、问题和 `X-Tenant-ID` 均不能覆盖。未知或缺失 credential 返回 401，PostgreSQL 模式缺少映射时拒绝启动。每个请求把认证映射所得 tenant 显式传入只读查询，不修改共享核心或连接池状态。PG 数据身份必须与 SQLite verifier 一致，否则请求失败。
 
 部署前，DB owner 必须为数据补齐并核对 `tenant_id`，执行 bootstrap SQL，再把应用登录角色加入 `insightpilot_reader`。tenant id 必须来自可信认证上下文。默认 SQLite 及其只读限制保持兼容。
 
@@ -26,8 +26,12 @@ PostgreSQL 16.15 经真实 FastAPI → InsightPilot → `PostgresQueryEngine` �
 
 使用 PostgreSQL 16.15 一次性容器与 `scripts/verify_ip4_postgres_psql.py` 直接执行 SQLGlot 转换后的查询。退款订单率、退款金额率、退款活动归因、营销 ROI 三种查询，在 tenant-a 和 tenant-b 各 6/6 匹配独立 Python gold；数据重复导入到两个租户，避免空租户造成的假通过。无 tenant 上下文 fail-closed，应用角色 DML 被拒，statement timeout 被触发且后续查询成功。
 
-随后完成应用层集成：`InsightPilot` 接受 `QueryEngine` 和受信任的静态 tenant ID；默认仍用 SQLite。设置 `INSIGHTPILOT_DATABASE_URL` 与 `INSIGHTPILOT_TENANT_ID` 后，默认 FastAPI app 使用 PostgreSQL 查询，身份验证读取 PG `data_meta`，并要求 PG 与独立 SQLite verifier 的版本/fingerprint 完全一致。tenant ID 来自部署配置，不从 HTTP 请求体或问题读取。API shutdown 关闭连接池。
+随后完成应用层集成：`InsightPilot` 接受 `QueryEngine`，默认仍用 SQLite。设置 `INSIGHTPILOT_DATABASE_URL` 与服务端 `INSIGHTPILOT_API_TENANT_TOKENS` 后，FastAPI 使用 PostgreSQL。认证 token 映射到可信 tenant ID；每次 PG 查询在独立只读事务中绑定 RLS tenant，不从 HTTP 请求字段取租户。PostgreSQL `data_meta` 必须与 SQLite verifier 的版本/fingerprint 完全一致。API shutdown 关闭连接池。
 
-检查所有本地 venv/cache 没找到 psycopg wheel；按审批联网安装 `psycopg[binary,pool]>=3.2,<4` 成功，版本为 psycopg 3.3.6、binary 3.3.6、pool 3.3.3。随后运行 `scripts/verify_ip4_postgres.py`，经过 FastAPI → InsightPilot → PostgresQueryEngine 实测：两个独立 tenant app 各 12/12 题通过；退款 6/6、营销 ROI 6/6；R03 退款归因 JOIN 与 M01 ROI JOIN 在两租户下都匹配 gold，证明没有跨租户 JOIN 泄漏；PG/SQLite 数据版本和 fingerprint 相同；独立 SQLite verifier 全部通过。预期拒答 3/3，错误拒答 0，拒答问题被接受 0，不支持地区被接受 0。
+检查所有本地 venv/cache 没找到 psycopg wheel；按审批联网安装 `psycopg[binary,pool]>=3.2,<4` 成功，版本为 psycopg 3.3.6、binary 3.3.6、pool 3.3.3。随后运行 `scripts/verify_ip4_postgres.py`，经过 FastAPI → InsightPilot → PostgresQueryEngine 实测：同一 FastAPI app 映射两个 tenant，各 12/12 题通过；退款 6/6、营销 ROI 6/6；R03 退款归因 JOIN 与 M01 ROI JOIN 在两租户下都匹配 gold，证明没有跨租户 JOIN 泄漏；PG/SQLite 数据版本和 fingerprint 相同；独立 SQLite verifier 全部通过。预期拒答 3/3，错误拒答 0，拒答问题被接受 0，不支持地区被接受 0。
 
 同一驱动测试还确认缺 tenant 上下文被拒、应用只读角色的 DELETE 被数据库拒绝、50 ms `statement_timeout` 生效且后续查询恢复、max_size=1 pool 耗尽按 200 ms timeout 失败并在释放连接后恢复。完整应用层 PostgreSQL/RLS 查询路径现已实测。Docker 只在提权后可访问 daemon；测试库使用 Compose 的 tmpfs 临时盘，已停止，不留数据卷。
+
+## 认证主体隔离补记（2026-10-23）
+
+移除部署级全局 tenant 选择。`INSIGHTPILOT_API_TENANT_TOKENS` 配置 bearer token 到 tenant 的服务端映射；PG 模式无映射时拒绝启动。缺失/未知 token 均返回 401，伪造 `X-Tenant-ID` 不影响映射。tenant 随分析任务传入 `read_data_identity` 与 `execute_readonly`，每次 transaction-local RLS 设置独立。并发 API 测试在共享核心下同时发两个 tenant 请求，确认两次查询收到各自映射；RunStore 读取与取消也按 principal 隔离。IP4 PostgreSQL 脚本现由同一 API app、同一核心和连接池依次跑完两租户盲集。

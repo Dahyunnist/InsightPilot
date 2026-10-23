@@ -38,24 +38,28 @@ def verify(database: Path, blind_path: Path, gold_path: Path, tenant_ids: tuple[
     gold = {row["case_id"]: row for row in gold_rows}
     answerable = [case for case in cases if gold[case["case_id"]]["expected_status"] == "answered"]
     tenant_results = {}
-    for tenant_id in tenant_ids:
-        engine = PostgresQueryEngine(dsn, tenant_id=tenant_id)
-        core = InsightPilot(RulePlanner(), database, query_engine=engine, tenant_id=tenant_id)
-        with tempfile.TemporaryDirectory(prefix=f"insightpilot-api-{tenant_id}-") as temp:
-            app = create_app(core, run_store=RunStore(Path(temp) / "runs.sqlite"),
-                             api_token=f"local-{tenant_id}-only", api_scopes={
-                                 "refund:read", "refund:cancel", "marketing:read"})
-            with TestClient(app) as client:
+    engine = PostgresQueryEngine(dsn)
+    core = InsightPilot(RulePlanner(), database, query_engine=engine)
+    with tempfile.TemporaryDirectory(prefix="insightpilot-api-shared-") as temp:
+        token_map = {f"local-{tenant}-only": tenant for tenant in tenant_ids}
+        app = create_app(core, run_store=RunStore(Path(temp) / "runs.sqlite"),
+                         api_tenant_tokens=token_map, api_scopes={
+                             "refund:read", "refund:cancel", "marketing:read"})
+        with TestClient(app) as client:
+            for tenant_id in tenant_ids:
+                token = f"local-{tenant_id}-only"
                 checks = []
                 for case in cases:
                     response = client.post("/analysis", json={"question": case["question"]},
-                                           headers={"Authorization": f"Bearer local-{tenant_id}-only"})
+                                           headers={"Authorization": f"Bearer {token}"})
                     actual = response.json()
                     scored = compare(case, gold[case["case_id"]], actual)
                     expected_http = {"answered": 200, "clarify": 422, "refused": 403}[
                         gold[case["case_id"]]["expected_status"]]
                     checked = {**scored, "http_status": response.status_code,
-                               "http_status_ok": response.status_code == expected_http}
+                               "http_status_ok": response.status_code == expected_http,
+                               "actual_stage": actual.get("stage"),
+                               "actual_message": actual.get("message")}
                     if gold[case["case_id"]]["expected_status"] == "answered":
                         checked["postgres_backend"] = actual.get("query_backend") == "postgresql"
                         checked["dataset_identity_matches"] = (
@@ -67,25 +71,25 @@ def verify(database: Path, blind_path: Path, gold_path: Path, tenant_ids: tuple[
                         checked.get(key, True) for key in ("postgres_backend", "dataset_identity_matches",
                                                             "sqlite_independent_verifier"))
                     checks.append(checked)
-        engine.close()
-        refusal_cases = [row for row in checks if gold[row["case_id"]]["expected_status"] == "refused"]
-        tenant_results[tenant_id] = {
-            "passed": sum(row["passed"] for row in checks), "total": len(checks), "case_results": checks,
-            "failures": [row for row in checks if not row["passed"]],
-            "refusal_metrics": {
-                "correct_refusals": sum(row["actual_status"] == "refused" and row["reason_ok"]
-                                         for row in refusal_cases),
-                "expected_refusals": len(refusal_cases),
-                "false_refusals_on_answerable": [row["case_id"] for row in checks
-                    if gold[row["case_id"]]["expected_status"] == "answered" and row["actual_status"] == "refused"],
-                "false_accepts_on_refusal_cases": [row["case_id"] for row in refusal_cases
-                    if row["actual_status"] == "answered"],
-                "unsupported_marketing_region_accepted": any(row["case_id"] == "IP4-M04" and
-                    row["actual_status"] == "answered" for row in checks),
-            },
-            "cross_tenant_join_case_ids": [row["case_id"] for row in checks
-                if row["case_id"] in ("IP4-R03", "IP4-M01") and row["passed"]],
-        }
+                refusal_cases = [row for row in checks if gold[row["case_id"]]["expected_status"] == "refused"]
+                tenant_results[tenant_id] = {
+                    "passed": sum(row["passed"] for row in checks), "total": len(checks), "case_results": checks,
+                    "failures": [row for row in checks if not row["passed"]],
+                    "refusal_metrics": {
+                        "correct_refusals": sum(row["actual_status"] == "refused" and row["reason_ok"]
+                                                 for row in refusal_cases),
+                        "expected_refusals": len(refusal_cases),
+                        "false_refusals_on_answerable": [row["case_id"] for row in checks
+                            if gold[row["case_id"]]["expected_status"] == "answered" and row["actual_status"] == "refused"],
+                        "false_accepts_on_refusal_cases": [row["case_id"] for row in refusal_cases
+                            if row["actual_status"] == "answered"],
+                        "unsupported_marketing_region_accepted": any(row["case_id"] == "IP4-M04" and
+                            row["actual_status"] == "answered" for row in checks),
+                    },
+                    "cross_tenant_join_case_ids": [row["case_id"] for row in checks
+                        if row["case_id"] in ("IP4-R03", "IP4-M01") and row["passed"]],
+                }
+    engine.close()
 
     no_tenant_result = "not_checked"
     engine = PostgresQueryEngine(dsn)

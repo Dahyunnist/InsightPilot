@@ -38,6 +38,8 @@ class RunStore:
             columns = {row[1] for row in db.execute("PRAGMA table_info(runs)")}
             if "idempotency_key_hash" not in columns:
                 db.execute("ALTER TABLE runs ADD COLUMN idempotency_key_hash TEXT")
+            if "principal_id" not in columns:
+                db.execute("ALTER TABLE runs ADD COLUMN principal_id TEXT")
             db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_runs_idempotency_key_hash "
                        "ON runs(idempotency_key_hash) WHERE idempotency_key_hash IS NOT NULL")
             db.execute("UPDATE runs SET status='interrupted', updated_at=? WHERE status='running'", (_now(),))
@@ -72,7 +74,8 @@ class RunStore:
             raise IdempotencyConflict("Idempotency-Key was already used with a different question.")
         return row[0]
 
-    def start(self, run_id: str, question: str, idempotency_key: str | None = None) -> str:
+    def start(self, run_id: str, question: str, idempotency_key: str | None = None,
+              *, principal_id: str | None = None) -> str:
         key_hash = self._idempotency_hash(idempotency_key)
         question_hash = hashlib.sha256(question.encode("utf-8")).hexdigest()
         with self._connection() as db:
@@ -85,9 +88,9 @@ class RunStore:
                     if existing[1] != question_hash:
                         raise IdempotencyConflict("Idempotency-Key was already used with a different question.")
                     return existing[0]
-            db.execute("INSERT INTO runs(run_id,created_at,updated_at,status,question_hash,question_redacted,idempotency_key_hash) "
-                       "VALUES(?,?,?,?,?,?,?)",
-                       (run_id, _now(), _now(), "running", question_hash, _redact(question), key_hash))
+            db.execute("INSERT INTO runs(run_id,created_at,updated_at,status,question_hash,question_redacted,idempotency_key_hash,principal_id) "
+                       "VALUES(?,?,?,?,?,?,?,?)",
+                       (run_id, _now(), _now(), "running", question_hash, _redact(question), key_hash, principal_id))
         return run_id
 
     def finish(self, run_id: str, result: dict) -> None:
@@ -95,9 +98,10 @@ class RunStore:
             db.execute("UPDATE runs SET status=?,updated_at=?,result_json=? WHERE run_id=?",
                        (result.get("status", "failed"), _now(), json.dumps(result, ensure_ascii=False), run_id))
 
-    def get(self, run_id: str) -> dict | None:
+    def get(self, run_id: str, *, principal_id: str | None = None) -> dict | None:
         with self._connection() as db:
-            row = db.execute("SELECT run_id,created_at,updated_at,status,question_hash,question_redacted,result_json,cancel_requested FROM runs WHERE run_id=?", (run_id,)).fetchone()
+            row = db.execute("SELECT run_id,created_at,updated_at,status,question_hash,question_redacted,result_json,cancel_requested FROM runs WHERE run_id=? AND (? IS NULL OR principal_id=?)",
+                             (run_id, principal_id, principal_id)).fetchone()
         if row is None:
             return None
         return {"run_id": row[0], "created_at": row[1], "updated_at": row[2], "status": row[3],
@@ -105,9 +109,10 @@ class RunStore:
                 "result": json.loads(row[6]) if row[6] else None,
                 "cancel_requested": bool(row[7])}
 
-    def request_cancel(self, run_id: str) -> bool:
+    def request_cancel(self, run_id: str, *, principal_id: str | None = None) -> bool:
         with self._connection() as db:
-            cursor = db.execute("UPDATE runs SET cancel_requested=1,updated_at=? WHERE run_id=? AND status='running'", (_now(), run_id))
+            cursor = db.execute("UPDATE runs SET cancel_requested=1,updated_at=? WHERE run_id=? AND status='running' AND (? IS NULL OR principal_id=?)",
+                                (_now(), run_id, principal_id, principal_id))
             return cursor.rowcount == 1
 
 

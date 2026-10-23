@@ -1,0 +1,61 @@
+{
+  "lock_id": "ip4-model-blind-v1-preregistered",
+  "created_at_utc": "2026-10-23T07:00:45Z",
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+  "manifest_sha256": "f5aca68edbd908640d8886ffa16e590176ce8b26db7c0cfccdc1113dc5e25e5d",
+  "blind_sha256": "f587c11308c8cd6a1de24b57bf5b5259c618ac0d692aa60615e0419a92d5f2d2",
+  "gold_sha256": "0cc4f43873eae69b1be7ba670a29bed4a9da20533ddb3cb7e8c89bf65c92a1d6",
+  "model_settings": {
+    "model": "deepseek-v4-flash",
+    "base_url_origin": "https://api.deepseek.com",
+    "max_completion_tokens": 1024,
+    "temperature": 0
+  },
+  "model_provider_alias": "DeepSeek documents legacy deepseek-v4-flash as accepted, served by DeepSeek-V4.1-Flash-1017, and billed at Flash rates.",
+  "evaluation_arms": [
+    {
+      "backend": "SQLite",
+      "runs": 1
+    },
+    {
+      "backend": "PostgreSQL",
+      "tenant_ids": [
+        "tenant-a",
+        "tenant-b"
+      ]
+    }
+  ],
+  "blind_case_count": 12,
+  "total_case_runs": 36,
+  "max_attempts_per_case": 2,
+  "maximum_api_calls": 72,
+  "prompt_utf8_byte_limit": 51000,
+  "reserved_input_token_bound_per_call": 52000,
+  "max_output_tokens_per_call": 1024,
+  "pricing_usd_per_million_peak": {
+    "input_cache_hit": 0.006,
+    "input_cache_miss": 0.3,
+    "output": 1.2
+  },
+  "maximum_worst_case_reserve_usd": 1.2116736,
+  "cap_usd": 4.0,
+  "global_remaining_before_reserve_usd": 3.72695595,
+  "global_remaining_after_reserve_usd": 2.51528235,
+  "scorer": {
+    "name": "ip4_evaluate.compare",
+    "file": "insightpilot/ip4_evaluate.py",
+    "sha256": "6fdca63711d8efb504f2b3f4b29d6018f4a8cbb9dc842404985ea941e7b29479",
+    "strict_checks": [
+      "expected status",
+      "expected reason on guards",
+      "metric id",
+      "dimension",
+      "region",
+      "date window",
+      "exact answer groups and numeric values",
+      "independent verifier passed"
+    ]
+  },
+  "rule": "If hashes, model settings, case count or cost bound differ, stop before first request. No mid-run prompts or scorer changes."
+}

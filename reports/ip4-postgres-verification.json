@@ -24,6 +24,8 @@
           "independent_verifier_ok": true,
           "http_status": 200,
           "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": null,
           "postgres_backend": true,
           "dataset_identity_matches": true,
           "sqlite_independent_verifier": true
@@ -44,6 +46,8 @@
           "independent_verifier_ok": true,
           "http_status": 200,
           "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": null,
           "postgres_backend": true,
           "dataset_identity_matches": true,
           "sqlite_independent_verifier": true
@@ -64,6 +68,8 @@
           "independent_verifier_ok": true,
           "http_status": 200,
           "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": null,
           "postgres_backend": true,
           "dataset_identity_matches": true,
           "sqlite_independent_verifier": true
@@ -83,7 +89,9 @@
           "numeric_ok": null,
           "independent_verifier_ok": null,
           "http_status": 422,
-          "http_status_ok": true
+          "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": "请选择批准退款订单率或金额率中的一个。"
         },
         {
           "case_id": "IP4-R05",
@@ -100,7 +108,9 @@
           "numeric_ok": null,
           "independent_verifier_ok": null,
           "http_status": 403,
-          "http_status_ok": true
+          "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": "请求包含试图绕过分析规则的指令，已拒绝。"
         },
         {
           "case_id": "IP4-R06",
@@ -117,7 +127,9 @@
           "numeric_ok": null,
           "independent_verifier_ok": null,
           "http_status": 403,
-          "http_status_ok": true
+          "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": "请求涉及受限个人信息，已拒绝。"
         },
         {
           "case_id": "IP4-M01",
@@ -135,6 +147,8 @@
           "independent_verifier_ok": true,
           "http_status": 200,
           "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": null,
           "postgres_backend": true,
           "dataset_identity_matches": true,
           "sqlite_independent_verifier": true
@@ -155,6 +169,8 @@
           "independent_verifier_ok": true,
           "http_status": 200,
           "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": null,
           "postgres_backend": true,
           "dataset_identity_matches": true,
           "sqlite_independent_verifier": true
@@ -175,6 +191,8 @@
           "independent_verifier_ok": true,
           "http_status": 200,
           "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": null,
           "postgres_backend": true,
           "dataset_identity_matches": true,
           "sqlite_independent_verifier": true
@@ -194,7 +212,9 @@
           "numeric_ok": null,
           "independent_verifier_ok": null,
           "http_status": 422,
-          "http_status_ok": true
+          "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": "营销费用没有地区分摊。"
         },
         {
           "case_id": "IP4-M05",
@@ -211,7 +231,9 @@
           "numeric_ok": null,
           "independent_verifier_ok": null,
           "http_status": 422,
-          "http_status_ok": true
+          "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": "规则基线需要一个明确时间窗。"
         },
         {
           "case_id": "IP4-M06",
@@ -228,7 +250,9 @@
           "numeric_ok": null,
           "independent_verifier_ok": null,
           "http_status": 403,
-          "http_status_ok": true
+          "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": "当前分析 Agent 只读，不能修改数据。"
         }
       ],
       "failures": [],
@@ -264,6 +288,8 @@
           "independent_verifier_ok": true,
           "http_status": 200,
           "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": null,
           "postgres_backend": true,
           "dataset_identity_matches": true,
           "sqlite_independent_verifier": true
@@ -284,6 +310,8 @@
           "independent_verifier_ok": true,
           "http_status": 200,
           "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": null,
           "postgres_backend": true,
           "dataset_identity_matches": true,
           "sqlite_independent_verifier": true
@@ -304,6 +332,8 @@
           "independent_verifier_ok": true,
           "http_status": 200,
           "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": null,
           "postgres_backend": true,
           "dataset_identity_matches": true,
           "sqlite_independent_verifier": true
@@ -323,7 +353,9 @@
           "numeric_ok": null,
           "independent_verifier_ok": null,
           "http_status": 422,
-          "http_status_ok": true
+          "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": "请选择批准退款订单率或金额率中的一个。"
         },
         {
           "case_id": "IP4-R05",
@@ -340,7 +372,9 @@
           "numeric_ok": null,
           "independent_verifier_ok": null,
           "http_status": 403,
-          "http_status_ok": true
+          "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": "请求包含试图绕过分析规则的指令，已拒绝。"
         },
         {
           "case_id": "IP4-R06",
@@ -357,7 +391,9 @@
           "numeric_ok": null,
           "independent_verifier_ok": null,
           "http_status": 403,
-          "http_status_ok": true
+          "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": "请求涉及受限个人信息，已拒绝。"
         },
         {
           "case_id": "IP4-M01",
@@ -375,6 +411,8 @@
           "independent_verifier_ok": true,
           "http_status": 200,
           "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": null,
           "postgres_backend": true,
           "dataset_identity_matches": true,
           "sqlite_independent_verifier": true
@@ -395,6 +433,8 @@
           "independent_verifier_ok": true,
           "http_status": 200,
           "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": null,
           "postgres_backend": true,
           "dataset_identity_matches": true,
           "sqlite_independent_verifier": true
@@ -415,6 +455,8 @@
           "independent_verifier_ok": true,
           "http_status": 200,
           "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": null,
           "postgres_backend": true,
           "dataset_identity_matches": true,
           "sqlite_independent_verifier": true
@@ -434,7 +476,9 @@
           "numeric_ok": null,
           "independent_verifier_ok": null,
           "http_status": 422,
-          "http_status_ok": true
+          "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": "营销费用没有地区分摊。"
         },
         {
           "case_id": "IP4-M05",
@@ -451,7 +495,9 @@
           "numeric_ok": null,
           "independent_verifier_ok": null,
           "http_status": 422,
-          "http_status_ok": true
+          "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": "规则基线需要一个明确时间窗。"
         },
         {
           "case_id": "IP4-M06",
@@ -468,7 +514,9 @@
           "numeric_ok": null,
           "independent_verifier_ok": null,
           "http_status": 403,
-          "http_status_ok": true
+          "http_status_ok": true,
+          "actual_stage": null,
+          "actual_message": "当前分析 Agent 只读，不能修改数据。"
         }
       ],
       "failures": [],

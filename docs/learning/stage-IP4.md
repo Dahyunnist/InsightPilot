@@ -60,4 +60,10 @@ docker compose -f docker-compose.ip4.yml down
 费用账本未变，本阶段没有模型请求。
 ## 剩余边界
 
-IP4 离线盲集、独立 SQL/Python gold、SQLite 规则基线、真实 PostgreSQL API 双租户查询和连接池恢复均已实测。tenant ID 是每个 API 实例的静态部署配置；同一进程按用户动态选择租户，仍需经过认证主体映射后再扩展，当前不会读取调用方可伪造的 tenant header。
+IP4 离线盲集、独立 SQL/Python gold、SQLite 规则基线、同一 FastAPI app 的 PostgreSQL 双租户查询和连接池恢复均已实测。服务端 bearer-token 映射提供可信 tenant ID；客户端 tenant header 不参与授权。未知/缺失主体 fail-closed。并发传递、RunStore 租户归属另见 IP1 认证主体隔离补记。
+
+## 冻结模型盲测计划
+
+模型运行前锁定 manifest、blind/gold SHA-256、数据版本/fingerprint、`deepseek-v4-flash`（DeepSeek 当前接受的旧别名）、temperature 0、输出上限 1,024、每题最多 2 次请求、UTF-8 prompt 上限 51,000 bytes。scorer 固定为 `insightpilot.ip4_evaluate.compare`，包含状态、指标、切片、日期、精确数值和独立 verifier。计划覆盖 SQLite 一次及 PostgreSQL 两租户，共 36 题、最多 72 次 API 请求。
+
+按峰时价格每 1M 未缓存输入 $0.30、输出 $1.20，并把 UTF-8 字节数保守计为输入 token，上界预留 $1.2116736。运行前成本账本尚余 $3.72695595；预留后为 $2.51528235，总额仍低于 $4.00。冻结明细见 `reports/ip4-model-preregistration.json`。实际费用只按响应 usage 回执估算峰时价格；完整结果及账本增量见 `reports/ip4-model-blind-verification.json` 与 `reports/model-experiment-cost-ledger.json`。

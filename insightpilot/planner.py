@@ -38,9 +38,11 @@ class NeedsClarification(ValueError):
 
 
 class OpenAICompatiblePlanner:
-    def __init__(self, settings: Settings, *, use_metric_retrieval: bool = True):
+    def __init__(self, settings: Settings, *, use_metric_retrieval: bool = True,
+                 max_prompt_bytes_per_call: int | None = None):
         self.settings = settings
         self.use_metric_retrieval = use_metric_retrieval
+        self.max_prompt_bytes_per_call = max_prompt_bytes_per_call
         self.last_call_usage: dict | None = None
         self.last_call_latency_ms: float | None = None
         self.last_call_count = 0
@@ -77,6 +79,11 @@ class OpenAICompatiblePlanner:
         if len(system) + len(body["messages"][1]["content"]) > _MAX_PROMPT_CHARS_PER_CALL:
             self.last_call_count -= 1
             raise PlanError("analysis model prompt exceeds 12,000-character budget")
+        if (self.max_prompt_bytes_per_call is not None and
+                len(system.encode("utf-8")) + len(body["messages"][1]["content"].encode("utf-8"))
+                > self.max_prompt_bytes_per_call):
+            self.last_call_count -= 1
+            raise PlanError("analysis model prompt exceeds configured byte budget")
         request = urllib.request.Request(
             self.settings.base_url + "/chat/completions",
             data=json.dumps(body).encode("utf-8"),
