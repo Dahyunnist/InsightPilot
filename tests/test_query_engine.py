@@ -94,7 +94,8 @@ class QueryEngineTests(unittest.TestCase):
         with self.assertRaises(QueryExecutionError) as missing_context:
             engine.execute_readonly(query)
         self.assertEqual(missing_context.exception.failure_code, "tenant_scope_missing")
-        for sql in ("DELETE FROM orders", "DROP TABLE orders", "SELECT customer_id FROM orders LIMIT 1"):
+        for sql in ("DELETE FROM orders", "DROP TABLE orders", "SELECT customer_id FROM orders LIMIT 1",
+                    "SELECT email FROM customers LIMIT 1", "SELECT phone FROM customers LIMIT 1"):
             with self.subTest(sql=sql), self.assertRaises(QueryExecutionError) as policy_error:
                 engine.execute_readonly(type(query)(sql, ()), tenant_id="tenant-a")
             self.assertEqual(policy_error.exception.failure_code, "sql_policy")
@@ -114,6 +115,12 @@ class QueryEngineTests(unittest.TestCase):
         engine = PostgresQueryEngine("unused", tenant_id="tenant-a", pool=FakePool(FakeConnection([(str(i), 0.1) for i in range(3)])), max_rows=2)
         with self.assertRaises(QueryExecutionError):
             engine.execute_readonly(query)
+
+    def test_postgres_close_does_not_close_caller_owned_pool(self):
+        pool = MagicMock()
+        engine = PostgresQueryEngine("unused", pool=pool)
+        engine.close()
+        pool.close.assert_not_called()
 
     def test_sqlite_compatibility_adapter_rejects_unsupported_tenant_scope(self):
         engine = SQLiteQueryEngine(None)

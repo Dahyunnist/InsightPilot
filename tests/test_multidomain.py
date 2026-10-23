@@ -85,6 +85,32 @@ class MultiDomainTests(unittest.TestCase):
         before_month_end = total_spend("2026-10-01", "2026-10-31")
         self.assertGreater(month_total, before_month_end)
 
+    def test_refund_reversal_recorded_after_snapshot_is_excluded(self):
+        plan = QueryPlan("marketing_net_roi", "2026-10-01", "2026-11-01", None, None)
+        query = compile_query(plan)
+        rows_before, _ = execute_readonly(self.database, query)
+        connection = sqlite3.connect(self.database)
+        try:
+            snapshot = connection.execute(
+                "SELECT value FROM data_meta WHERE key='snapshot_at'").fetchone()[0]
+            refund_id = connection.execute(
+                "SELECT refund_id FROM refunds WHERE status='approved' ORDER BY refund_id LIMIT 1").fetchone()[0]
+            connection.execute(
+                "INSERT INTO refund_reversals VALUES (?,?,?,?,?)",
+                ("snapshot-boundary-probe", refund_id, snapshot, "9999-01-01T00:00:00Z", 1),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+        rows_after, _ = execute_readonly(self.database, query)
+        self.assertEqual(rows_after, rows_before)
+
+    def test_ambiguous_refund_rate_clarifies_before_model_call(self):
+        planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)
+        planner._complete = lambda *_args: self.fail("ambiguous refund rate reached model")
+        with self.assertRaises(NeedsClarification):
+            planner.plan("2026-10-01 至 2026-10-31 退款率是多少？")
+
     def test_roi_region_request_clarifies_and_unapproved_sql_is_rejected(self):
         planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)
         planner._complete = lambda *_args: self.fail("unsupported marketing region reached model")

@@ -8,7 +8,7 @@
 .\scripts\verify_final_acceptance.ps1
 ```
 
-脚本启动隔离的临时 PostgreSQL，装载合成多租户数据，重跑 R01/R02 开发诊断与分域规则基线，校验 IP4 冻结封存和已保存的模型盲评报告，最后清理临时容器。**不会调用模型 API，也不会覆盖已提交的验收报告。**需要 Docker、项目 `.venv` 和已安装依赖。模型盲评结果是对已有单轮产物的复核；不重发模型请求。
+脚本启动隔离的临时 PostgreSQL，装载合成多租户数据，重跑 IP-1/IP-2 强制权限负例、R01/R02 开发诊断与分域规则基线，校验 IP4 冻结封存和已保存的模型盲评报告，最后清理临时容器。**不会调用模型 API，也不会覆盖旧 IP4 冻结报告。**需要 Docker、项目 `.venv` 和已安装依赖。模型盲评结果是对已有单轮产物的复核；不重发模型请求。
 
 全套测试单独运行：
 
@@ -16,9 +16,9 @@
 .\.venv\Scripts\python.exe -m unittest discover -s tests -q
 ```
 
-共 94 项。MCP Streamable HTTP 回归使用 FastAPI `TestClient` 运行完整 JSON-RPC 初始化、工具枚举和工具调用，避免随机端口及手动 Uvicorn 线程的生命周期抖动。该回归连续 10 次通过；修复后全套测试连续两次 94/94 通过。
+全套测试当前共 97 项。MCP Streamable HTTP 回归使用 FastAPI `TestClient` 运行完整 JSON-RPC 初始化、工具枚举和工具调用，避免随机端口及手动 Uvicorn 线程的生命周期抖动。IP-1/IP-2 补充两条边界用例与一条外部连接池所有权回归。
 
-一键验收命令也连续两次通过。每次重建临时 PostgreSQL，R01/R02 开发诊断通过，分域规则基线六臂通过，旧 IP4 封存与模型盲评报告哈希校验通过。全程 0 模型 API 调用，冻结评测结果未改。
+此前基础验收命令连续两次通过。加入 IP-1/IP-2 权限负例后的增强命令，修复发现的问题后完整通过一次：强制权限负例、R01/R02 开发诊断、分域规则基线六臂、旧 IP4 封存和模型盲评报告哈希校验均通过。全程 0 模型 API 调用，冻结评测结果未改。
 
 ## 结果索引
 
@@ -31,6 +31,7 @@
 | IP4 冻结封存 | `reports/ip4-freeze-seal.json` | 旧题集、gold 和评测报告哈希 |
 | 旧 IP4 模型结果 | `reports/ip4-model-blind-verification.json` | tenant-a 10/12；R01/R02 在 query 阶段失败 |
 | R01/R02 开发诊断 | `reports/ip4-r01-r02-dev-diagnostic.json` | RulePlanner 在 SQLite 与两个 PG tenant 均通过；RLS scope 探针 |
+| IP-1/IP-2 PostgreSQL 权限验收 | `reports/ip1-ip2-postgres-acceptance-v1.json` | reader 列授权、8 表 RLS、跨租户、敏感列、DDL/DML、注入、边界、上下文清理、超时与池恢复 |
 | 费用账本 | `reports/model-experiment-cost-ledger.json` | 请求与 token 记录、估价方法及剩余预算 |
 | 阶段说明 | `docs/learning/stage-IP4.md` | IP4 冻结、失败边界和分域复验背景 |
 

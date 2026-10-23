@@ -6,7 +6,7 @@
 - `SQLiteQueryEngine` 包装原有只读 URI、authorizer、VM 指令和结果行数限制。
 - `PostgresQueryEngine` 只接收经过 SQLGlot AST 白名单的编译查询；把 SQLite 参数占位符转为 PostgreSQL 占位符，继续绑定参数。
 - PostgreSQL 请求通过 psycopg 连接池执行只读事务，并在事务内设定 `statement_timeout`、切换到 `insightpilot_reader`、绑定受信任的 tenant id。
-- `docs/postgresql-rls-bootstrap.sql` 为五张批准表启用并强制 RLS。每表均要求已有 `tenant_id`；迁移不会替现有数据猜租户归属。
+- `docs/postgresql-rls-bootstrap.sql` 为八张租户表启用并强制 RLS，给 reader 角色逐列授予查询所需字段。PII 表无 SELECT 授权；全局 `data_meta` 只开放口径/版本键值。迁移不会替现有数据猜租户归属。
 
 ## 验证
 
@@ -31,6 +31,18 @@ PostgreSQL 16.15 经真实 FastAPI → InsightPilot → `PostgresQueryEngine` �
 检查所有本地 venv/cache 没找到 psycopg wheel；按审批联网安装 `psycopg[binary,pool]>=3.2,<4` 成功，版本为 psycopg 3.3.6、binary 3.3.6、pool 3.3.3。随后运行 `scripts/verify_ip4_postgres.py`，经过 FastAPI → InsightPilot → PostgresQueryEngine 实测：同一 FastAPI app 映射两个 tenant，各 12/12 题通过；退款 6/6、营销 ROI 6/6；R03 退款归因 JOIN 与 M01 ROI JOIN 在两租户下都匹配 gold，证明没有跨租户 JOIN 泄漏；PG/SQLite 数据版本和 fingerprint 相同；独立 SQLite verifier 全部通过。预期拒答 3/3，错误拒答 0，拒答问题被接受 0，不支持地区被接受 0。
 
 同一驱动测试还确认缺 tenant 上下文被拒、应用只读角色的 DELETE 被数据库拒绝、50 ms `statement_timeout` 生效且后续查询恢复、max_size=1 pool 耗尽按 200 ms timeout 失败并在释放连接后恢复。完整应用层 PostgreSQL/RLS 查询路径现已实测。Docker 只在提权后可访问 daemon；测试库使用 Compose 的 tmpfs 临时盘，已停止，不留数据卷。
+
+## IP-1/IP-2 数据库权限复验（2026-10-23）
+
+新报告 `reports/ip1-ip2-postgres-acceptance-v1.json` 在 PostgreSQL 临时库上直接以非超级用户应用角色执行：`insightpilot_reader` 是 `NOLOGIN/NOSUPERUSER/NOBYPASSRLS`；八张含租户数据的表均开启并 `FORCE ROW LEVEL SECURITY`；`orders.customer_id`、`customers.email`、`customers.phone` 没有列级授权，reader 直接读取均被 PostgreSQL 拒绝。`data_meta` 是全局版本元数据，不含租户事实；它保留仅 `key,value` 的 SELECT 授权。
+
+部署影响：bootstrap 会撤销这些表授予 `PUBLIC` 的权限，也会撤销 `public` schema 对 `PUBLIC` 的 CREATE。依赖这些宽泛默认权限的其他应用需改用独立 schema 或显式授权。
+
+两个 tenant 均只能看到自己的 50,000 个订单；显式读取对方 tenant 和 JOIN 对方退款均返回零行。缺租户上下文返回零行；应用层不接受缺失主体。reader 的 DELETE、CREATE TABLE 和敏感列 SELECT 均由数据库拒绝。参数注入字符串只作为绑定值，PostgreSQL 与 SQLite 返回一致结果。
+
+同一营销 ROI 查询在 SQLite 与 PostgreSQL 数值一致。UTC 截止日右开、10 月 31 日费用边界以及快照后入库的退款撤销均有回归；同一单连接池连续切换 tenant 后，事务本地 tenant GUC 已清空。50 ms statement timeout 后查询可恢复；单连接池耗尽后也能恢复。传入的连接池由调用方拥有，关闭共享查询引擎不会关闭它。
+
+测试数据为合成固定 seed，每租户 50,000 单；不是独立客户样本。分域规则回归每域 6 题（4 可答、2 guard），SQLite 和两个 PostgreSQL tenant 共六臂全通过。没有模型请求，费用账本保持不变。
 
 ## 认证主体隔离补记（2026-10-23）
 

@@ -68,6 +68,7 @@ class PostgresQueryEngine:
         self.max_rows = max_rows
         self.statement_timeout_ms = statement_timeout_ms
         self._pool = pool
+        self._owns_pool = pool is None
         self._dsn = dsn
 
     def _connection_pool(self):
@@ -174,6 +175,6 @@ class PostgresQueryEngine:
                                       failure_code=code) from None
 
     def close(self) -> None:
-        if self._pool is not None:
+        if self._pool is not None and self._owns_pool:
             self._pool.close()
             self._pool = None

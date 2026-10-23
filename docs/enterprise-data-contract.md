@@ -25,4 +25,4 @@
 | `campaign_spend_events` | 每条费用事件修订/投递 | `business_event_id` 去重；`revision` 纠错；`event_status=void` 撤销；`spent_at` 与 `recorded_at` 分离 |
 | `refund_reversals` | 每笔退款撤销事件 | 连接原退款；只累计快照前入库撤销；合成金额不超过批准退款 |
 
-固定集含 UTC 月末边界、迟到入库、重复投递、后续修订与 void、部分退款撤销、缺失 attribution，以及无费用的未归因组。生成器 `quality_report()` 检查事件重复、迟到 spend 和撤销金额上限。数据仅为合成样本。该 SQLite fixture 尚未为 PostgreSQL 注入 tenant 列，不能用于证明 RLS。
+固定集含 UTC 月末边界、迟到入库、重复投递、后续修订与 void、部分退款撤销、缺失 attribution，以及无费用的未归因组。生成器 `quality_report()` 检查事件重复、迟到 spend 和撤销金额上限。数据仅为合成样本。源 SQLite fixture 没有 `tenant_id`，本身不能证明 RLS；PostgreSQL 验收会把它装载到一次性临时库，在租户表添加 `tenant_id` 并复制为两个隔离租户。验收证据见 `reports/ip1-ip2-postgres-acceptance-v1.json`。

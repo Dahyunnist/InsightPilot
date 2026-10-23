@@ -41,6 +41,7 @@ try {
     $ComposeAttempted = $true
     Invoke-Checked 'docker' @('compose', '-f', $ComposeFile, 'up', '-d', '--wait')
     Invoke-Checked $Python @('scripts/prepare_ip4_postgres.py')
+    Invoke-Checked $Python @('scripts/verify_ip12_postgres_security.py', '--output', 'reports/ip1-ip2-postgres-acceptance-v1.json')
     Invoke-Checked $Python @('scripts/diagnose_ip4_r01_r02.py', '--output', $TempDiagnostic, '--require-passed')
     Invoke-Checked $Python @('scripts/verify_domain_validation.py', '--output', $TempDomain)
     Invoke-Checked $Python @('scripts/verify_ip4_freeze_seal.py')

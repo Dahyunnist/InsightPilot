@@ -1,0 +1,116 @@
+{
+  "status": "passed",
+  "model_calls": 0,
+  "synthetic_data_only": true,
+  "ip4_frozen_artifacts_modified": false,
+  "tenant_table_count": 8,
+  "postgres_version": "16.15",
+  "role_properties": {
+    "insightpilot_acceptance_app": {
+      "superuser": false,
+      "bypass_rls": false,
+      "can_login": true,
+      "inherit": true
+    },
+    "insightpilot_reader": {
+      "superuser": false,
+      "bypass_rls": false,
+      "can_login": false,
+      "inherit": false
+    }
+  },
+  "rls_tables": {
+    "orders": {
+      "enabled": true,
+      "forced": true
+    },
+    "refunds": {
+      "enabled": true,
+      "forced": true
+    },
+    "products": {
+      "enabled": true,
+      "forced": true
+    },
+    "campaign_attributions": {
+      "enabled": true,
+      "forced": true
+    },
+    "campaigns": {
+      "enabled": true,
+      "forced": true
+    },
+    "campaign_spend_events": {
+      "enabled": true,
+      "forced": true
+    },
+    "refund_reversals": {
+      "enabled": true,
+      "forced": true
+    },
+    "customers": {
+      "enabled": true,
+      "forced": true
+    }
+  },
+  "sensitive_column_privileges": {
+    "orders.customer_id": false,
+    "customers.email": false,
+    "customers.phone": false
+  },
+  "tenant_probes": {
+    "tenant-a": {
+      "own_rows": 50000,
+      "foreign_rows_visible": 0,
+      "foreign_join_rows_visible": 0
+    },
+    "tenant-b": {
+      "own_rows": 50000,
+      "foreign_rows_visible": 0,
+      "foreign_join_rows_visible": 0
+    }
+  },
+  "missing_context_visible_rows": 0,
+  "sensitive_read_denials": [
+    true,
+    true,
+    true
+  ],
+  "dml_denied": true,
+  "dml_denials": {
+    "insert": true,
+    "update": true,
+    "delete": true
+  },
+  "ddl_denied": true,
+  "temp_ddl_denied_in_read_only_transaction": true,
+  "bound_injection_payload_is_sql": false,
+  "sqlite_postgres_roi_rows_equal": true,
+  "utc_and_refund_boundary_checks": {
+    "2026-10-31": true,
+    "2026-11-01": true,
+    "october_31_events_present": true,
+    "recorded_refund_reversals_present": true,
+    "utc_right_edge_changes_spend": true,
+    "future_recorded_refund_reversal_ignored": true
+  },
+  "tenant_context_cleared": true,
+  "tenant_context_after_pool_release": "",
+  "pool_exhaustion_recovered": true,
+  "statement_timeout_observed_and_recovered": true,
+  "checks": {
+    "database_roles_and_membership": true,
+    "rls_enabled_and_forced_on_tenant_tables": true,
+    "column_privileges_exclude_sensitive_fields": true,
+    "cross_tenant_reads_and_joins_blocked": true,
+    "missing_tenant_fails_closed": true,
+    "database_denies_sensitive_column_reads": true,
+    "database_denies_dml_and_ddl": true,
+    "bound_parameter_injection_is_data": true,
+    "sqlite_postgres_marketing_roi_parity": true,
+    "ip2_utc_refund_boundary_cases": true,
+    "transaction_local_tenant_context_cleared": true,
+    "pool_exhaustion_recovery": true,
+    "statement_timeout_and_recovery": true
+  }
+}
