@@ -1,0 +1,90 @@
+{
+  "lock_id": "insightpilot-domain-model-blind-v1",
+  "created_at_utc": "2026-10-23T07:49:52.855858+00:00",
+  "sets": {
+    "refunds": {
+      "manifest_sha256": "1fcaf08ccc2386891260216164cc5a70a11c06df5e920ef05bcbe93122f1511f",
+      "blind_sha256": "87ed4ca5dd0d3d63ce6897f4b93a89d06027da8056955f50b9331bc79bd8bddb",
+      "gold_sha256": "3ec995a51fbad415ce956fa477de15df741ef95dcc868ed3c14f8ecae42e1eae",
+      "case_count": 6,
+      "answerable_count": 4,
+      "guard_count": 2,
+      "suite_id": "insightpilot-refunds-validation-v1",
+      "gold_method": "independent Python row/event ledger, cross-checked against compiled read-only SQLite query"
+    },
+    "marketing_roi": {
+      "manifest_sha256": "5eb489a7c055063eb4602dda45bce70ac069d17225409e5f0291a21ba9824098",
+      "blind_sha256": "475a7684c67051c6ba50194746461172dd49628b5f5c06bd3809fe7ef10bbe24",
+      "gold_sha256": "5cc3696127c6184a2909b5bf61606a6a888d431a9833829e3b10d3b3b636c0b3",
+      "case_count": 6,
+      "answerable_count": 4,
+      "guard_count": 2,
+      "suite_id": "insightpilot-marketing_roi-validation-v1",
+      "gold_method": "independent Python row/event ledger, cross-checked against compiled read-only SQLite query"
+    }
+  },
+  "total_cases": 12,
+  "backend_arms": [
+    {
+      "backend": "sqlite",
+      "runs": 1
+    },
+    {
+      "backend": "postgresql",
+      "tenants": [
+        "tenant-a",
+        "tenant-b"
+      ]
+    }
+  ],
+  "case_runs": 36,
+  "maximum_api_calls": 72,
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+  "model_settings": {
+    "model": "deepseek-v4-flash",
+    "base_url_origin": "https://api.deepseek.com",
+    "max_completion_tokens": 1024,
+    "temperature": 0
+  },
+  "model_alias_note": "Legacy deepseek-v4-flash is accepted and served by DeepSeek-V4.1-Flash-1017 at Flash pricing.",
+  "planner_prompt": {
+    "file": "insightpilot/planner.py",
+    "file_sha256": "daad5070c5e93145dad09a5883fe220bf31f0e0806bcac76cbdb922ff36f8342",
+    "max_prompt_bytes": 51000,
+    "max_input_token_reserve": 52000,
+    "max_output_tokens": 1024,
+    "max_attempts_per_case": 2
+  },
+  "harness_sha256": "491c7a1c7f33fef157121a1f421fad35233dd45b1a883483ff5e90374eac87b0",
+  "scorer": {
+    "name": "insightpilot.ip4_evaluate.compare",
+    "file": "insightpilot/ip4_evaluate.py",
+    "sha256": "6fdca63711d8efb504f2b3f4b29d6018f4a8cbb9dc842404985ea941e7b29479",
+    "checks": [
+      "expected status and guard reason",
+      "metric id",
+      "dimension and region",
+      "date interval",
+      "exact values/groups from Python oracle",
+      "independent verifier"
+    ]
+  },
+  "pricing": {
+    "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "input_cache_hit_peak_usd_per_million": 0.006,
+    "input_cache_miss_peak_usd_per_million": 0.3,
+    "output_peak_usd_per_million": 1.2,
+    "estimate_method": "all input tokens treated as cache misses"
+  },
+  "global_cap_usd": 4.0,
+  "global_remaining_before_usd": 3.71436825,
+  "worst_case_reserve_usd": 1.2116736,
+  "global_remaining_after_reserve_usd": 2.50269465,
+  "sealed_old_ip4": {
+    "seal_file": "reports/ip4-freeze-seal.json",
+    "sha256": "9d90cdbe39830846ba02723aad5e3a9b6dfe0fafc02d9bd26bcc44469626bd4a",
+    "blind_sha256": "f587c11308c8cd6a1de24b57bf5b5259c618ac0d692aa60615e0419a92d5f2d2"
+  },
+  "change_rule": "One model run only. No changing frozen sets, prompt, model, scorer, or budget after preregistration. If settings or hashes differ, abort before first request."
+}

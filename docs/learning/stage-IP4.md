@@ -75,3 +75,9 @@ IP4 离线盲集、独立 SQL/Python gold、SQLite 规则基线、同一 FastAPI
 冻结集、manifest、规则基线、PostgreSQL 验收、盲测预注册和模型结果 SHA-256 已写入 `reports/ip4-freeze-seal.json`；`scripts/verify_ip4_freeze_seal.py` 验证通过。没有修改或重跑冻结集/盲测。R01/R02 开发副本在 SQLite 与 PostgreSQL 两租户下均由 RulePlanner 通过；诊断覆盖 plan、schema identity、SQL compile、tenant scope、DB execution、verification。原始模型报告只保留 `query` 阶段，未保存脱敏错误、SQL fingerprint 或模型计划，因此无法区分 query adapter 的 SQL policy、tenant scope 或数据库执行原因；开发副本没有复现失败。后续失败会记录脱敏结构化分类，不含原始 SQL、参数、租户、DSN 或数据库错误文本。报告：`reports/ip4-r01-r02-dev-diagnostic.json`。
 
 另建 refunds 与 marketing ROI 两个独立验证集，各 4 条可答、2 条 guard；gold 由 Python 行/事件账本独立计算，并与只读 SQLite SQL 对齐。两集分别在 SQLite、PostgreSQL tenant-a、PostgreSQL tenant-b 达到 6/6；数值、false refusal、false accept 均通过。RLS tenant scope 探针确认每个已绑定作用域只见自身租户，缺上下文返回 0 行。12 并发 bearer 请求回归也通过。详见 `evals/domain-validation-v1/` 与 `reports/domain-validation-v1.json`。全程 0 模型请求，费用账本不变。
+
+## 新分域集模型盲评预注册
+
+只评退款、营销 ROI 两个新集，不评旧 IP4。锁定 `deepseek-v4-flash`、temperature 0、输出 1,024 tokens、每题最多 2 次调用、每请求 UTF-8 prompt 51,000 bytes。评分器固定 `insightpilot.ip4_evaluate.compare`；逐题报告独立 oracle、compiled SQL、严格分数、false refusal、false accept 和 usage。SQLite 跑一次，PostgreSQL 两租户各一次；合计 36 题、最大 72 次请求。
+
+用每次 52,000 输入 tokens、1,024 输出 tokens做峰值上界。按[DeepSeek 官方 Flash 峰价](https://api-docs.deepseek.com/quick_start/pricing/)未缓存输入 $0.30/M、输出 $1.20/M，最多预留 $1.2116736。账本余 $3.71436825，预留后余 $2.50269465，低于 $4 cap。预注册锁、prompt、scorer 和两集哈希见 `reports/domain-validation-model-preregistration.json`。旧 R01/R02 的错误内容缺失已记录为监控缺陷；不推测或补写原始根因。
