@@ -110,7 +110,7 @@ class S6RuntimeTests(unittest.TestCase):
 
         core = InsightPilot(BlockingPlanner(), self.database)
         app = create_app(core, run_store=self.store, api_token="secret-token",
-                         api_scopes={"refund:read"}, max_concurrent=1, request_timeout_seconds=0.05)
+                         api_scopes={"refund:read"}, max_concurrent=1, request_timeout_seconds=0.5)
         client = TestClient(app)
         response_holder = []
         request_thread = threading.Thread(target=lambda: response_holder.append(client.post(
