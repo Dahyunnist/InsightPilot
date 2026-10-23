@@ -38,6 +38,8 @@ def main() -> None:
     scorer = ROOT / "insightpilot/enterprise_evaluate.py"
     planner = ROOT / "insightpilot/planner.py"
     runner = ROOT / "insightpilot/enterprise_evaluate.py"
+    model_runner = ROOT / "scripts/run_enterprise_v8_model.py"
+    rule_baseline = ROOT / "reports/enterprise-v8-rule-baseline.json"
     question_only = '.analyze(case["question"])'
     if question_only not in runner.read_text(encoding="utf-8"):
         raise SystemExit("Agent invocation boundary changed; no preregistration written")
@@ -76,6 +78,8 @@ def main() -> None:
         "scorer_sha256": sha(scorer),
         "planner_sha256": sha(planner),
         "evaluator_sha256": sha(runner),
+        "model_runner_sha256": sha(model_runner),
+        "rule_baseline_sha256": sha(rule_baseline),
         "old_ip4_touched": False,
         "v6_v7_reused_as_test": False,
     }

@@ -37,6 +37,8 @@
   "scorer_sha256": "0bdfeb6afe819305aecb8248e007f7b45370471a32cec1a46f620f82cb0000c4",
   "planner_sha256": "daad5070c5e93145dad09a5883fe220bf31f0e0806bcac76cbdb922ff36f8342",
   "evaluator_sha256": "0bdfeb6afe819305aecb8248e007f7b45370471a32cec1a46f620f82cb0000c4",
+  "model_runner_sha256": "941a99331e10abe1508d9ebaa4b840a40f10a0b393e300c0391909c5d83639be",
+  "rule_baseline_sha256": "de978e76af205c046fbd4c5a85105fcc5c00e6a54d4cb1d0b0dbfb81f0fad0af",
   "old_ip4_touched": false,
   "v6_v7_reused_as_test": false
 }
