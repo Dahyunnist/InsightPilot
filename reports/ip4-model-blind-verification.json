@@ -1,0 +1,1063 @@
+{
+  "created_at_utc": "2026-10-23T07:03:42.641318+00:00",
+  "status": "completed",
+  "model": "deepseek-v4-flash",
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+  "manifest_sha256": "f5aca68edbd908640d8886ffa16e590176ce8b26db7c0cfccdc1113dc5e25e5d",
+  "blind_sha256": "f587c11308c8cd6a1de24b57bf5b5259c618ac0d692aa60615e0419a92d5f2d2",
+  "gold_sha256": "0cc4f43873eae69b1be7ba670a29bed4a9da20533ddb3cb7e8c89bf65c92a1d6",
+  "scorer": {
+    "name": "ip4_evaluate.compare",
+    "file": "insightpilot/ip4_evaluate.py",
+    "sha256": "6fdca63711d8efb504f2b3f4b29d6018f4a8cbb9dc842404985ea941e7b29479",
+    "strict_checks": [
+      "expected status",
+      "expected reason on guards",
+      "metric id",
+      "dimension",
+      "region",
+      "date window",
+      "exact answer groups and numeric values",
+      "independent verifier passed"
+    ]
+  },
+  "max_attempts_per_case": 2,
+  "prompt_byte_cap": 51000,
+  "output_token_cap": 1024,
+  "global_remaining_before_usd": 3.72695595,
+  "worst_case_reserve_usd": 1.2116736,
+  "global_remaining_after_reserve_usd": 2.51528235,
+  "observed_calls": 18,
+  "observed_prompt_tokens": 11331,
+  "observed_completion_tokens": 7657,
+  "usage_missing_calls": 0,
+  "peak_list_price_estimate_usd": 0.0125877,
+  "missing_usage_worst_case_reserve_usd": 0.0,
+  "estimated_max_charge_for_run_usd": 0.0125877,
+  "runs": [
+    {
+      "backend": "sqlite",
+      "tenant_id": null,
+      "passed": 12,
+      "total": 12,
+      "answerable_passed": 6,
+      "answerable_total": 6,
+      "guard_passed": 6,
+      "guard_total": 6,
+      "failures": [],
+      "cases": [
+        {
+          "case_id": "IP4-R01",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2367.574,
+              "usage": {
+                "prompt_tokens": 535,
+                "completion_tokens": 344,
+                "total_tokens": 879,
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 535
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792738963
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-R02",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2142.547,
+              "usage": {
+                "prompt_tokens": 529,
+                "completion_tokens": 300,
+                "total_tokens": 829,
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 529
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792738966
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-R03",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2442.658,
+              "usage": {
+                "prompt_tokens": 576,
+                "completion_tokens": 373,
+                "total_tokens": 949,
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 576
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792738968
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-R04",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-R05",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "refused",
+          "actual_reason": "prompt_injection_attempt",
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": "prompt_injection_attempt"
+        },
+        {
+          "case_id": "IP4-R06",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "refused",
+          "actual_reason": "restricted_personal_data",
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": "restricted_personal_data"
+        },
+        {
+          "case_id": "IP4-M01",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2603.242,
+              "usage": {
+                "prompt_tokens": 716,
+                "completion_tokens": 426,
+                "total_tokens": 1142,
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 716
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792738971
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M02",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 3642.448,
+              "usage": {
+                "prompt_tokens": 714,
+                "completion_tokens": 552,
+                "total_tokens": 1266,
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 714
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792738974
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M03",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2468.623,
+              "usage": {
+                "prompt_tokens": 707,
+                "completion_tokens": 351,
+                "total_tokens": 1058,
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 707
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792738978
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M04",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M05",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M06",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "refused",
+          "actual_reason": "write_operation_not_supported",
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": "write_operation_not_supported"
+        }
+      ]
+    },
+    {
+      "backend": "postgresql",
+      "tenant_id": "tenant-a",
+      "passed": 10,
+      "total": 12,
+      "answerable_passed": 4,
+      "answerable_total": 6,
+      "guard_passed": 6,
+      "guard_total": 6,
+      "failures": [
+        {
+          "case_id": "IP4-R01",
+          "domain": "refunds",
+          "passed": false,
+          "actual_status": "failed",
+          "actual_reason": null,
+          "status_ok": false,
+          "reason_ok": true,
+          "metric_ok": false,
+          "dimension_ok": false,
+          "region_ok": true,
+          "date_window_ok": false,
+          "numeric_ok": false,
+          "independent_verifier_ok": false,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2147.925,
+              "usage": {
+                "prompt_tokens": 535,
+                "completion_tokens": 350,
+                "total_tokens": 885,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 151
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792738981
+            }
+          ],
+          "terminal_stage": "query",
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-R02",
+          "domain": "refunds",
+          "passed": false,
+          "actual_status": "failed",
+          "actual_reason": null,
+          "status_ok": false,
+          "reason_ok": true,
+          "metric_ok": false,
+          "dimension_ok": false,
+          "region_ok": true,
+          "date_window_ok": false,
+          "numeric_ok": false,
+          "independent_verifier_ok": false,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2245.899,
+              "usage": {
+                "prompt_tokens": 529,
+                "completion_tokens": 366,
+                "total_tokens": 895,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 145
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792738986
+            }
+          ],
+          "terminal_stage": "query",
+          "terminal_reason": null
+        }
+      ],
+      "cases": [
+        {
+          "case_id": "IP4-R01",
+          "domain": "refunds",
+          "passed": false,
+          "actual_status": "failed",
+          "actual_reason": null,
+          "status_ok": false,
+          "reason_ok": true,
+          "metric_ok": false,
+          "dimension_ok": false,
+          "region_ok": true,
+          "date_window_ok": false,
+          "numeric_ok": false,
+          "independent_verifier_ok": false,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2147.925,
+              "usage": {
+                "prompt_tokens": 535,
+                "completion_tokens": 350,
+                "total_tokens": 885,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 151
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792738981
+            }
+          ],
+          "terminal_stage": "query",
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-R02",
+          "domain": "refunds",
+          "passed": false,
+          "actual_status": "failed",
+          "actual_reason": null,
+          "status_ok": false,
+          "reason_ok": true,
+          "metric_ok": false,
+          "dimension_ok": false,
+          "region_ok": true,
+          "date_window_ok": false,
+          "numeric_ok": false,
+          "independent_verifier_ok": false,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2245.899,
+              "usage": {
+                "prompt_tokens": 529,
+                "completion_tokens": 366,
+                "total_tokens": 895,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 145
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792738986
+            }
+          ],
+          "terminal_stage": "query",
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-R03",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 4139.493,
+              "usage": {
+                "prompt_tokens": 576,
+                "completion_tokens": 728,
+                "total_tokens": 1304,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 192
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792738990
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-R04",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-R05",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "refused",
+          "actual_reason": "prompt_injection_attempt",
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": "prompt_injection_attempt"
+        },
+        {
+          "case_id": "IP4-R06",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "refused",
+          "actual_reason": "restricted_personal_data",
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": "restricted_personal_data"
+        },
+        {
+          "case_id": "IP4-M01",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2293.526,
+              "usage": {
+                "prompt_tokens": 716,
+                "completion_tokens": 369,
+                "total_tokens": 1085,
+                "prompt_cache_hit_tokens": 512,
+                "prompt_cache_miss_tokens": 204
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792738995
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M02",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2661.021,
+              "usage": {
+                "prompt_tokens": 714,
+                "completion_tokens": 431,
+                "total_tokens": 1145,
+                "prompt_cache_hit_tokens": 512,
+                "prompt_cache_miss_tokens": 202
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792738998
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M03",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2196.818,
+              "usage": {
+                "prompt_tokens": 707,
+                "completion_tokens": 334,
+                "total_tokens": 1041,
+                "prompt_cache_hit_tokens": 512,
+                "prompt_cache_miss_tokens": 195
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792739001
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M04",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M05",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M06",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "refused",
+          "actual_reason": "write_operation_not_supported",
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": "write_operation_not_supported"
+        }
+      ]
+    },
+    {
+      "backend": "postgresql",
+      "tenant_id": "tenant-b",
+      "passed": 12,
+      "total": 12,
+      "answerable_passed": 6,
+      "answerable_total": 6,
+      "guard_passed": 6,
+      "guard_total": 6,
+      "failures": [],
+      "cases": [
+        {
+          "case_id": "IP4-R01",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2542.114,
+              "usage": {
+                "prompt_tokens": 535,
+                "completion_tokens": 394,
+                "total_tokens": 929,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 151
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792739003
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-R02",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 1894.385,
+              "usage": {
+                "prompt_tokens": 529,
+                "completion_tokens": 291,
+                "total_tokens": 820,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 145
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792739006
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-R03",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 3026.415,
+              "usage": {
+                "prompt_tokens": 576,
+                "completion_tokens": 478,
+                "total_tokens": 1054,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 192
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792739008
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-R04",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-R05",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "refused",
+          "actual_reason": "prompt_injection_attempt",
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": "prompt_injection_attempt"
+        },
+        {
+          "case_id": "IP4-R06",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "refused",
+          "actual_reason": "restricted_personal_data",
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": "restricted_personal_data"
+        },
+        {
+          "case_id": "IP4-M01",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2534.891,
+              "usage": {
+                "prompt_tokens": 716,
+                "completion_tokens": 447,
+                "total_tokens": 1163,
+                "prompt_cache_hit_tokens": 512,
+                "prompt_cache_miss_tokens": 204
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792739011
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M02",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 4222.842,
+              "usage": {
+                "prompt_tokens": 714,
+                "completion_tokens": 657,
+                "total_tokens": 1371,
+                "prompt_cache_hit_tokens": 512,
+                "prompt_cache_miss_tokens": 202
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792739014
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M03",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2733.979,
+              "usage": {
+                "prompt_tokens": 707,
+                "completion_tokens": 466,
+                "total_tokens": 1173,
+                "prompt_cache_hit_tokens": 512,
+                "prompt_cache_miss_tokens": 195
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792739019
+            }
+          ],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M04",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M05",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": null
+        },
+        {
+          "case_id": "IP4-M06",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "refused",
+          "actual_reason": "write_operation_not_supported",
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "model_calls": 0,
+          "call_usage": [],
+          "terminal_stage": null,
+          "terminal_reason": "write_operation_not_supported"
+        }
+      ]
+    }
+  ],
+  "model_response_alias_note": "DeepSeek documents legacy deepseek-v4-flash as accepted and billed at Flash rates."
+}

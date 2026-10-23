@@ -66,4 +66,6 @@ IP4 离线盲集、独立 SQL/Python gold、SQLite 规则基线、同一 FastAPI
 
 模型运行前锁定 manifest、blind/gold SHA-256、数据版本/fingerprint、`deepseek-v4-flash`（DeepSeek 当前接受的旧别名）、temperature 0、输出上限 1,024、每题最多 2 次请求、UTF-8 prompt 上限 51,000 bytes。scorer 固定为 `insightpilot.ip4_evaluate.compare`，包含状态、指标、切片、日期、精确数值和独立 verifier。计划覆盖 SQLite 一次及 PostgreSQL 两租户，共 36 题、最多 72 次 API 请求。
 
-按峰时价格每 1M 未缓存输入 $0.30、输出 $1.20，并把 UTF-8 字节数保守计为输入 token，上界预留 $1.2116736。运行前成本账本尚余 $3.72695595；预留后为 $2.51528235，总额仍低于 $4.00。冻结明细见 `reports/ip4-model-preregistration.json`。实际费用只按响应 usage 回执估算峰时价格；完整结果及账本增量见 `reports/ip4-model-blind-verification.json` 与 `reports/model-experiment-cost-ledger.json`。
+按[DeepSeek 官方峰时价格](https://api-docs.deepseek.com/quick_start/pricing/)每 1M 未缓存输入 $0.30、输出 $1.20，并把 UTF-8 字节数保守计为输入 token，上界预留 $1.2116736。运行前成本账本尚余 $3.72695595；预留后为 $2.51528235，总额仍低于 $4.00。冻结明细见 `reports/ip4-model-preregistration.json`。实际费用只按响应 usage 回执估算峰时价格；完整结果及账本增量见 `reports/ip4-model-blind-verification.json` 与 `reports/model-experiment-cost-ledger.json`。
+
+单轮执行实际发出 18 次请求，输入 11,331 tokens、输出 7,657 tokens；按峰价并把所有输入计为未缓存，估算 $0.0125877。账本剩余 $3.71436825。严格 scorer：SQLite 12/12；PostgreSQL tenant-b 12/12；tenant-a 10/12。tenant-a 的 IP4-R01、IP4-R02 失败于 query 阶段。已通过的 RulePlanner PG 全集为两租户各 12/12，故模型结果未证明常规 RLS 路径故障；本次模型报告没有保留具体 query 错误，不能进一步断定失败原因。未重跑模型盲测，冻结题集及 gold 未改。三组 guard 均全通过。

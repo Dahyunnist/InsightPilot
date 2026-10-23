@@ -137,5 +137,30 @@
   "v5_pricing_basis": {
     "source": "https://api-docs.deepseek.com/quick_start/pricing/",
     "method": "Peak DeepSeek Flash list rates: $0.006/M cache-hit input, $0.30/M cache-miss input, $1.20/M output; actual cache-hit/miss and output tokens. Estimate is not provider invoice."
-  }
+  },
+  "ip4_model_blind_v1": {
+    "status": "completed_once_with_backend_failures",
+    "suite": "insightpilot-ip4-cross-domain-v1",
+    "model": "deepseek-v4-flash",
+    "case_runs": 36,
+    "strict_passed": {"sqlite:shared": "12/12", "postgresql:tenant-a": "10/12", "postgresql:tenant-b": "12/12"},
+    "api_request_attempts": 18,
+    "prompt_tokens": 11331,
+    "completion_tokens": 7657,
+    "usage_missing_calls": 0,
+    "peak_list_price_estimate_usd": 0.0125877,
+    "worst_case_reserve_usd": 1.2116736,
+    "remaining_global_cap_before_run_usd": 3.72695595,
+    "remaining_global_cap_after_actual_usage_usd": 3.71436825,
+    "failures": [
+      {"backend": "postgresql", "tenant_id": "tenant-a", "case_id": "IP4-R01", "stage": "query"},
+      {"backend": "postgresql", "tenant_id": "tenant-a", "case_id": "IP4-R02", "stage": "query"}
+    ],
+    "holdout_manifest_sha256": "f5aca68edbd908640d8886ffa16e590176ce8b26db7c0cfccdc1113dc5e25e5d",
+    "blind_sha256": "f587c11308c8cd6a1de24b57bf5b5259c618ac0d692aa60615e0419a92d5f2d2",
+    "gold_sha256": "0cc4f43873eae69b1be7ba670a29bed4a9da20533ddb3cb7e8c89bf65c92a1d6",
+    "scorer_sha256": "6fdca63711d8efb504f2b3f4b29d6018f4a8cbb9dc842404985ea941e7b29479",
+    "pricing_basis": "Peak DeepSeek Flash rates, all reported input tokens priced as cache misses; actual provider invoice not available."
+  },
+  "remaining_global_cap_after_ip4_model_usd": 3.71436825
 }
