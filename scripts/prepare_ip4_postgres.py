@@ -64,6 +64,24 @@ def prepare(sqlite_path: Path, dsn: str, app_role: str, app_password: str, boots
             connection.execute(sql.SQL("CREATE TABLE {} ({})").format(
                 sql.Identifier("public", table), sql.SQL(", ").join(declarations)))
 
+        # Preserve the source query indexes, with tenant_id first so PostgreSQL
+        # can use them under the row-level security predicate as well.
+        tenant_indexes = {
+            "orders": (("ordered_at", "region"),),
+            "refunds": (("refunded_at", "status", "order_id"), ("order_id", "status")),
+            "refund_reversals": (("refund_id", "recorded_at"),),
+            "campaign_attributions": (("order_id",),),
+            "campaign_spend_events": (("business_event_id", "revision", "recorded_at"),
+                                       ("spent_at", "campaign_id")),
+        }
+        for table, indexes in tenant_indexes.items():
+            for index_number, indexed_columns in enumerate(indexes, start=1):
+                index_name = f"ip4_{table}_{index_number}_tenant_idx"
+                connection.execute(sql.SQL("CREATE INDEX {} ON {} ({})").format(
+                    sql.Identifier(index_name), sql.Identifier("public", table),
+                    sql.SQL(", ").join(sql.Identifier(column)
+                                        for column in (("tenant_id",) + indexed_columns))))
+
         connection.execute(bootstrap_path.read_text(encoding="utf-8"))
         connection.execute(sql.SQL("GRANT insightpilot_reader TO {}").format(sql.Identifier(app_role)))
         for table in tables:
@@ -82,6 +100,10 @@ def prepare(sqlite_path: Path, dsn: str, app_role: str, app_password: str, boots
                 with connection.cursor().copy(copy_sql) as copy:
                     for row in source_rows[table]:
                         copy.write_row((*row, tenant))
+
+        for table in tables:
+            if table != "data_meta":
+                connection.execute(sql.SQL("ANALYZE {}").format(sql.Identifier("public", table)))
 
     return {"database": "insightpilot_ip4", "source_table_count": len(tables),
             "tenant_rows": {"tenant-a": sum(len(source_rows[name]) for name in tables if name != "data_meta"),

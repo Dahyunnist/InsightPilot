@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import argparse
 import json
 import os
 import sys
@@ -90,9 +91,11 @@ def verify(dsn: str | None = None) -> dict:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, default=ROOT / "reports/domain-validation-v1.json")
+    args = parser.parse_args()
     result = verify(os.environ.get("INSIGHTPILOT_IP4_APP_DSN"))
-    output = ROOT / "reports/domain-validation-v1.json"
-    output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False, indent=2))
     if result["status"] != "passed":
         raise SystemExit(1)

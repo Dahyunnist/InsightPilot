@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import argparse
 import json
 import os
 import sys
@@ -61,6 +62,11 @@ def _run_copy(case: dict, backend: str, tenant_id: str | None) -> dict:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, default=OUTPUT)
+    parser.add_argument("--require-passed", action="store_true",
+                        help="exit nonzero unless every development copy and RLS probe passes")
+    args = parser.parse_args()
     dsn = os.environ.get("INSIGHTPILOT_IP4_APP_DSN")
     if not dsn:
         raise SystemExit("Set INSIGHTPILOT_IP4_APP_DSN to a non-superuser PG test role.")
@@ -93,15 +99,23 @@ def main() -> None:
     result = {
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "development_only": True, "frozen_blind_rerun": False, "model_calls": 0,
+        "status": "passed" if all(row["status"] == "answered" and row["schema_identity_passed"] and
+                                    row["verification_passed"] for row in details) and
+                  all(row["only_own_tenant_visible"] for key, row in tenant_scope.items()
+                      if key.startswith("tenant-")) and tenant_scope["missing_context"]["rejected"]
+                  else "failed",
         "dev_copy_sha256": hashlib.sha256(DEV_CASES.read_bytes()).hexdigest(),
         "dev_sql_fingerprints": {row["dev_case_id"]: row.get("failure_detail", {}).get("sql_sha256")
                                  for row in details if row.get("failure_detail")},
         "classification_note": "Errors include only layer/category/class, tenant-context presence, SQL fingerprint and parameter count; raw SQL, params, tenant IDs, DSN, and provider data are omitted from failure details.",
         "diagnostics": details, "tenant_scope_probe": tenant_scope,
     }
-    OUTPUT.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"output": str(OUTPUT), "diagnostics": details,
-                      "tenant_scope_probe": tenant_scope}, ensure_ascii=False, indent=2))
+    args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"output": str(args.output), "diagnostics": details,
+                      "status": result["status"], "tenant_scope_probe": tenant_scope},
+                     ensure_ascii=False, indent=2))
+    if args.require_passed and result["status"] != "passed":
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
