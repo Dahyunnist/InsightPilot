@@ -27,9 +27,9 @@
 
 本机 Docker CLI 初始受 workspace 沙箱限制，访问 `docker_engine` 命名管道返回 permission denied。授权的只读检查通过后确认 Docker 29.1.3 可用，已有 `postgres:16-alpine` 镜像；以 tmpfs 启动一次性 PostgreSQL 16.15 容器完成测试。
 
-使用 `insightpilot_ip4_app` 登录并切到 `insightpilot_reader`：tenant-a 与 tenant-b 各 6/6 个退款/ROI 查询均匹配 Python gold。无 tenant 上下文返回 0 行；DML 被拒；50 ms statement timeout 被触发，后续查询成功。查询包含退款活动归因 JOIN 与营销 ROI 事件/费用处理，因此两业务域都在 PostgreSQL 实测。
+应用层接好后，`scripts/verify_ip4_postgres.py` 经 FastAPI → InsightPilot → psycopg `PostgresQueryEngine` 执行完整 12 题。tenant-a 和 tenant-b 各 12/12 通过；每租户退款 6/6、营销 ROI 6/6。R03 退款归因 JOIN 与 M01 ROI JOIN 在两租户都匹配独立 Python gold 和 SQLite verifier。PG/SQLite data version 与 fingerprint 一致。三题预期拒答全部正确；错误拒答 0、错误接受 0、不支持地区被接受 0。
 
-主机虚拟环境缺少 `psycopg` 和 `psycopg_pool`。安装项目已声明的驱动时 PyPI 请求超时。因此本次 PostgreSQL 执行通过 psql 直接运行由 SQLGlot 生成的 PostgreSQL SQL；未执行 Python `PostgresQueryEngine` 的真实连接池路径，也未测量连接池耗尽/恢复。不能把这项实测描述成完整应用端到端 PostgreSQL 验收。
+另实测缺 tenant 被拒、应用只读角色 DELETE 被拒、50 ms `statement_timeout` 后可继续查询，以及 max_size=1 连接池以 200 ms checkout timeout 拒绝超额借用、释放连接后恢复。完整结果见 `reports/ip4-postgres-verification.json`。此前 psql-only 结果保存在 `reports/ip4-postgres-psql-verification.json`。
 
 ## 成本上界预核算
 
@@ -43,20 +43,21 @@
 .\.venv\Scripts\python.exe -m unittest tests.test_ip4_holdout -v
 ```
 
-PostgreSQL 双租户实测：
+PostgreSQL 16.15 双租户 API 实测（需先准备专用临时数据库）：
 
 ```powershell
-$env:INSIGHTPILOT_IP4_ADMIN_PASSWORD = "local-test-only-change-me"
+$env:INSIGHTPILOT_IP4_ADMIN_PASSWORD = "<临时管理员密码>"
 docker compose -f docker-compose.ip4.yml up -d --wait
-.\.venv\Scripts\python.exe scripts\verify_ip4_postgres_psql.py --container insightpilot-ip4-postgres
+# 设置 INSIGHTPILOT_IP4_ADMIN_DSN、INSIGHTPILOT_IP4_APP_ROLE、INSIGHTPILOT_IP4_APP_PASSWORD
+.\.venv\Scripts\python.exe scripts\prepare_ip4_postgres.py
+# 设置 INSIGHTPILOT_IP4_APP_DSN
+.\.venv\Scripts\python.exe scripts\verify_ip4_postgres.py
 docker compose -f docker-compose.ip4.yml down
-Remove-Item Env:INSIGHTPILOT_IP4_ADMIN_PASSWORD
 ```
 
-Docker Compose 使用临时 tmpfs 数据盘。`verify_ip4_postgres_psql.py` 会重建专用 `insightpilot_ip4` 数据库的 public schema；只对一次性测试容器运行。当前实测还未覆盖 psycopg pool exhaustion；安装驱动后运行 `scripts/verify_ip4_postgres.py` 补测。
+驱动脚本通过 FastAPI → InsightPilot → `PostgresQueryEngine` 跑完整盲集。tenant-a、tenant-b 各 12/12；R03 与 M01 JOIN 均通过；预期拒答 3/3、错误拒答 0、误接受 0。无 tenant 上下文被拒，DML 被数据库拒绝；50 ms statement timeout 与 max_size=1 pool 耗尽后均恢复。报告写入 `reports/ip4-postgres-verification.json`。测试库在 Compose tmpfs 中，准备脚本会重建专用库 public schema；仅用于一次性测试容器。
 
-驱动版准备/连接池验证使用同一个专用测试库：设置 `INSIGHTPILOT_IP4_ADMIN_DSN` 为该 PostgreSQL 管理连接，设置 `INSIGHTPILOT_IP4_APP_ROLE=insightpilot_ip4_app` 和一次性 `INSIGHTPILOT_IP4_APP_PASSWORD`，运行 `scripts/prepare_ip4_postgres.py`；再设置 `INSIGHTPILOT_IP4_APP_DSN` 为应用角色连接并运行 `scripts/verify_ip4_postgres.py`。准备脚本会重建该测试库的 `public` schema。
-
+费用账本未变，本阶段没有模型请求。
 ## 剩余边界
 
-IP4 的离线盲集、独立 SQL/Python gold、SQLite 规则基线和 PostgreSQL 双租户查询均已实测。应用内 Python PostgreSQL adapter/连接池的端到端集成仍待 psycopg 可用后补验；本记录不把它记为已通过。
+IP4 离线盲集、独立 SQL/Python gold、SQLite 规则基线、真实 PostgreSQL API 双租户查询和连接池恢复均已实测。tenant ID 是每个 API 实例的静态部署配置；同一进程按用户动态选择租户，仍需经过认证主体映射后再扩展，当前不会读取调用方可伪造的 tenant header。

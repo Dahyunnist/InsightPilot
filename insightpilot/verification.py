@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from threading import Event
 
 from .planner import QueryPlan
@@ -187,6 +188,9 @@ FROM periods p LIMIT 100"""
 
 
 def verify_result(plan: QueryPlan, rows: list[dict], database_path, cancel_event: Event | None = None) -> dict:
+    # psycopg returns PostgreSQL NUMERIC as Decimal; SQLite returns int/float.
+    rows = [{key: float(value) if isinstance(value, Decimal) else value for key, value in row.items()}
+            for row in rows]
     if plan.metric_id == "marketing_net_roi":
         if cancel_event is not None and cancel_event.is_set():
             from .runner import QueryCancelledError

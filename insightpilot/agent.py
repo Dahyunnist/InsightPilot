@@ -11,7 +11,8 @@ from threading import Event
 
 from .metrics import METRICS, REGION_VALUES
 from .planner import NeedsClarification, OpenAICompatiblePlanner, PlanError
-from .runner import QueryCancelledError, QueryExecutionError, execute_readonly, read_data_identity
+from .query_engine import QueryEngine, SQLiteQueryEngine
+from .runner import QueryCancelledError, QueryExecutionError
 from .sql import compile_query
 from .verification import verify_result
 
@@ -47,9 +48,14 @@ def _preflight(question: str) -> dict | None:
 
 
 class InsightPilot:
-    def __init__(self, planner: OpenAICompatiblePlanner, database_path: Path):
+    def __init__(self, planner: OpenAICompatiblePlanner, database_path: Path, *,
+                 query_engine: QueryEngine | None = None, tenant_id: str | None = None):
         self.planner = planner
         self.database_path = database_path
+        self.query_engine = query_engine or SQLiteQueryEngine(database_path)
+        self.tenant_id = tenant_id or getattr(self.query_engine, "tenant_id", None)
+        if hasattr(self.query_engine, "tenant_id") and not self.tenant_id:
+            raise ValueError("PostgreSQL query execution requires a trusted tenant_id.")
 
     def analyze(self, question: str, *, run_id: str | None = None, cancel_event: Event | None = None,
                 authorized_region: str | None = None) -> dict:
@@ -117,11 +123,19 @@ class InsightPilot:
             plan = type(plan)(plan.metric_id, plan.start_date, plan.end_date, authorized_region, plan.dimension, plan.periods)
         metric = METRICS[plan.metric_id]
         try:
-            dataset_version, data_fingerprint = read_data_identity(self.database_path)
+            dataset_version, data_fingerprint = self.query_engine.read_data_identity(tenant_id=self.tenant_id)
+            if not isinstance(self.query_engine, SQLiteQueryEngine):
+                verifier_version, verifier_fingerprint = SQLiteQueryEngine(
+                    self.database_path).read_data_identity()
+                if (dataset_version, data_fingerprint) != (verifier_version, verifier_fingerprint):
+                    return {"run_id": run_id, "status": "failed", "stage": "dataset",
+                            "reason": "backend_dataset_mismatch",
+                            "message": "PostgreSQL 与独立 SQLite 复核数据指纹不一致。"}
         except QueryExecutionError as exc:
             if metric.required_data_versions:
                 return {"run_id": run_id, "status": "failed", "stage": "dataset", "message": str(exc)}
             dataset_version = "unknown"
+            data_fingerprint = None
         if metric.required_data_versions and dataset_version not in metric.required_data_versions:
             return {"run_id": run_id, "status": "clarify", "stage": "dataset",
                     "message": "该指标需要企业扩展数据集；请配置 INSIGHTPILOT_DATABASE_PATH。",
@@ -131,7 +145,8 @@ class InsightPilot:
         except ValueError as exc:
             return {"run_id": run_id, "status": "failed", "stage": "compilation", "message": str(exc)}
         try:
-            rows, data_version = execute_readonly(self.database_path, compiled, cancel_event)
+            rows, _backend = self.query_engine.execute_readonly(
+                compiled, tenant_id=self.tenant_id, cancel_event=cancel_event)
         except QueryCancelledError as exc:
             return {"run_id": run_id, "status": "cancelled", "stage": "query", "message": str(exc)}
         except QueryExecutionError as exc:
@@ -162,8 +177,9 @@ class InsightPilot:
             "plan": {"start_date_inclusive": plan.start_date, "end_date_exclusive": plan.end_date,
                      "periods": [list(period) for period in plan.periods],
                      "region": plan.region, "dimension": plan.dimension},
-            "data_version": data_version,
+            "data_version": dataset_version,
             "data_fingerprint": data_fingerprint,
+            "query_backend": "sqlite" if isinstance(self.query_engine, SQLiteQueryEngine) else "postgresql",
             "generated_at_utc": datetime.now(timezone.utc).isoformat(),
             "sql": compiled.sql,
             "parameters": list(compiled.params),

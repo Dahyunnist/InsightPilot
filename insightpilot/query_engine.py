@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
@@ -12,6 +13,7 @@ from .runner import (
     QueryExecutionError,
     QueryTimeoutError,
     execute_readonly,
+    read_data_identity as read_sqlite_data_identity,
 )
 from .sql import CompiledQuery
 from .sql_policy import MAX_ROWS, SQLPolicyError, validate_sql
@@ -20,6 +22,8 @@ from .sql_policy import MAX_ROWS, SQLPolicyError, validate_sql
 @runtime_checkable
 class QueryEngine(Protocol):
     """Execute only compiler-produced, validated, parameterized read queries."""
+
+    def read_data_identity(self, *, tenant_id: str | None = None) -> tuple[str, str | None]: ...
 
     def execute_readonly(
         self,
@@ -41,6 +45,11 @@ class SQLiteQueryEngine:
         if tenant_id is not None:
             raise QueryExecutionError("SQLite adapter has no tenant isolation contract.")
         return execute_readonly(self.database_path, query, cancel_event)
+
+    def read_data_identity(self, *, tenant_id: str | None = None) -> tuple[str, str | None]:
+        if tenant_id is not None:
+            raise QueryExecutionError("SQLite adapter has no tenant isolation contract.")
+        return read_sqlite_data_identity(self.database_path)
 
 
 class PostgresQueryEngine:
@@ -117,7 +126,8 @@ class PostgresQueryEngine:
                     if cancel_event is not None and cancel_event.is_set():
                         raise QueryCancelledError("分析已取消。")
                     columns = [item.name for item in cursor.description]
-                    data = [dict(zip(columns, row)) for row in rows]
+                    data = [{key: float(value) if isinstance(value, Decimal) else value
+                             for key, value in zip(columns, row)} for row in rows]
                     return data, "postgresql"
         except QueryExecutionError:
             raise
@@ -125,6 +135,25 @@ class PostgresQueryEngine:
             if getattr(exc, "sqlstate", None) == "57014":
                 raise QueryTimeoutError("PostgreSQL 查询超过 statement_timeout 限制。") from None
             raise QueryExecutionError(f"PostgreSQL 只读查询失败：{exc.__class__.__name__}") from None
+
+    def read_data_identity(self, *, tenant_id: str | None = None) -> tuple[str, str | None]:
+        effective_tenant = tenant_id or self.tenant_id
+        if not effective_tenant or not effective_tenant.strip():
+            raise QueryExecutionError("A trusted tenant_id is required for PostgreSQL RLS.")
+        try:
+            with self._connection_pool().connection() as connection:
+                with connection.transaction():
+                    connection.execute("SET TRANSACTION READ ONLY")
+                    connection.execute("SET LOCAL ROLE insightpilot_reader")
+                    connection.execute("SELECT set_config('app.tenant_id', %s, true)", (effective_tenant,))
+                    cursor = connection.execute(
+                        "SELECT key, value FROM data_meta WHERE key IN ('data_version','data_fingerprint')")
+                    metadata = dict(cursor.fetchall())
+                    return metadata.get("data_version", "unknown"), metadata.get("data_fingerprint")
+        except QueryExecutionError:
+            raise
+        except Exception as exc:
+            raise QueryExecutionError(f"PostgreSQL 数据身份读取失败：{exc.__class__.__name__}") from None
 
     def close(self) -> None:
         if self._pool is not None:

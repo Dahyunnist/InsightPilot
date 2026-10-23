@@ -21,6 +21,7 @@ from .agent import InsightPilot
 from .config import load_settings
 from .metrics import required_access_scopes
 from .planner import OpenAICompatiblePlanner
+from .query_engine import PostgresQueryEngine
 from .run_store import IdempotencyConflict, RunStore
 
 
@@ -117,6 +118,9 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
     @app.on_event("shutdown")
     def shutdown_executor() -> None:
         executor.shutdown(wait=False, cancel_futures=False)
+        close_query_engine = getattr(core.query_engine, "close", None)
+        if close_query_engine is not None:
+            close_query_engine()
 
     @app.post("/analysis")
     def analysis(request: AnalysisRequest, authorization: str | None = Header(default=None),
@@ -232,7 +236,10 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
 def build_default_app() -> FastAPI:
     root = Path(__file__).resolve().parents[1]
     settings = load_settings(root)
-    core = InsightPilot(OpenAICompatiblePlanner(settings), settings.database_path)
+    query_engine = (PostgresQueryEngine(settings.database_url, tenant_id=settings.tenant_id)
+                    if settings.database_url else None)
+    core = InsightPilot(OpenAICompatiblePlanner(settings), settings.database_path,
+                        query_engine=query_engine, tenant_id=settings.tenant_id)
     token = os.environ.get("INSIGHTPILOT_API_TOKEN") or None
     scopes = set(filter(None, os.environ.get(
         "INSIGHTPILOT_API_SCOPES", "refund:read,refund:cancel,marketing:read"

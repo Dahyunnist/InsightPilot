@@ -15,6 +15,8 @@ class Settings:
     timeout_seconds: float
     max_completion_tokens: int
     database_path: Path
+    database_url: str | None = None
+    tenant_id: str | None = None
 
 
 def load_env_file(path: Path) -> None:
@@ -49,6 +51,10 @@ def load_settings(root: Path | None = None) -> Settings:
     database = Path(os.environ.get("INSIGHTPILOT_DATABASE_PATH", "data/insightpilot-s0.sqlite"))
     if not database.is_absolute():
         database = root / database
+    database_url = os.environ.get("INSIGHTPILOT_DATABASE_URL") or None
+    tenant_id = os.environ.get("INSIGHTPILOT_TENANT_ID") or None
+    if database_url and not tenant_id:
+        raise ValueError("INSIGHTPILOT_TENANT_ID is required with INSIGHTPILOT_DATABASE_URL")
     return Settings(
         api_key=os.environ["LLM_API_KEY"],
         base_url=os.environ["LLM_BASE_URL"].rstrip("/"),
@@ -56,4 +62,6 @@ def load_settings(root: Path | None = None) -> Settings:
         timeout_seconds=timeout,
         max_completion_tokens=min(tokens, 1200),
         database_path=database.resolve(),
+        database_url=database_url,
+        tenant_id=tenant_id,
     )

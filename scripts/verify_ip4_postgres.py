@@ -4,34 +4,26 @@ from __future__ import annotations
 
 import json
 import os
+import sys
+import tempfile
 from pathlib import Path
 
-from insightpilot.planner import RulePlanner
-from insightpilot.query_engine import PostgresQueryEngine, SQLiteQueryEngine
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from fastapi.testclient import TestClient
+
+from insightpilot.agent import InsightPilot
+from insightpilot.api import create_app
+from insightpilot.ip4_evaluate import compare
+from insightpilot.rule_baseline import RulePlanner
+from insightpilot.query_engine import PostgresQueryEngine
+from insightpilot.run_store import RunStore
 from insightpilot.runner import QueryExecutionError, QueryTimeoutError
 from insightpilot.sql import CompiledQuery, compile_query
 
 
-def _compare_rows(actual: list[dict], expected: list[dict]) -> bool:
-    actual_by_group = {row.get("group_value"): row for row in actual}
-    expected_by_group = {row.get("group_value"): row for row in expected}
-    if actual_by_group.keys() != expected_by_group.keys():
-        return False
-    for group, expected_row in expected_by_group.items():
-        for field, expected_value in expected_row.items():
-            actual_value = actual_by_group[group].get(field)
-            if expected_value is None:
-                if actual_value is not None:
-                    return False
-            elif isinstance(expected_value, (int, float)):
-                if not isinstance(actual_value, (int, float)) or abs(actual_value - expected_value) > 1e-6:
-                    return False
-            elif actual_value != expected_value:
-                return False
-    return True
-
-
-def verify(database: Path, blind_path: Path, gold_path: Path, tenant_ids: tuple[str, str]) -> dict:
+def verify(database: Path, blind_path: Path, gold_path: Path, tenant_ids: tuple[str, str],
+           expected_data_version: str, expected_data_fingerprint: str) -> dict:
     try:
         import psycopg
         from psycopg_pool import ConnectionPool
@@ -44,26 +36,56 @@ def verify(database: Path, blind_path: Path, gold_path: Path, tenant_ids: tuple[
     cases = [json.loads(line) for line in blind_path.read_text(encoding="utf-8").splitlines() if line.strip()]
     gold_rows = [json.loads(line) for line in gold_path.read_text(encoding="utf-8").splitlines() if line.strip()]
     gold = {row["case_id"]: row for row in gold_rows}
-    sqlite_engine = SQLiteQueryEngine(database)
     answerable = [case for case in cases if gold[case["case_id"]]["expected_status"] == "answered"]
     tenant_results = {}
     for tenant_id in tenant_ids:
-        rows_checked, mismatches = 0, []
         engine = PostgresQueryEngine(dsn, tenant_id=tenant_id)
-        try:
-            for case in answerable:
-                plan = RulePlanner().plan(case["question"])
-                query = compile_query(plan)
-                pg_rows, _ = engine.execute_readonly(query)
-                sqlite_rows, _ = sqlite_engine.execute_readonly(query)
-                expected = gold[case["case_id"]]["expected_rows"]
-                if not _compare_rows(pg_rows, expected) or not _compare_rows(pg_rows, sqlite_rows):
-                    mismatches.append(case["case_id"])
-                rows_checked += 1
-        finally:
-            engine.close()
-        tenant_results[tenant_id] = {"matched_cases": rows_checked - len(mismatches),
-                                     "total_cases": rows_checked, "mismatches": mismatches}
+        core = InsightPilot(RulePlanner(), database, query_engine=engine, tenant_id=tenant_id)
+        with tempfile.TemporaryDirectory(prefix=f"insightpilot-api-{tenant_id}-") as temp:
+            app = create_app(core, run_store=RunStore(Path(temp) / "runs.sqlite"),
+                             api_token=f"local-{tenant_id}-only", api_scopes={
+                                 "refund:read", "refund:cancel", "marketing:read"})
+            with TestClient(app) as client:
+                checks = []
+                for case in cases:
+                    response = client.post("/analysis", json={"question": case["question"]},
+                                           headers={"Authorization": f"Bearer local-{tenant_id}-only"})
+                    actual = response.json()
+                    scored = compare(case, gold[case["case_id"]], actual)
+                    expected_http = {"answered": 200, "clarify": 422, "refused": 403}[
+                        gold[case["case_id"]]["expected_status"]]
+                    checked = {**scored, "http_status": response.status_code,
+                               "http_status_ok": response.status_code == expected_http}
+                    if gold[case["case_id"]]["expected_status"] == "answered":
+                        checked["postgres_backend"] = actual.get("query_backend") == "postgresql"
+                        checked["dataset_identity_matches"] = (
+                            actual.get("data_version") == expected_data_version and
+                            actual.get("data_fingerprint") == expected_data_fingerprint
+                        )
+                        checked["sqlite_independent_verifier"] = actual.get("verification", {}).get("passed") is True
+                    checked["passed"] = checked["passed"] and checked["http_status_ok"] and all(
+                        checked.get(key, True) for key in ("postgres_backend", "dataset_identity_matches",
+                                                            "sqlite_independent_verifier"))
+                    checks.append(checked)
+        engine.close()
+        refusal_cases = [row for row in checks if gold[row["case_id"]]["expected_status"] == "refused"]
+        tenant_results[tenant_id] = {
+            "passed": sum(row["passed"] for row in checks), "total": len(checks), "case_results": checks,
+            "failures": [row for row in checks if not row["passed"]],
+            "refusal_metrics": {
+                "correct_refusals": sum(row["actual_status"] == "refused" and row["reason_ok"]
+                                         for row in refusal_cases),
+                "expected_refusals": len(refusal_cases),
+                "false_refusals_on_answerable": [row["case_id"] for row in checks
+                    if gold[row["case_id"]]["expected_status"] == "answered" and row["actual_status"] == "refused"],
+                "false_accepts_on_refusal_cases": [row["case_id"] for row in refusal_cases
+                    if row["actual_status"] == "answered"],
+                "unsupported_marketing_region_accepted": any(row["case_id"] == "IP4-M04" and
+                    row["actual_status"] == "answered" for row in checks),
+            },
+            "cross_tenant_join_case_ids": [row["case_id"] for row in checks
+                if row["case_id"] in ("IP4-R03", "IP4-M01") and row["passed"]],
+        }
 
     no_tenant_result = "not_checked"
     engine = PostgresQueryEngine(dsn)
@@ -78,11 +100,25 @@ def verify(database: Path, blind_path: Path, gold_path: Path, tenant_ids: tuple[
     finally:
         engine.close()
 
+    dml_denied = False
+    with psycopg.connect(dsn) as connection:
+        try:
+            connection.execute("BEGIN")
+            connection.execute("SET LOCAL ROLE insightpilot_reader")
+            connection.execute("SELECT set_config('app.tenant_id', %s, true)", (tenant_ids[0],))
+            connection.execute("DELETE FROM orders WHERE false")
+        except psycopg.errors.InsufficientPrivilege:
+            dml_denied = True
+        finally:
+            connection.rollback()
+
     # Hold the only pooled connection, confirm checkout fails, release it, then prove recovery.
     pool = ConnectionPool(conninfo=dsn, min_size=1, max_size=1, timeout=0.2, open=True)
     pool_result = "not_checked"
     query = compile_query(RulePlanner().plan(answerable[0]["question"]))
-    pooled_engine = PostgresQueryEngine(dsn, tenant_id=tenant_ids[0], pool=pool)
+    # Keep statement execution budget separate from the deliberately short pool checkout.
+    pooled_engine = PostgresQueryEngine(dsn, tenant_id=tenant_ids[0], pool=pool,
+                                        statement_timeout_ms=10_000)
     try:
         with pool.connection():
             try:
@@ -108,12 +144,13 @@ def verify(database: Path, blind_path: Path, gold_path: Path, tenant_ids: tuple[
     finally:
         slow_engine.close()
 
-    passed = (all(value["matched_cases"] == value["total_cases"] for value in tenant_results.values())
-              and no_tenant_result == "rejected" and pool_result == "recovered"
+    passed = (all(value["passed"] == value["total"] for value in tenant_results.values())
+              and no_tenant_result == "rejected" and dml_denied and pool_result == "recovered"
               and timeout_result == "timed_out")
-    return {"status": "passed" if passed else "failed", "backend": "PostgreSQL",
-            "answerable_case_count": len(answerable), "tenants": tenant_results,
+    return {"status": "passed" if passed else "failed", "backend": "PostgreSQL via FastAPI/InsightPilot/PostgresQueryEngine",
+            "case_count_per_tenant": len(cases), "answerable_case_count": len(answerable), "tenants": tenant_results,
             "missing_tenant_context": no_tenant_result,
+            "postgres_dml_denied": dml_denied,
             "pool_exhaustion_and_recovery": pool_result,
             "statement_timeout": timeout_result,
             "independent_gold": "IP4 Python gold; PostgreSQL output also compared to SQLite output"}
@@ -127,9 +164,13 @@ def main() -> None:
     parser.add_argument("--gold", type=Path, default=Path("evals/ip4-gold-v1.jsonl"))
     parser.add_argument("--tenant-a", default="tenant-a")
     parser.add_argument("--tenant-b", default="tenant-b")
+    parser.add_argument("--manifest", type=Path, default=Path("evals/ip4-manifest-v1.json"))
     parser.add_argument("--output", type=Path, default=Path("reports/ip4-postgres-verification.json"))
     args = parser.parse_args()
-    result = verify(args.database, args.blind, args.gold, (args.tenant_a, args.tenant_b))
+    manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
+    manifest_data_version = manifest["data_version"]
+    result = verify(args.database, args.blind, args.gold, (args.tenant_a, args.tenant_b),
+                    manifest["data_version"], manifest["data_fingerprint"])
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False, indent=2))

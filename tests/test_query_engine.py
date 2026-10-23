@@ -41,6 +41,20 @@ class FakePool:
         yield self.value
 
 
+class MetadataConnection(FakeConnection):
+    def __init__(self):
+        super().__init__()
+        self.metadata = [("data_version", "insightpilot-multidomain-v1"),
+                         ("data_fingerprint", "f" * 64)]
+
+    def execute(self, sql, params=()):
+        self.calls.append((sql, tuple(params)))
+        return self
+
+    def fetchall(self):
+        return self.metadata
+
+
 class QueryEngineTests(unittest.TestCase):
     def test_postgres_adapter_is_query_engine_and_binds_scope_and_parameters(self):
         connection = FakeConnection([("全部", 0.25)])
@@ -59,6 +73,18 @@ class QueryEngineTests(unittest.TestCase):
         statement, params = connection.calls[-1]
         self.assertIn("LIMIT 100", statement)
         self.assertEqual(params, query.params)
+
+    def test_postgres_reads_dataset_identity_inside_tenant_scoped_readonly_transaction(self):
+        connection = MetadataConnection()
+        engine = PostgresQueryEngine("unused", tenant_id="tenant-a", pool=FakePool(connection))
+        self.assertEqual(engine.read_data_identity(), ("insightpilot-multidomain-v1", "f" * 64))
+        self.assertIn(("SET TRANSACTION READ ONLY", ()), connection.calls)
+        self.assertIn(("SET LOCAL ROLE insightpilot_reader", ()), connection.calls)
+        self.assertIn(("SELECT set_config('app.tenant_id', %s, true)", ("tenant-a",)), connection.calls)
+
+        missing_tenant = PostgresQueryEngine("unused", pool=FakePool(MetadataConnection()))
+        with self.assertRaises(QueryExecutionError):
+            missing_tenant.read_data_identity()
 
     def test_postgres_requires_trusted_tenant_and_rejects_mutations_before_pool(self):
         pool = MagicMock()
