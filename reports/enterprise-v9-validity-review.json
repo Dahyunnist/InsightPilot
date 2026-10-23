@@ -1,0 +1,11 @@
+{
+  "suite": "enterprise-blind-v9",
+  "status": "invalid_as_independent_evaluation",
+  "model_calls": 10,
+  "estimated_peak_price_usd": 0.0093684,
+  "invalid_case_ids": ["X01", "X02", "X03", "X04", "X05", "X06", "X08"],
+  "cause": "Seven answerable blind questions specify November dates, while the shared v5 gold builder assigns their case IDs October windows. X04/X05 also specify Nov 15-21 while gold expects Oct 15-21.",
+  "disposition": "Preserve request/usage record for cost accounting. Do not report v9 strict score or reuse this blind/gold as test. Do not regenerate or repair its gold after model exposure.",
+  "next_valid_set": "enterprise-blind-v10",
+  "v9_artifacts_preserved": true
+}

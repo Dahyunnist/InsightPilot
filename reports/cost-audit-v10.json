@@ -1,0 +1,23 @@
+{
+  "authorized_cap_usd": 5.0,
+  "registered_increase_usd": 1.0,
+  "remaining_before_v10_reserve_usd": 4.68622135,
+  "v9_invalid_run_usage_usd": 0.0093684,
+  "v9_requests": 10,
+  "v9_report_use": "Invalid gold/date pairing; charge retained, score excluded.",
+  "v10_reservation": {
+    "cases": 20,
+    "attempts_per_case": 2,
+    "max_provider_requests": 40,
+    "input_tokens_per_request": 2000,
+    "output_tokens_per_request": 1024,
+    "input_peak_usd_per_million": 0.30,
+    "output_peak_usd_per_million": 1.20,
+    "per_request_peak_usd": 0.0018288,
+    "whole_run_peak_reserve_usd": 0.073152,
+    "remaining_after_reserve_usd": 4.61306935
+  },
+  "pricing_source": "https://api-docs.deepseek.com/quick_start/pricing/",
+  "provider_invoice_available": false,
+  "model_calls_during_v10_preparation": 0
+}

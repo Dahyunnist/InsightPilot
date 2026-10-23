@@ -247,5 +247,36 @@
   },
   "authorized_cap_increase_usd": 1.0,
   "booked_usage_and_reserves_usd": 0.30441025,
-  "remaining_global_cap_after_v9_reserve_usd": 4.62243775
+  "remaining_global_cap_after_v9_reserve_usd": 4.62243775,
+  "remaining_global_cap_after_v9_model_usd": 4.68622135,
+  "remaining_global_cap_after_v10_reserve_usd": 4.61306935,
+  "v9_independent_holdout": {
+    "status": "completed_invalid_gold_pairing",
+    "holdout": "enterprise-blind-v9",
+    "seed": 20261024,
+    "blind_sha256": "56113bc1471739374b0477f341c733d2a2f423c9ea6a9d8138ab695424b16797",
+    "gold_sha256": "7d07afd40a3709c73a74678412374e195e5e46ea2bdf5f789cfb453a17a51bd1",
+    "model_calls": 10,
+    "strict_passed": "11/20",
+    "peak_list_price_estimate_usd": 0.0093684,
+    "worst_case_reserve_usd": 0.073152,
+    "global_remaining_before_usd": 4.69558975,
+    "global_remaining_after_actual_usage_usd": 4.68622135,
+    "no_old_ip4_rerun": true,
+    "score_valid": false,
+    "invalid_case_ids": ["X01", "X02", "X03", "X04", "X05", "X06", "X08"],
+    "invalidity_report": "reports/enterprise-v9-validity-review.json"
+  },
+  "v10_independent_holdout": {
+    "status": "preregistered",
+    "holdout": "enterprise-blind-v10",
+    "seed": 20261025,
+    "blind_sha256": "e8c7f1b01ff65943acc4e4aec7aa375c68f6d34aef7f7c8361b0b38f073bffe4",
+    "gold_sha256": "23c6da93a9e3df5de285a8bb862de3606004ad1409df9fb6a271c6a1d0014e45",
+    "model_calls": 0,
+    "worst_case_reserve_usd": 0.073152,
+    "global_remaining_before_usd": 4.68622135,
+    "global_remaining_after_reserve_usd": 4.61306935,
+    "no_old_ip4_rerun": true
+  }
 }
