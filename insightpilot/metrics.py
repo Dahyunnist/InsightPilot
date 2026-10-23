@@ -24,6 +24,11 @@ class Metric:
     definition_source: str = "docs/product-contract.md#指标字典与口径"
     example_question: str = ""
     required_data_versions: tuple[str, ...] = ()
+    business_domain: str = "退款分析"
+    numerator_definition: str = ""
+    denominator_definition: str = ""
+    timezone: str = "UTC"
+    freshness: str = "固定数据契约；无生产 freshness SLA 或实时性保证"
 
 
 METRICS = {
@@ -80,7 +85,28 @@ METRICS = {
                  "campaign_attributions.weight", "campaigns.campaign_name"),
         valid_dimensions=("campaign",), definition_source="docs/product-contract.md#多触点活动归因",
         example_question="比较各活动带来的批准退款金额贡献？",
-        required_data_versions=("insightpilot-enterprise-v1",),
+        required_data_versions=("insightpilot-enterprise-v1", "insightpilot-multidomain-v1"),
+    ),
+    "marketing_net_roi": Metric(
+        "marketing_net_roi", "营销净投资回报率",
+        "(按触点权重分摊的订单净收入 - 去重后活动费用) / 去重后活动费用",
+        "订单下单时间与活动费用发生时间（UTC）；退款按发生时间并以数据快照截断",
+        "批准退款扣除已记录撤销；费用采用同业务事件最新修订",
+        definition_version="1.0.0", effective_from="2026-01-01",
+        grain="campaign × UTC 期间", source_tables=("orders", "refunds", "refund_reversals",
+                                                     "campaign_attributions", "campaigns",
+                                                     "campaign_spend_events", "data_meta"),
+        lineage=("orders.paid_amount_cents", "refunds.amount_cents", "refund_reversals.amount_cents",
+                 "campaign_attributions.weight", "campaign_spend_events.spend_cents",
+                 "campaign_spend_events.business_event_id", "campaign_spend_events.revision"),
+        valid_dimensions=("campaign",), access_scopes=("marketing:read",),
+        definition_source="docs/product-contract.md#营销净投资回报率",
+        example_question="指定日期内各营销活动的净投资回报率是多少？",
+        required_data_versions=("insightpilot-multidomain-v1",), business_domain="营销 ROI",
+        numerator_definition="按 campaign touch 权重分摊的 paid_amount_cents，减批准退款，再减有效 spend_cents",
+        denominator_definition="spent_at 落在请求 UTC 区间、recorded_at 不晚于数据快照，按 business_event_id 取最新修订后的费用",
+        timezone="UTC",
+        freshness="使用 data_meta.snapshot_at；晚于快照入库的退款撤销或费用修订不计入",
     ),
 }
 
@@ -94,6 +120,8 @@ def retrieve_metrics(question: str) -> list[Metric]:
     """Rank metrics by explicit business-language cues; never pick vague refund rate."""
     q = question.lower()
     scores = {key: 0 for key in METRICS}
+    if any(term in q for term in ("roi", "投资回报率", "广告回报率")):
+        scores["marketing_net_roi"] = 20
     if any(term in q for term in ("按下单日期", "按订单创建日期", "订单创建日期按日")) and "退款订单数" in q:
         scores["approved_refund_cohort_summary"] = 10
     if any(term in q for term in ("campaign", "活动归因", "营销活动", "投放活动", "广告活动")):
@@ -130,13 +158,30 @@ def retrieve_metrics(question: str) -> list[Metric]:
     return [METRICS[key] for key in ordered]
 
 
+def required_access_scopes(question: str) -> set[str]:
+    candidates = retrieve_metrics(question)
+    if not candidates:
+        return {"refund:read"}
+    return {scope for metric in candidates for scope in metric.access_scopes}
+
+
 def catalog_document() -> dict:
     """Return a deterministic, versioned semantic catalog for clients and audit."""
     return {
-        "catalog_version": "insightpilot-semantic-catalog-v1",
+        "catalog_version": "insightpilot-semantic-catalog-v2",
         "data_contract_version": "insightpilot-s0-v1",
-        "data_contract_versions": ["insightpilot-s0-v1", "insightpilot-enterprise-v1"],
-        "metrics": [asdict(METRICS[key]) for key in sorted(METRICS)],
+        "data_contract_versions": ["insightpilot-s0-v1", "insightpilot-enterprise-v1", "insightpilot-multidomain-v1"],
+        "metrics": [
+            {
+                **asdict(METRICS[key]),
+                "numerator_definition": METRICS[key].numerator_definition or METRICS[key].formula.split("/")[0].strip(),
+                "denominator_definition": METRICS[key].denominator_definition or (
+                    METRICS[key].formula.split("/", 1)[1].strip()
+                    if "/" in METRICS[key].formula else "不适用；该指标为金额或计数聚合"
+                ),
+            }
+            for key in sorted(METRICS)
+        ],
         "dimensions": {
             "category": {"source": "products.category", "grain": "product", "sensitivity": "internal"},
             "channel": {"source": "orders.channel", "grain": "order", "sensitivity": "internal"},

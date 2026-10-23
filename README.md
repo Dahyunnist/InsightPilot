@@ -1,6 +1,6 @@
 # InsightPilot
 
-本地、只读的退款经营分析 Agent 原型。支持批准退款订单率/金额率、批准退款金额与贡献度、退款状态金额、退款事件日金额、订单计数、cohort 汇总和双区间订单率比较；要求明确日历日期。
+本地、只读的零售分析 Agent 原型。支持退款指标、campaign 归因与合成营销净 ROI；要求明确日历日期。
 
 ## 启动
 
@@ -22,7 +22,7 @@ python -m venv .venv
 
 当前会澄清相对日期、模糊退款率和多指标问题；会拒绝写请求与个人信息请求。固定数据只有 30 单和 32 条退款，不能代表真实企业数据。扫描预算按 SQLite 虚拟机指令计，不是物理磁盘字节数。
 
-API 绑定 `127.0.0.1:8000`，提供 `POST /analysis`、`GET /runs/{id}`、`POST /runs/{id}/cancel`、`GET /health`。MCP 使用独立 loopback 端口 `127.0.0.1:8001/mcp`，暴露 `analyze_refund` 工具和指标/契约资源。API 和 MCP HTTP 共用 `InsightPilot`、Bearer token、读取 scope 与地区限制。配置 `INSIGHTPILOT_API_TOKEN`、`INSIGHTPILOT_API_SCOPES=refund:read,refund:cancel`，可选 `INSIGHTPILOT_API_REGION=华东`。未配置 token 时仅供本机 loopback 开发；不要改成公网监听。
+API 绑定 `127.0.0.1:8000`，提供 `POST /analysis`、`GET /runs/{id}`、`POST /runs/{id}/cancel`、`GET /health`。MCP 使用独立 loopback 端口 `127.0.0.1:8001/mcp`，暴露分析工具和指标/契约资源。API 与 MCP 按检索到的指标检查 `refund:read` 或 `marketing:read` scope。配置 `INSIGHTPILOT_API_TOKEN`、`INSIGHTPILOT_API_SCOPES=refund:read,refund:cancel,marketing:read`，可选 `INSIGHTPILOT_API_REGION=华东`。未配置 token 时仅供本机 loopback 开发；不要改成公网监听。
 
 运行记录持久化到 `data/insightpilot-runs.sqlite`，保留 90 天，可用 `INSIGHTPILOT_RUN_RETENTION_DAYS` 调整。记录保存问题哈希、常见手机号/邮箱/身份证的脱敏文本，以及结果中的指标版本、SQL、参数、数据版本和复核证据；不保存原始问题。重启时未完成任务标记为 `interrupted`。进程内并发默认上限 8，SQL 执行可取消；模型 HTTP 请求只受 `LLM_TIMEOUT_SECONDS` 限制，取消会在模型返回后生效。
 
@@ -45,6 +45,8 @@ S4 的 16/16 是历史结果：12 次正常回答调用模型；2 次澄清与 2
 ## S5 版本化语义目录
 
 各指标现在提供定义版本、生效日、粒度、来源表与字段血缘、适用维度、访问范围和来源文档。MCP `metrics://refund-catalog` 返回同一版本化目录。规划器把检索到的指标元数据按需注入；执行前校验维度符合该指标语义契约。未定义的 `refund_event_rate` 保持禁用，模糊“退款率”继续澄清。API/MCP 的 Bearer scope 与地区约束见 S6。
+
+IP-2 增加目录 v2 的分子/分母、业务域、时区与 freshness 元数据，以及合成营销 ROI 指标。运行 `python -m data.multidomain_seed` 生成 `data/insightpilot-multidomain.sqlite`；ROI 公式、费用事件去重、退款撤销、UTC 边界和未归因口径见 [多域数据契约](docs/enterprise-data-contract.md)。`python -m data.build_marketing_roi_holdout` 冻结开发/测试题与独立 gold。当前这些小集合用于离线口径回归，不是模型能力估计。
 
 ## S7 企业合成基准与归因
 

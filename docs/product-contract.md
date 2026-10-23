@@ -30,9 +30,11 @@
 | `approved_refund_amount_contribution` | 分组批准退款金额 / 同切片全部批准退款金额 | 分母为零时返回 null/不可计算 |
 | `approved_refund_campaign_attribution` | campaign touch 归因权重 × 订单批准退款金额；缺少 touch 的退款放入“未归因” | 仅 enterprise v1 扩展数据集；campaign 多触点权重和为 1 |
 
-语义目录版本为 `insightpilot-semantic-catalog-v1`。每个已支持指标同时发布 `definition_version`、`effective_from`、grain、源表、字段 lineage、合法维度、访问 scope、契约来源和示例问法。规划只注入候选指标定义。MCP 目录资源与 CLI/API 使用相同对象。`refund_event_rate` 仍禁用，直到产品负责人冻结公式、时间归属、分母与生效版本。
+语义目录版本为 `insightpilot-semantic-catalog-v2`。每个已支持指标同时发布 `definition_version`、分子/分母、时区、freshness、grain、源表、字段 lineage、合法维度、访问 scope、契约来源和示例问法。规划只注入候选指标定义。MCP 目录资源与 CLI/API 使用相同对象。`refund_event_rate` 仍禁用，直到产品负责人冻结公式、时间归属、分母与生效版本。
 
 扩展基准 `insightpilot-enterprise-v1` 由 `data/enterprise_seed.py` 确定性生成。含 50,000 单、退款多行、多触点 campaign、区域/渠道/品类、synthetic customer PII decoy、recorded_at 迟到退款。该库不是 S0 的替代，统计结果只用于压力/语义回归。campaign 归因的未归因订单有显式 bucket；单条订单多 touch 的 weights 应和为 1。质量报告记录归因缺失率和 >1 天入库延迟；没有做历史 as-of point-in-time 查询。
+
+第二业务域 `marketing_net_roi` 需要独立合成版本 `insightpilot-multidomain-v1`。定义为 `(触点权重分摊订单净收入 - 去重活动费用) / 去重活动费用`。订单时间和 spend 时间均按 UTC 左闭右开筛选；批准退款扣除快照前已记录的撤销。Spend 按 `business_event_id` 取 `revision`、`recorded_at`、`event_id` 排序后的最新事件；`void` 修订排除。缺 attribution 汇入“未归因”；没有 spend 的组 ROI 返回 null。费用没有地区分摊，所以 ROI 地区筛选必须澄清。
 
 金额用整数分计算，展示层才转元。比例用未舍入值比较，黄金集允许误差见每题 `tolerance`；零分母返回 `null`，不得写作 0%。`N01` 的“订单退款率”、`N02` 的“金额退款率”说明两种含义；`A01`、`A02` 覆盖口径/范围缺失。至少存在三种可区分口径：退款订单率、退款金额率、退款事件率。
 

@@ -9,7 +9,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-`.env` 填入 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`。API 要求鉴权时，再配置 `INSIGHTPILOT_API_TOKEN`；令牌默认具有 `refund:read,refund:cancel` scope。不要提交 `.env`。
+`.env` 填入 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`。API 要求鉴权时，再配置 `INSIGHTPILOT_API_TOKEN`；默认 scopes 为 `refund:read,refund:cancel,marketing:read`。不要提交 `.env`。
 
 ## 2. 构建合成数据库与冻结 gold
 

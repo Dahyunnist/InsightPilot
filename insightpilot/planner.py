@@ -164,6 +164,10 @@ class OpenAICompatiblePlanner:
             raise NeedsClarification("请提供明确日期；对比问题需提供两个日期区间。")
         use_metric_retrieval = getattr(self, "use_metric_retrieval", True)
         candidates = retrieve_metrics(q) if use_metric_retrieval else []
+        if candidates and candidates[0].metric_id == "marketing_net_roi" and any(
+            region in q for region in REGION_VALUES
+        ):
+            raise NeedsClarification("营销费用目前没有地区分摊；请先移除地区筛选。")
         if "退款率" in q and not any(term in q for term in ("订单率", "订单数", "金额", "实付")):
             raise NeedsClarification("请选退款订单率或退款金额率。", ["approved_refund_order_rate", "approved_refund_amount_rate"])
         if use_metric_retrieval and not candidates:

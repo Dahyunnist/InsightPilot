@@ -13,7 +13,7 @@ import uvicorn
 from .agent import InsightPilot
 from .auth import BearerScopeMiddleware
 from .config import load_settings
-from .metrics import METRICS, catalog_document
+from .metrics import METRICS, catalog_document, required_access_scopes
 from .planner import OpenAICompatiblePlanner
 
 
@@ -50,7 +50,10 @@ def main() -> None:
     server = build_mcp_server(core, authorized_region=os.environ.get("INSIGHTPILOT_API_REGION") or None)
     app = server.streamable_http_app(streamable_http_path="/mcp", stateless_http=True, host="127.0.0.1")
     app.add_middleware(BearerScopeMiddleware, token=os.environ.get("INSIGHTPILOT_API_TOKEN") or None,
-                       scopes=set(filter(None, os.environ.get("INSIGHTPILOT_API_SCOPES", "refund:read,refund:cancel").split(","))))
+                       scopes=set(filter(None, os.environ.get(
+                           "INSIGHTPILOT_API_SCOPES", "refund:read,refund:cancel,marketing:read"
+                       ).split(","))),
+                       question_scope_resolver=required_access_scopes)
     uvicorn.run(app, host="127.0.0.1", port=8001, reload=False)
 
 

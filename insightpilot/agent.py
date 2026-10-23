@@ -152,7 +152,13 @@ class InsightPilot:
                        "time_basis": metric.time_basis, "refund_status": metric.refund_status,
                        "definition_version": metric.definition_version, "effective_from": metric.effective_from,
                        "grain": metric.grain, "definition_source": metric.definition_source,
-                       "lineage": list(metric.lineage)},
+                       "lineage": list(metric.lineage), "business_domain": metric.business_domain,
+                       "numerator_definition": metric.numerator_definition or metric.formula.split("/")[0].strip(),
+                       "denominator_definition": metric.denominator_definition or (
+                           metric.formula.split("/", 1)[1].strip() if "/" in metric.formula
+                           else "不适用；该指标为金额或计数聚合"
+                       ),
+                       "timezone": metric.timezone, "freshness": metric.freshness},
             "plan": {"start_date_inclusive": plan.start_date, "end_date_exclusive": plan.end_date,
                      "periods": [list(period) for period in plan.periods],
                      "region": plan.region, "dimension": plan.dimension},

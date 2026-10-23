@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from .agent import InsightPilot
 from .config import load_settings
+from .metrics import required_access_scopes
 from .planner import OpenAICompatiblePlanner
 from .run_store import RunStore
 
@@ -36,14 +37,18 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
     app.state.core = core
     app.state.run_store = store
 
-    def require_scope(authorization: str | None, scope: str) -> None:
+    def require_scope(authorization: str | None, scope: str | set[str], *, any_scope: bool = False) -> None:
+        required = {scope} if isinstance(scope, str) else scope
         if api_token is None:
             return
         scheme, _, credential = (authorization or "").partition(" ")
         if scheme.lower() != "bearer" or not hmac.compare_digest(credential, api_token):
             raise HTTPException(status_code=401, detail={"reason": "invalid_bearer_token"}, headers={"WWW-Authenticate": "Bearer"})
-        if scope not in scopes:
-            raise HTTPException(status_code=403, detail={"reason": "insufficient_scope", "required_scope": scope})
+        permitted = bool(required & scopes) if any_scope else required.issubset(scopes)
+        if not permitted:
+            detail = ({"required_scope": sorted(required)[0]} if len(required) == 1
+                      else {"required_scopes": sorted(required)})
+            raise HTTPException(status_code=403, detail={"reason": "insufficient_scope", **detail})
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(_request, _exc) -> JSONResponse:
@@ -68,7 +73,7 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
 
     @app.post("/analysis")
     def analysis(request: AnalysisRequest, authorization: str | None = Header(default=None)) -> JSONResponse:
-        require_scope(authorization, "refund:read")
+        require_scope(authorization, required_access_scopes(request.question))
         run_id = str(uuid.uuid4())
         if not capacity.acquire(blocking=False):
             return JSONResponse(status_code=429,
@@ -94,7 +99,7 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
 
     @app.get("/runs/{run_id}")
     def get_run(run_id: str, authorization: str | None = Header(default=None)) -> dict:
-        require_scope(authorization, "refund:read")
+        require_scope(authorization, {"refund:read", "marketing:read"}, any_scope=True)
         record = store.get(run_id)
         if record is None:
             raise HTTPException(status_code=404, detail={"request_id": run_id, "reason": "run_not_found"})
@@ -120,7 +125,9 @@ def build_default_app() -> FastAPI:
     settings = load_settings(root)
     core = InsightPilot(OpenAICompatiblePlanner(settings), settings.database_path)
     token = os.environ.get("INSIGHTPILOT_API_TOKEN") or None
-    scopes = set(filter(None, os.environ.get("INSIGHTPILOT_API_SCOPES", "refund:read,refund:cancel").split(",")))
+    scopes = set(filter(None, os.environ.get(
+        "INSIGHTPILOT_API_SCOPES", "refund:read,refund:cancel,marketing:read"
+    ).split(",")))
     region = os.environ.get("INSIGHTPILOT_API_REGION") or None
     return create_app(core, api_token=token, api_scopes=scopes, authorized_region=region)
 

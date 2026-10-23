@@ -23,6 +23,73 @@ DIMENSIONS = {
 
 
 def compile_query(plan: QueryPlan) -> CompiledQuery:
+    if plan.metric_id == "marketing_net_roi":
+        if plan.dimension not in (None, "campaign") or plan.region is not None:
+            raise ValueError("Marketing net ROI only supports campaign grouping")
+        filters = ["o.status = 'paid'", "o.ordered_at >= ?", "o.ordered_at < ?"]
+        params = [plan.start_date + "T00:00:00Z", plan.end_date + "T00:00:00Z"]
+        if plan.region:
+            filters.append("o.region = ?")
+            params.append(plan.region)
+        sql = f"""WITH eligible_orders AS (
+    SELECT o.order_id, o.paid_amount_cents
+    FROM orders o WHERE {' AND '.join(filters)}
+), valid_refunds AS (
+    SELECT r.refund_id, r.order_id, r.amount_cents
+    FROM refunds r CROSS JOIN data_meta m
+    WHERE r.status = 'approved' AND m.key = 'snapshot_at'
+      AND r.refunded_at < m.value AND r.recorded_at <= m.value
+), refund_reversals_by_refund AS (
+    SELECT rv.refund_id, SUM(rv.amount_cents) AS reversed_cents
+    FROM refund_reversals rv CROSS JOIN data_meta m
+    WHERE m.key = 'snapshot_at' AND rv.recorded_at <= m.value
+    GROUP BY rv.refund_id
+), net_refunds AS (
+    SELECT r.order_id, SUM(r.amount_cents - COALESCE(rv.reversed_cents, 0)) AS refund_cents
+    FROM valid_refunds r LEFT JOIN refund_reversals_by_refund rv ON rv.refund_id = r.refund_id
+    GROUP BY r.order_id
+), touch_revenue AS (
+    SELECT COALESCE(c.campaign_name, '未归因') AS group_value,
+           SUM((o.paid_amount_cents - COALESCE(r.refund_cents, 0)) *
+               CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END) AS net_revenue_cents
+    FROM eligible_orders o
+    LEFT JOIN net_refunds r ON r.order_id = o.order_id
+    LEFT JOIN campaign_attributions a ON a.order_id = o.order_id
+    LEFT JOIN campaigns c ON c.campaign_id = a.campaign_id
+    GROUP BY COALESCE(c.campaign_name, '未归因')
+), spend_ranked AS (
+    SELECT s.business_event_id, s.revision, s.recorded_at, s.event_id, s.spend_cents,
+           s.event_status, s.campaign_id, ROW_NUMBER() OVER (
+        PARTITION BY s.business_event_id ORDER BY s.revision DESC, s.recorded_at DESC, s.event_id DESC
+    ) AS revision_rank
+    FROM campaign_spend_events s CROSS JOIN data_meta m
+    WHERE m.key = 'snapshot_at' AND s.spent_at >= ? AND s.spent_at < ? AND s.recorded_at <= m.value
+), valid_spend AS (
+    SELECT s.campaign_id, s.spend_cents
+    FROM spend_ranked s WHERE s.revision_rank = 1 AND s.event_status = 'active'
+), spend_totals AS (
+    SELECT c.campaign_name AS group_value, SUM(s.spend_cents) AS spend_cents
+    FROM valid_spend s JOIN campaigns c ON c.campaign_id = s.campaign_id
+    GROUP BY c.campaign_name
+), campaign_keys AS (
+    SELECT group_value FROM touch_revenue UNION SELECT group_value FROM spend_totals
+), combined AS (
+    SELECT k.group_value, COALESCE(r.net_revenue_cents, 0) AS net_revenue_cents,
+           COALESCE(s.spend_cents, 0) AS spend_cents
+    FROM campaign_keys k
+    LEFT JOIN touch_revenue r ON r.group_value = k.group_value
+    LEFT JOIN spend_totals s ON s.group_value = k.group_value
+)
+{("SELECT group_value, net_revenue_cents, spend_cents, "
+  "(net_revenue_cents - spend_cents) * 1.0 / NULLIF(spend_cents, 0) AS value "
+  "FROM combined ORDER BY group_value LIMIT 100") if plan.dimension == "campaign" else
+ ("SELECT '全部' AS group_value, SUM(net_revenue_cents) AS net_revenue_cents, "
+  "SUM(spend_cents) AS spend_cents, "
+  "(SUM(net_revenue_cents) - SUM(spend_cents)) * 1.0 / NULLIF(SUM(spend_cents), 0) AS value "
+  "FROM combined LIMIT 1")}"""
+        params.extend([plan.start_date + "T00:00:00Z", plan.end_date + "T00:00:00Z"])
+        return CompiledQuery(sql, tuple(params))
+
     if plan.metric_id == "approved_refund_campaign_attribution":
         if plan.dimension not in (None, "campaign"):
             raise ValueError("Campaign attribution only supports campaign grouping")

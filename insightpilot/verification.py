@@ -5,6 +5,7 @@ from __future__ import annotations
 from threading import Event
 
 from .planner import QueryPlan
+from .marketing_oracle import calculate_marketing_net_roi
 from .runner import execute_readonly
 from .sql import CompiledQuery
 
@@ -186,6 +187,29 @@ FROM periods p LIMIT 100"""
 
 
 def verify_result(plan: QueryPlan, rows: list[dict], database_path, cancel_event: Event | None = None) -> dict:
+    if plan.metric_id == "marketing_net_roi":
+        if cancel_event is not None and cancel_event.is_set():
+            from .runner import QueryCancelledError
+
+            raise QueryCancelledError("分析已取消。")
+        control_rows = calculate_marketing_net_roi(plan, database_path)
+        actual = {row.get("group_value"): row for row in rows}
+        expected = {row.get("group_value"): row for row in control_rows}
+        checks = {"groups_match": actual.keys() == expected.keys()}
+        if checks["groups_match"]:
+            checks["amounts_match"] = all(
+                abs((actual[key].get(field) or 0) - (expected[key].get(field) or 0)) <= 1e-7
+                for key in actual for field in ("net_revenue_cents", "spend_cents")
+            )
+            checks["roi_matches"] = all(
+                (actual[key].get("value") is None and expected[key].get("value") is None)
+                or (actual[key].get("value") is not None and expected[key].get("value") is not None
+                    and abs(actual[key]["value"] - expected[key]["value"]) <= 1e-9)
+                for key in actual
+            )
+        return {"passed": all(checks.values()), "method": "independent_python_marketing_roi",
+                "checks": checks, "control": control_rows}
+
     control_rows, _ = execute_readonly(database_path, compile_verification_query(plan), cancel_event)
     if not control_rows:
         empty_match = not rows

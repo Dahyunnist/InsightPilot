@@ -8,13 +8,27 @@ from insightpilot.planner import OpenAICompatiblePlanner, PlanError
 class S5SemanticTests(unittest.TestCase):
     def test_catalog_has_version_lineage_grain_dimensions_and_sources(self):
         catalog = catalog_document()
-        self.assertEqual(catalog["catalog_version"], "insightpilot-semantic-catalog-v1")
+        self.assertEqual(catalog["catalog_version"], "insightpilot-semantic-catalog-v2")
         amount = next(metric for metric in catalog["metrics"] if metric["metric_id"] == "approved_refund_amount_rate")
         self.assertEqual(amount["definition_version"], "1.0.0")
         self.assertIn("refunds.amount_cents", amount["lineage"])
         self.assertIn("category", amount["valid_dimensions"])
         self.assertIn("refund_event_rate", catalog["excluded_definitions"])
+        self.assertTrue(amount["numerator_definition"])
+        self.assertTrue(amount["denominator_definition"])
+        self.assertEqual(amount["timezone"], "UTC")
+        self.assertTrue(amount["freshness"])
         json.dumps(catalog, ensure_ascii=False)
+
+    def test_marketing_roi_has_versioned_domain_lineage_and_retrieval(self):
+        roi = METRICS["marketing_net_roi"]
+        self.assertEqual(roi.business_domain, "营销 ROI")
+        self.assertEqual(roi.definition_version, "1.0.0")
+        self.assertIn("refund_reversals", roi.source_tables)
+        self.assertIn("campaign_spend_events.revision", roi.lineage)
+        self.assertEqual(roi.required_data_versions, ("insightpilot-multidomain-v1",))
+        self.assertEqual([item.metric_id for item in retrieve_metrics("2026-10-01 到 2026-10-31 各营销活动投资回报率")],
+                         ["marketing_net_roi"])
 
     def test_metric_retrieval_keeps_ambiguous_refund_rate_unselected(self):
         ids = {metric.metric_id for metric in retrieve_metrics("2026-10-05 到 2026-10-11 退款率是多少？")}

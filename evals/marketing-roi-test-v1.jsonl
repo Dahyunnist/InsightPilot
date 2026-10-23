@@ -1,0 +1,4 @@
+{"expected_status": "answered", "id": "MD-T01", "question": "2026-10-01 至 2026-11-01 按活动看营销投资回报率，扣除已撤销退款并去重费用。"}
+{"expected_status": "answered", "id": "MD-T02", "question": "2026-10-01 到 2026-11-01 营销净 ROI 是多少？"}
+{"expected_status": "clarify", "id": "MD-T03", "question": "2026-10-01 到 2026-10-31 华东各营销活动投资回报率是多少？"}
+{"expected_status": "clarify", "id": "MD-T04", "question": "在 2026-10-01 至 2026-10-31 期间，退款率的口径是什么？"}

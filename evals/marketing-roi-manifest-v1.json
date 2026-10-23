@@ -1,0 +1,24 @@
+{
+  "suite_id": "marketing-roi-v1",
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+  "seed": "20261023",
+  "snapshot_at": "2027-03-01T00:00:00Z",
+  "gold_method": "independent Python ledger aggregation, cross-checked against a second Python oracle and compiled SQL execution",
+  "scoring": "strict plan and per-group net revenue, spend, nullable ROI equality; guard status/reason equality",
+  "synthetic_only": true,
+  "splits": {
+    "dev": {
+      "case_count": 3,
+      "blind_sha256": "fc734f9d6ca1abc1714f64f6d91c3bfe1eea279ad9bdf0fc096e33be9d44704b",
+      "gold_sha256": "286a6929427c7400d88ac0613d9d7619aa79e85c4238cce810dd275a6f809b2a"
+    },
+    "test": {
+      "case_count": 4,
+      "blind_sha256": "d41af753474d95a3271a94e9db9779bcdb68349d55ad4f8a50d46f2c300c20b0",
+      "gold_sha256": "fb9ef7ec5e27b6c64a50a88693e189b8c08c263c3d90c050fbd7b028333be1ca"
+    }
+  },
+  "exact_prompt_overlap_count": 0,
+  "exact_prompt_overlap": []
+}

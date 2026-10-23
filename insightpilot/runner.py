@@ -62,7 +62,9 @@ def execute_readonly(database_path: Path, query: CompiledQuery, cancel_event: Ev
             connection.execute("PRAGMA query_only = ON")
             version_row = connection.execute("SELECT value FROM data_meta WHERE key = 'data_version'").fetchone()
             version = version_row[0] if version_row else "unknown"
-            vm_budget = MAX_VM_STEPS * 20 if version == "insightpilot-enterprise-v1" else MAX_VM_STEPS
+            vm_budget = MAX_VM_STEPS * 20 if version in (
+                "insightpilot-enterprise-v1", "insightpilot-multidomain-v1"
+            ) else MAX_VM_STEPS
             deadline = time.monotonic() + QUERY_TIMEOUT_SECONDS
             execution_state = {"steps": 0, "timed_out": False, "over_budget": False}
 
