@@ -75,3 +75,20 @@ S6 覆盖 store 重开和脱敏、启动恢复、API Bearer/scopes、地区收�
 ## 停止点
 
 S6 完成。单实例持久化和静态 bearer 已可复现；分布式 worker、OAuth 与运行中模型请求强取消留待真实部署要求出现后再做。
+
+## S6.1：API 幂等与运行时上限
+
+API 增加 `Idempotency-Key`、每分钟请求上限、固定 worker 池和请求等待超时。幂等键只保存 SHA-256；同键同问题重放原 run，同键不同问题返回 409。默认并发 8、每分钟 120 次、HTTP 等待上限 125 秒，可由 `create_app` 参数覆盖。
+
+超时返回 504，并设取消事件。正在阻塞的模型 HTTP 请求不能被 Python 线程强杀；worker 会继续占用并发名额，直到模型调用返回并进入取消检查点。这样不会把仍在运行的任务误报为已结束，也不会在超时后偷偷启动更多工作。429 包含 `Retry-After`；幂等冲突为 409；RunStore 不可用为 503。
+
+新增 `scripts/load_api.py`。用固定 planner、合成 SQLite、25 ms 可控 planner 延迟测 1/5/20 并发，不调用模型。2026-10-23 本机一次运行：1 并发 1/1 返回 200，p50/p95 94.640 ms；5 并发 5/5 返回 200，p50 82.111 ms、p95 98.739 ms；20 并发 8 个 200、12 个 429，p50 34.140 ms、p95 134.261 ms。20 并发下的快速 429 也计入延迟分位数；数字只描述本机进程内测试，不代表线上性能。
+
+复现：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\load_api.py --delay-ms 25
+.\.venv\Scripts\python.exe -m unittest tests.test_s6_runtime -v
+```
+
+新增测试覆盖幂等重放/冲突、速率限制、504 后合作式取消与 worker 回收。PostgreSQL 连接池、Compose/OTel 部署及真实数据库中断/跨租户验收仍未完成；不得把 SQLite 离线结果当作 PostgreSQL 验收。

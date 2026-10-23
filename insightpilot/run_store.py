@@ -35,6 +35,11 @@ class RunStore:
                 status TEXT NOT NULL, question_hash TEXT NOT NULL, question_redacted TEXT NOT NULL,
                 result_json TEXT, cancel_requested INTEGER NOT NULL DEFAULT 0
             )""")
+            columns = {row[1] for row in db.execute("PRAGMA table_info(runs)")}
+            if "idempotency_key_hash" not in columns:
+                db.execute("ALTER TABLE runs ADD COLUMN idempotency_key_hash TEXT")
+            db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_runs_idempotency_key_hash "
+                       "ON runs(idempotency_key_hash) WHERE idempotency_key_hash IS NOT NULL")
             db.execute("UPDATE runs SET status='interrupted', updated_at=? WHERE status='running'", (_now(),))
             cutoff = (datetime.now(timezone.utc) - timedelta(days=retention_days)).isoformat()
             db.execute("DELETE FROM runs WHERE created_at < ?", (cutoff,))
@@ -51,10 +56,39 @@ class RunStore:
         finally:
             db.close()
 
-    def start(self, run_id: str, question: str) -> None:
+    @staticmethod
+    def _idempotency_hash(key: str | None) -> str | None:
+        return hashlib.sha256(key.encode("utf-8")).hexdigest() if key is not None else None
+
+    def find_idempotent(self, key: str, question: str) -> str | None:
+        key_hash = self._idempotency_hash(key)
+        question_hash = hashlib.sha256(question.encode("utf-8")).hexdigest()
         with self._connection() as db:
-            db.execute("INSERT INTO runs(run_id,created_at,updated_at,status,question_hash,question_redacted) VALUES(?,?,?,?,?,?)",
-                       (run_id, _now(), _now(), "running", hashlib.sha256(question.encode()).hexdigest(), _redact(question)))
+            row = db.execute("SELECT run_id,question_hash FROM runs WHERE idempotency_key_hash=?",
+                             (key_hash,)).fetchone()
+        if row is None:
+            return None
+        if row[1] != question_hash:
+            raise IdempotencyConflict("Idempotency-Key was already used with a different question.")
+        return row[0]
+
+    def start(self, run_id: str, question: str, idempotency_key: str | None = None) -> str:
+        key_hash = self._idempotency_hash(idempotency_key)
+        question_hash = hashlib.sha256(question.encode("utf-8")).hexdigest()
+        with self._connection() as db:
+            db.execute("BEGIN IMMEDIATE")
+            if key_hash is not None:
+                existing = db.execute(
+                    "SELECT run_id,question_hash FROM runs WHERE idempotency_key_hash=?", (key_hash,)
+                ).fetchone()
+                if existing is not None:
+                    if existing[1] != question_hash:
+                        raise IdempotencyConflict("Idempotency-Key was already used with a different question.")
+                    return existing[0]
+            db.execute("INSERT INTO runs(run_id,created_at,updated_at,status,question_hash,question_redacted,idempotency_key_hash) "
+                       "VALUES(?,?,?,?,?,?,?)",
+                       (run_id, _now(), _now(), "running", question_hash, _redact(question), key_hash))
+        return run_id
 
     def finish(self, run_id: str, result: dict) -> None:
         with self._connection() as db:
@@ -75,3 +109,7 @@ class RunStore:
         with self._connection() as db:
             cursor = db.execute("UPDATE runs SET cancel_requested=1,updated_at=? WHERE run_id=? AND status='running'", (_now(), run_id))
             return cursor.rowcount == 1
+
+
+class IdempotencyConflict(ValueError):
+    """An idempotency key was reused for a different request body."""

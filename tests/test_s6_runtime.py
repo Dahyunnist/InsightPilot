@@ -1,4 +1,6 @@
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
 
@@ -71,6 +73,62 @@ class S6RuntimeTests(unittest.TestCase):
         self.assertEqual(client.get(f"/runs/{run_id}", headers={"Authorization": "Bearer secret-token"}).json()["result"], ok.json())
         no_cancel_scope = client.post(f"/runs/{run_id}/cancel", headers={"Authorization": "Bearer secret-token"})
         self.assertEqual(no_cancel_scope.status_code, 403)
+
+    def test_api_idempotency_replays_result_and_rejects_changed_question(self):
+        headers = {"Authorization": "Bearer secret-token", "Idempotency-Key": "client-run-1"}
+        client = TestClient(create_app(self.core, run_store=self.store, api_token="secret-token",
+                                       api_scopes={"refund:read"}))
+        first = client.post("/analysis", json={"question": "退款分析"}, headers=headers)
+        replay = client.post("/analysis", json={"question": "退款分析"}, headers=headers)
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(replay.status_code, 200)
+        self.assertEqual(first.json()["run_id"], replay.json()["run_id"])
+        self.assertEqual(replay.headers["idempotency-replay"], "true")
+        conflict = client.post("/analysis", json={"question": "退款分析 华南"}, headers=headers)
+        self.assertEqual(conflict.status_code, 409)
+        self.assertEqual(conflict.json()["reason"], "idempotency_key_question_conflict")
+
+    def test_api_rate_limit_returns_retry_after(self):
+        app = create_app(self.core, run_store=self.store, api_token="secret-token",
+                         api_scopes={"refund:read"}, max_requests_per_minute=1)
+        client = TestClient(app)
+        headers = {"Authorization": "Bearer secret-token"}
+        self.assertEqual(client.post("/analysis", json={"question": "退款分析"}, headers=headers).status_code, 200)
+        limited = client.post("/analysis", json={"question": "退款分析"}, headers=headers)
+        self.assertEqual(limited.status_code, 429)
+        self.assertGreaterEqual(int(limited.headers["retry-after"]), 1)
+
+    def test_api_timeout_requests_cooperative_cancel_and_worker_recovers(self):
+        entered = threading.Event()
+        release = threading.Event()
+
+        class BlockingPlanner:
+            def plan(self, _question):
+                entered.set()
+                release.wait(2)
+                return QueryPlan("approved_refund_amount_rate", "2026-10-05", "2026-10-12", "华东", None)
+
+        core = InsightPilot(BlockingPlanner(), self.database)
+        app = create_app(core, run_store=self.store, api_token="secret-token",
+                         api_scopes={"refund:read"}, max_concurrent=1, request_timeout_seconds=0.05)
+        client = TestClient(app)
+        response_holder = []
+        request_thread = threading.Thread(target=lambda: response_holder.append(client.post(
+            "/analysis", json={"question": "退款分析"}, headers={"Authorization": "Bearer secret-token"})))
+        request_thread.start()
+        self.assertTrue(entered.wait(1))
+        request_thread.join(1)
+        self.assertEqual(response_holder[0].status_code, 504)
+        run_id = response_holder[0].json()["run_id"]
+        self.assertEqual(self.store.get(run_id)["status"], "running")
+        release.set()
+        deadline = time.monotonic() + 2
+        while time.monotonic() < deadline and self.store.get(run_id)["status"] == "running":
+            time.sleep(0.01)
+        self.assertEqual(self.store.get(run_id)["status"], "cancelled")
+        recovered = client.post("/analysis", json={"question": "退款分析恢复"},
+                                headers={"Authorization": "Bearer secret-token"})
+        self.assertEqual(recovered.status_code, 200)
 
     def test_api_requires_marketing_scope_for_marketing_roi(self):
         planner = MarketingPlanner()
