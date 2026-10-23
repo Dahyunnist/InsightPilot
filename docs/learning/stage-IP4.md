@@ -81,3 +81,7 @@ IP4 离线盲集、独立 SQL/Python gold、SQLite 规则基线、同一 FastAPI
 只评退款、营销 ROI 两个新集，不评旧 IP4。锁定 `deepseek-v4-flash`、temperature 0、输出 1,024 tokens、每题最多 2 次调用、每请求 UTF-8 prompt 51,000 bytes。评分器固定 `insightpilot.ip4_evaluate.compare`；逐题报告独立 oracle、compiled SQL、严格分数、false refusal、false accept 和 usage。SQLite 跑一次，PostgreSQL 两租户各一次；合计 36 题、最大 72 次请求。
 
 用每次 52,000 输入 tokens、1,024 输出 tokens做峰值上界。按[DeepSeek 官方 Flash 峰价](https://api-docs.deepseek.com/quick_start/pricing/)未缓存输入 $0.30/M、输出 $1.20/M，最多预留 $1.2116736。账本余 $3.71436825，预留后余 $2.50269465，低于 $4 cap。预注册锁、prompt、scorer 和两集哈希见 `reports/domain-validation-model-preregistration.json`。旧 R01/R02 的错误内容缺失已记录为监控缺陷；不推测或补写原始根因。
+
+已按预注册执行一轮：SQLite、PostgreSQL tenant-a、tenant-b 各 12/12；每臂 refunds 6/6、marketing ROI 6/6。24 次请求，输入 14,874 tokens、输出 10,680 tokens；按峰价并将输入全按未缓存估算 $0.0172782，账本余 $3.69709005。三臂 answerable 均 8/8、guard 均 4/4；false refusal 0、false accept 0。逐题独立 oracle、compiled SQL、严格分数、拒答及 usage 见 `reports/domain-validation-model-blind-report.json`。旧 IP4 未重跑、未调分；账本与预注册 SHA 在 `reports/model-experiment-cost-ledger.json` 中。
+
+单轮评测完成：SQLite、PostgreSQL tenant-a、tenant-b 各 12/12；每臂 refunds 6/6、marketing ROI 6/6。24 次请求，输入 14,874 tokens、输出 10,680 tokens；按峰价未缓存输入估算 $0.0172782，账本余 $3.69709005。三臂 answerable 均 8/8、guard 均 4/4；false refusal 0，false accept 0。每题 scorer、独立 oracle、SQL 和 usage 见 `reports/domain-validation-model-blind-report.json`。旧 IP4 冻结结果不变。

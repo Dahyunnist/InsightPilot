@@ -1,0 +1,3422 @@
+{
+  "created_at_utc": "2026-10-23T07:53:53.915647+00:00",
+  "status": "completed",
+  "model": "deepseek-v4-flash",
+  "model_response_aliases": [
+    "deepseek-flash"
+  ],
+  "prompt_sha256": "daad5070c5e93145dad09a5883fe220bf31f0e0806bcac76cbdb922ff36f8342",
+  "scorer_sha256": "6fdca63711d8efb504f2b3f4b29d6018f4a8cbb9dc842404985ea941e7b29479",
+  "set_manifest_sha256": {
+    "refunds": "1fcaf08ccc2386891260216164cc5a70a11c06df5e920ef05bcbe93122f1511f",
+    "marketing_roi": "5eb489a7c055063eb4602dda45bce70ac069d17225409e5f0291a21ba9824098"
+  },
+  "max_attempts_per_case": 2,
+  "prompt_byte_cap": 51000,
+  "output_token_cap": 1024,
+  "global_remaining_before_usd": 3.71436825,
+  "worst_case_reserve_usd": 1.2116736,
+  "global_remaining_after_reserve_usd": 2.50269465,
+  "observed_calls": 24,
+  "observed_prompt_tokens": 14874,
+  "observed_completion_tokens": 10680,
+  "usage_missing_calls": 0,
+  "peak_list_price_estimate_usd": 0.0172782,
+  "missing_usage_worst_case_reserve_usd": 0.0,
+  "estimated_max_charge_for_run_usd": 0.0172782,
+  "runs": [
+    {
+      "backend": "sqlite",
+      "tenant_id": null,
+      "passed": 12,
+      "total": 12,
+      "answerable_passed": 8,
+      "answerable_total": 8,
+      "guard_passed": 4,
+      "guard_total": 4,
+      "correct_refusals": 0,
+      "false_refusals": [],
+      "false_accepts": [],
+      "failures": [],
+      "cases": [
+        {
+          "case_id": "DV-R01",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-01 至 2026-10-14 批准退款订单率是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-10-15",
+            "analysis_start": "2026-10-01",
+            "case_id": "DV-R01",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": null,
+            "domain": "refunds",
+            "expected_rows": [
+              {
+                "denominator": 1824,
+                "numerator": 281,
+                "value": 0.15405701754385964
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "approved_refund_order_rate",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-01",
+            "end_date_exclusive": "2026-10-15",
+            "periods": [
+              [
+                "2026-10-01",
+                "2026-10-15"
+              ]
+            ],
+            "region": null,
+            "dimension": null
+          },
+          "actual_metric_id": "approved_refund_order_rate",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents, '全部' AS group_value\n    FROM orders o\n    WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), approved_refunds AS (\n    SELECT order_id, SUM(amount_cents) AS refund_cents\n    FROM refunds\n    WHERE status = 'approved'\n    GROUP BY order_id\n), base AS (\n    SELECT b.order_id, b.paid_amount_cents, b.group_value\n    FROM eligible_orders b\n)\nSELECT COUNT(r.order_id) AS numerator, COUNT(*) AS denominator, 1.0 * COUNT(r.order_id) / NULLIF(COUNT(*), 0) AS value\nFROM base b\nLEFT JOIN approved_refunds r ON r.order_id = b.order_id\n\n\nLIMIT 100",
+          "parameter_count": 2,
+          "sql_sha256": "c7c296ecc73a7326754ac375271cb8379a67350b9512d94d48f698f1ee79f3f5",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2043.741,
+              "usage": {
+                "prompt_tokens": 527,
+                "completion_tokens": 243,
+                "total_tokens": 770,
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 527
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792741952
+            }
+          ]
+        },
+        {
+          "case_id": "DV-R02",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-01 至 2026-10-31 按渠道统计批准退款金额率。",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-11-01",
+            "analysis_start": "2026-10-01",
+            "case_id": "DV-R02",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "channel",
+            "domain": "refunds",
+            "expected_rows": [
+              {
+                "denominator_cents": 24129200,
+                "group_value": "app",
+                "numerator_cents": 2003441,
+                "value": 0.08302973161149146
+              },
+              {
+                "denominator_cents": 24324790,
+                "group_value": "partner",
+                "numerator_cents": 2535138,
+                "value": 0.10422034475939977
+              },
+              {
+                "denominator_cents": 24008930,
+                "group_value": "store",
+                "numerator_cents": 2673800,
+                "value": 0.11136689556760755
+              },
+              {
+                "denominator_cents": 21784550,
+                "group_value": "web",
+                "numerator_cents": 1650815,
+                "value": 0.07577916459141915
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "approved_refund_amount_rate",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-01",
+            "end_date_exclusive": "2026-11-01",
+            "periods": [
+              [
+                "2026-10-01",
+                "2026-11-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "channel"
+          },
+          "actual_metric_id": "approved_refund_amount_rate",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents, o.channel AS group_value\n    FROM orders o\n    WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), approved_refunds AS (\n    SELECT order_id, SUM(amount_cents) AS refund_cents\n    FROM refunds\n    WHERE status = 'approved'\n    GROUP BY order_id\n), base AS (\n    SELECT b.order_id, b.paid_amount_cents, b.group_value\n    FROM eligible_orders b\n)\nSELECT group_value, SUM(COALESCE(r.refund_cents, 0)) AS numerator_cents, SUM(b.paid_amount_cents) AS denominator_cents, 1.0 * SUM(COALESCE(r.refund_cents, 0)) / NULLIF(SUM(b.paid_amount_cents), 0) AS value\nFROM base b\nLEFT JOIN approved_refunds r ON r.order_id = b.order_id\nGROUP BY group_value\nORDER BY group_value\nLIMIT 100",
+          "parameter_count": 2,
+          "sql_sha256": "a18e43ddd2ef48ea5eb244c1ee74fa8ed2a6545ebf08b4b64476831ac2a6e29e",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 3107.569,
+              "usage": {
+                "prompt_tokens": 521,
+                "completion_tokens": 470,
+                "total_tokens": 991,
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 521
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792741954
+            }
+          ]
+        },
+        {
+          "case_id": "DV-R03",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-11-01 至 2026-11-30 按地区分组的批准退款订单率。",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-12-01",
+            "analysis_start": "2026-11-01",
+            "case_id": "DV-R03",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "region",
+            "domain": "refunds",
+            "expected_rows": [
+              {
+                "denominator": 1012,
+                "group_value": "华东",
+                "numerator": 150,
+                "value": 0.1482213438735178
+              },
+              {
+                "denominator": 1047,
+                "group_value": "华北",
+                "numerator": 163,
+                "value": 0.1556829035339064
+              },
+              {
+                "denominator": 990,
+                "group_value": "华南",
+                "numerator": 148,
+                "value": 0.1494949494949495
+              },
+              {
+                "denominator": 962,
+                "group_value": "西南",
+                "numerator": 144,
+                "value": 0.1496881496881497
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "approved_refund_order_rate",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-11-01",
+            "end_date_exclusive": "2026-12-01",
+            "periods": [
+              [
+                "2026-11-01",
+                "2026-12-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "region"
+          },
+          "actual_metric_id": "approved_refund_order_rate",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents, o.region AS group_value\n    FROM orders o\n    WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), approved_refunds AS (\n    SELECT order_id, SUM(amount_cents) AS refund_cents\n    FROM refunds\n    WHERE status = 'approved'\n    GROUP BY order_id\n), base AS (\n    SELECT b.order_id, b.paid_amount_cents, b.group_value\n    FROM eligible_orders b\n)\nSELECT group_value, COUNT(r.order_id) AS numerator, COUNT(*) AS denominator, 1.0 * COUNT(r.order_id) / NULLIF(COUNT(*), 0) AS value\nFROM base b\nLEFT JOIN approved_refunds r ON r.order_id = b.order_id\nGROUP BY group_value\nORDER BY group_value\nLIMIT 100",
+          "parameter_count": 2,
+          "sql_sha256": "108be3d21041d5136c631fd265e0954b5727d936f524234854ed4ae3ee253bf9",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 3482.953,
+              "usage": {
+                "prompt_tokens": 530,
+                "completion_tokens": 455,
+                "total_tokens": 985,
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 530
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792741958
+            }
+          ]
+        },
+        {
+          "case_id": "DV-R04",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-01 至 2026-10-31 按月趋势展示批准退款订单率。",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-11-01",
+            "analysis_start": "2026-10-01",
+            "case_id": "DV-R04",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "month_utc",
+            "domain": "refunds",
+            "expected_rows": [
+              {
+                "denominator": 4052,
+                "group_value": "2026-10",
+                "numerator": 619,
+                "value": 0.15276406712734453
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "approved_refund_order_rate",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-01",
+            "end_date_exclusive": "2026-11-01",
+            "periods": [
+              [
+                "2026-10-01",
+                "2026-11-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "month_utc"
+          },
+          "actual_metric_id": "approved_refund_order_rate",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents, substr(o.ordered_at, 1, 7) AS group_value\n    FROM orders o\n    WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), approved_refunds AS (\n    SELECT order_id, SUM(amount_cents) AS refund_cents\n    FROM refunds\n    WHERE status = 'approved'\n    GROUP BY order_id\n), base AS (\n    SELECT b.order_id, b.paid_amount_cents, b.group_value\n    FROM eligible_orders b\n)\nSELECT group_value, COUNT(r.order_id) AS numerator, COUNT(*) AS denominator, 1.0 * COUNT(r.order_id) / NULLIF(COUNT(*), 0) AS value\nFROM base b\nLEFT JOIN approved_refunds r ON r.order_id = b.order_id\nGROUP BY group_value\nORDER BY group_value\nLIMIT 100",
+          "parameter_count": 2,
+          "sql_sha256": "a287d62e8c1a89fdc1f976715ff19e890faeef0db3426dfd54611b240fbdbfe4",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 3117.113,
+              "usage": {
+                "prompt_tokens": 529,
+                "completion_tokens": 520,
+                "total_tokens": 1049,
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 529
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792741961
+            }
+          ]
+        },
+        {
+          "case_id": "DV-R05",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "question": "2026-10-01 至 2026-10-31 同时给批准退款订单率和金额率。",
+          "oracle_gold": {
+            "case_id": "DV-R05",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "domain": "refunds",
+            "expected_status": "clarify"
+          },
+          "actual_stage": null,
+          "actual_plan": null,
+          "actual_metric_id": null,
+          "compiled_sql": null,
+          "parameter_count": null,
+          "sql_sha256": null,
+          "verification_passed": null,
+          "failure_detail": null,
+          "model_calls": 0,
+          "call_usage": []
+        },
+        {
+          "case_id": "DV-R06",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "question": "2026-10-01 至 2026-10-31 按华北和华东地区拆分退款订单率。",
+          "oracle_gold": {
+            "case_id": "DV-R06",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "domain": "refunds",
+            "expected_status": "clarify"
+          },
+          "actual_stage": null,
+          "actual_plan": null,
+          "actual_metric_id": null,
+          "compiled_sql": null,
+          "parameter_count": null,
+          "sql_sha256": null,
+          "verification_passed": null,
+          "failure_detail": null,
+          "model_calls": 0,
+          "call_usage": []
+        },
+        {
+          "case_id": "DV-M01",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-01-01 至 2026-01-31 各营销活动的净ROI是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-02-01",
+            "analysis_start": "2026-01-01",
+            "case_id": "DV-M01",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "campaign",
+            "domain": "marketing_roi",
+            "expected_rows": [
+              {
+                "group_value": "Campaign 01",
+                "net_revenue_cents": 5197815.5,
+                "spend_cents": 209173,
+                "value": 23.849361533276284
+              },
+              {
+                "group_value": "Campaign 02",
+                "net_revenue_cents": 4526900.8,
+                "spend_cents": 40636,
+                "value": 110.40124027955507
+              },
+              {
+                "group_value": "Campaign 03",
+                "net_revenue_cents": 4427826.75,
+                "spend_cents": 217727,
+                "value": 19.336599273402012
+              },
+              {
+                "group_value": "Campaign 04",
+                "net_revenue_cents": 4735614.800000001,
+                "spend_cents": 201131,
+                "value": 22.54492743535308
+              },
+              {
+                "group_value": "Campaign 05",
+                "net_revenue_cents": 4579122.1,
+                "spend_cents": 72027,
+                "value": 62.575077401529974
+              },
+              {
+                "group_value": "Campaign 06",
+                "net_revenue_cents": 4407696.15,
+                "spend_cents": 195074,
+                "value": 21.594995488891396
+              },
+              {
+                "group_value": "Campaign 07",
+                "net_revenue_cents": 4385235.85,
+                "spend_cents": 97943,
+                "value": 43.77334623199207
+              },
+              {
+                "group_value": "Campaign 08",
+                "net_revenue_cents": 5409024.049999999,
+                "spend_cents": 167537,
+                "value": 31.285549162274595
+              },
+              {
+                "group_value": "Campaign 09",
+                "net_revenue_cents": 3355032.85,
+                "spend_cents": 42673,
+                "value": 77.6219119818152
+              },
+              {
+                "group_value": "Campaign 10",
+                "net_revenue_cents": 4617583.4,
+                "spend_cents": 98552,
+                "value": 45.85428403279487
+              },
+              {
+                "group_value": "Campaign 11",
+                "net_revenue_cents": 5276448.899999999,
+                "spend_cents": 150445,
+                "value": 34.07227824121772
+              },
+              {
+                "group_value": "Campaign 12",
+                "net_revenue_cents": 4305112.4,
+                "spend_cents": 157553,
+                "value": 26.324851954580367
+              },
+              {
+                "group_value": "Campaign 13",
+                "net_revenue_cents": 4175767.0000000005,
+                "spend_cents": 22441,
+                "value": 185.07758121295845
+              },
+              {
+                "group_value": "Campaign 14",
+                "net_revenue_cents": 5436141.1,
+                "spend_cents": 32827,
+                "value": 164.5996923264386
+              },
+              {
+                "group_value": "Campaign 15",
+                "net_revenue_cents": 4826380.699999999,
+                "spend_cents": 127107,
+                "value": 36.971006317512014
+              },
+              {
+                "group_value": "Campaign 16",
+                "net_revenue_cents": 4210757.55,
+                "spend_cents": 185907,
+                "value": 21.649806354790297
+              },
+              {
+                "group_value": "Campaign 17",
+                "net_revenue_cents": 3609371.85,
+                "spend_cents": 165608,
+                "value": 20.794670849234336
+              },
+              {
+                "group_value": "Campaign 18",
+                "net_revenue_cents": 3642406.9,
+                "spend_cents": 164153,
+                "value": 21.18909736648127
+              },
+              {
+                "group_value": "Campaign 19",
+                "net_revenue_cents": 4538257.85,
+                "spend_cents": 79775,
+                "value": 55.88822124725791
+              },
+              {
+                "group_value": "Campaign 20",
+                "net_revenue_cents": 3795193.5,
+                "spend_cents": 135075,
+                "value": 27.09693503609106
+              },
+              {
+                "group_value": "未归因",
+                "net_revenue_cents": 973556.0,
+                "spend_cents": 0,
+                "value": null
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "marketing_net_roi",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-01-01",
+            "end_date_exclusive": "2026-02-01",
+            "periods": [
+              [
+                "2026-01-01",
+                "2026-02-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "campaign"
+          },
+          "actual_metric_id": "marketing_net_roi",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents\n    FROM orders o WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), valid_refunds AS (\n    SELECT r.refund_id, r.order_id, r.amount_cents\n    FROM refunds r CROSS JOIN data_meta m\n    WHERE r.status = 'approved' AND m.key = 'snapshot_at'\n      AND r.refunded_at < m.value AND r.recorded_at <= m.value\n), refund_reversals_by_refund AS (\n    SELECT rv.refund_id, SUM(rv.amount_cents) AS reversed_cents\n    FROM refund_reversals rv CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND rv.recorded_at <= m.value\n    GROUP BY rv.refund_id\n), net_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents - COALESCE(rv.reversed_cents, 0)) AS refund_cents\n    FROM valid_refunds r LEFT JOIN refund_reversals_by_refund rv ON rv.refund_id = r.refund_id\n    GROUP BY r.order_id\n), touch_revenue AS (\n    SELECT COALESCE(c.campaign_name, '未归因') AS group_value,\n           SUM((o.paid_amount_cents - COALESCE(r.refund_cents, 0)) *\n               CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END) AS net_revenue_cents\n    FROM eligible_orders o\n    LEFT JOIN net_refunds r ON r.order_id = o.order_id\n    LEFT JOIN campaign_attributions a ON a.order_id = o.order_id\n    LEFT JOIN campaigns c ON c.campaign_id = a.campaign_id\n    GROUP BY COALESCE(c.campaign_name, '未归因')\n), spend_ranked AS (\n    SELECT s.business_event_id, s.revision, s.recorded_at, s.event_id, s.spend_cents,\n           s.event_status, s.campaign_id, ROW_NUMBER() OVER (\n        PARTITION BY s.business_event_id ORDER BY s.revision DESC, s.recorded_at DESC, s.event_id DESC\n    ) AS revision_rank\n    FROM campaign_spend_events s CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND s.spent_at >= ? AND s.spent_at < ? AND s.recorded_at <= m.value\n), valid_spend AS (\n    SELECT s.campaign_id, s.spend_cents\n    FROM spend_ranked s WHERE s.revision_rank = 1 AND s.event_status = 'active'\n), spend_totals AS (\n    SELECT c.campaign_name AS group_value, SUM(s.spend_cents) AS spend_cents\n    FROM valid_spend s JOIN campaigns c ON c.campaign_id = s.campaign_id\n    GROUP BY c.campaign_name\n), campaign_keys AS (\n    SELECT group_value FROM touch_revenue UNION SELECT group_value FROM spend_totals\n), combined AS (\n    SELECT k.group_value, COALESCE(r.net_revenue_cents, 0) AS net_revenue_cents,\n           COALESCE(s.spend_cents, 0) AS spend_cents\n    FROM campaign_keys k\n    LEFT JOIN touch_revenue r ON r.group_value = k.group_value\n    LEFT JOIN spend_totals s ON s.group_value = k.group_value\n)\nSELECT group_value, net_revenue_cents, spend_cents, (net_revenue_cents - spend_cents) * 1.0 / NULLIF(spend_cents, 0) AS value FROM combined ORDER BY group_value LIMIT 100",
+          "parameter_count": 4,
+          "sql_sha256": "f46c3e6dc6276566a65ba700e79f0a50500606c3e1b5de65ad245f6c62d09e9a",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2675.062,
+              "usage": {
+                "prompt_tokens": 715,
+                "completion_tokens": 452,
+                "total_tokens": 1167,
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 715
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792741965
+            }
+          ]
+        },
+        {
+          "case_id": "DV-M02",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-01 至 2026-10-31 整体营销ROI是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-11-01",
+            "analysis_start": "2026-10-01",
+            "case_id": "DV-M02",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": null,
+            "domain": "marketing_roi",
+            "expected_rows": [
+              {
+                "group_value": "全部",
+                "net_revenue_cents": 85419730.0,
+                "spend_cents": 2284500,
+                "value": 36.39099584154082
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "marketing_net_roi",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-01",
+            "end_date_exclusive": "2026-11-01",
+            "periods": [
+              [
+                "2026-10-01",
+                "2026-11-01"
+              ]
+            ],
+            "region": null,
+            "dimension": null
+          },
+          "actual_metric_id": "marketing_net_roi",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents\n    FROM orders o WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), valid_refunds AS (\n    SELECT r.refund_id, r.order_id, r.amount_cents\n    FROM refunds r CROSS JOIN data_meta m\n    WHERE r.status = 'approved' AND m.key = 'snapshot_at'\n      AND r.refunded_at < m.value AND r.recorded_at <= m.value\n), refund_reversals_by_refund AS (\n    SELECT rv.refund_id, SUM(rv.amount_cents) AS reversed_cents\n    FROM refund_reversals rv CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND rv.recorded_at <= m.value\n    GROUP BY rv.refund_id\n), net_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents - COALESCE(rv.reversed_cents, 0)) AS refund_cents\n    FROM valid_refunds r LEFT JOIN refund_reversals_by_refund rv ON rv.refund_id = r.refund_id\n    GROUP BY r.order_id\n), touch_revenue AS (\n    SELECT COALESCE(c.campaign_name, '未归因') AS group_value,\n           SUM((o.paid_amount_cents - COALESCE(r.refund_cents, 0)) *\n               CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END) AS net_revenue_cents\n    FROM eligible_orders o\n    LEFT JOIN net_refunds r ON r.order_id = o.order_id\n    LEFT JOIN campaign_attributions a ON a.order_id = o.order_id\n    LEFT JOIN campaigns c ON c.campaign_id = a.campaign_id\n    GROUP BY COALESCE(c.campaign_name, '未归因')\n), spend_ranked AS (\n    SELECT s.business_event_id, s.revision, s.recorded_at, s.event_id, s.spend_cents,\n           s.event_status, s.campaign_id, ROW_NUMBER() OVER (\n        PARTITION BY s.business_event_id ORDER BY s.revision DESC, s.recorded_at DESC, s.event_id DESC\n    ) AS revision_rank\n    FROM campaign_spend_events s CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND s.spent_at >= ? AND s.spent_at < ? AND s.recorded_at <= m.value\n), valid_spend AS (\n    SELECT s.campaign_id, s.spend_cents\n    FROM spend_ranked s WHERE s.revision_rank = 1 AND s.event_status = 'active'\n), spend_totals AS (\n    SELECT c.campaign_name AS group_value, SUM(s.spend_cents) AS spend_cents\n    FROM valid_spend s JOIN campaigns c ON c.campaign_id = s.campaign_id\n    GROUP BY c.campaign_name\n), campaign_keys AS (\n    SELECT group_value FROM touch_revenue UNION SELECT group_value FROM spend_totals\n), combined AS (\n    SELECT k.group_value, COALESCE(r.net_revenue_cents, 0) AS net_revenue_cents,\n           COALESCE(s.spend_cents, 0) AS spend_cents\n    FROM campaign_keys k\n    LEFT JOIN touch_revenue r ON r.group_value = k.group_value\n    LEFT JOIN spend_totals s ON s.group_value = k.group_value\n)\nSELECT '全部' AS group_value, SUM(net_revenue_cents) AS net_revenue_cents, SUM(spend_cents) AS spend_cents, (SUM(net_revenue_cents) - SUM(spend_cents)) * 1.0 / NULLIF(SUM(spend_cents), 0) AS value FROM combined LIMIT 1",
+          "parameter_count": 4,
+          "sql_sha256": "46b412d9fc616b16db2519c0fecde614fab04eb5b35615b1e7a3435e69037980",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 4491.194,
+              "usage": {
+                "prompt_tokens": 713,
+                "completion_tokens": 747,
+                "total_tokens": 1460,
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 713
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792741968
+            }
+          ]
+        },
+        {
+          "case_id": "DV-M03",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-31当天各营销活动净投资回报率是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-11-01",
+            "analysis_start": "2026-10-31",
+            "case_id": "DV-M03",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "campaign",
+            "domain": "marketing_roi",
+            "expected_rows": [
+              {
+                "group_value": "Campaign 01",
+                "net_revenue_cents": 60960.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 02",
+                "net_revenue_cents": 9081.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 03",
+                "net_revenue_cents": 70589.6,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 04",
+                "net_revenue_cents": 65106.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 05",
+                "net_revenue_cents": 103966.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 06",
+                "net_revenue_cents": 73471.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 07",
+                "net_revenue_cents": 9985.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 08",
+                "net_revenue_cents": 162270.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 09",
+                "net_revenue_cents": 105611.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 10",
+                "net_revenue_cents": 107981.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 11",
+                "net_revenue_cents": 3361.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 12",
+                "net_revenue_cents": 34454.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 13",
+                "net_revenue_cents": 80506.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 14",
+                "net_revenue_cents": 108804.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 15",
+                "net_revenue_cents": 130083.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 16",
+                "net_revenue_cents": 94930.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 17",
+                "net_revenue_cents": 142947.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 18",
+                "net_revenue_cents": 250946.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 19",
+                "net_revenue_cents": 121545.9,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 20",
+                "net_revenue_cents": 28955.0,
+                "spend_cents": 57383,
+                "value": -0.4954080476796264
+              },
+              {
+                "group_value": "未归因",
+                "net_revenue_cents": 1990.0,
+                "spend_cents": 0,
+                "value": null
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "marketing_net_roi",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-31",
+            "end_date_exclusive": "2026-11-01",
+            "periods": [
+              [
+                "2026-10-31",
+                "2026-11-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "campaign"
+          },
+          "actual_metric_id": "marketing_net_roi",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents\n    FROM orders o WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), valid_refunds AS (\n    SELECT r.refund_id, r.order_id, r.amount_cents\n    FROM refunds r CROSS JOIN data_meta m\n    WHERE r.status = 'approved' AND m.key = 'snapshot_at'\n      AND r.refunded_at < m.value AND r.recorded_at <= m.value\n), refund_reversals_by_refund AS (\n    SELECT rv.refund_id, SUM(rv.amount_cents) AS reversed_cents\n    FROM refund_reversals rv CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND rv.recorded_at <= m.value\n    GROUP BY rv.refund_id\n), net_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents - COALESCE(rv.reversed_cents, 0)) AS refund_cents\n    FROM valid_refunds r LEFT JOIN refund_reversals_by_refund rv ON rv.refund_id = r.refund_id\n    GROUP BY r.order_id\n), touch_revenue AS (\n    SELECT COALESCE(c.campaign_name, '未归因') AS group_value,\n           SUM((o.paid_amount_cents - COALESCE(r.refund_cents, 0)) *\n               CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END) AS net_revenue_cents\n    FROM eligible_orders o\n    LEFT JOIN net_refunds r ON r.order_id = o.order_id\n    LEFT JOIN campaign_attributions a ON a.order_id = o.order_id\n    LEFT JOIN campaigns c ON c.campaign_id = a.campaign_id\n    GROUP BY COALESCE(c.campaign_name, '未归因')\n), spend_ranked AS (\n    SELECT s.business_event_id, s.revision, s.recorded_at, s.event_id, s.spend_cents,\n           s.event_status, s.campaign_id, ROW_NUMBER() OVER (\n        PARTITION BY s.business_event_id ORDER BY s.revision DESC, s.recorded_at DESC, s.event_id DESC\n    ) AS revision_rank\n    FROM campaign_spend_events s CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND s.spent_at >= ? AND s.spent_at < ? AND s.recorded_at <= m.value\n), valid_spend AS (\n    SELECT s.campaign_id, s.spend_cents\n    FROM spend_ranked s WHERE s.revision_rank = 1 AND s.event_status = 'active'\n), spend_totals AS (\n    SELECT c.campaign_name AS group_value, SUM(s.spend_cents) AS spend_cents\n    FROM valid_spend s JOIN campaigns c ON c.campaign_id = s.campaign_id\n    GROUP BY c.campaign_name\n), campaign_keys AS (\n    SELECT group_value FROM touch_revenue UNION SELECT group_value FROM spend_totals\n), combined AS (\n    SELECT k.group_value, COALESCE(r.net_revenue_cents, 0) AS net_revenue_cents,\n           COALESCE(s.spend_cents, 0) AS spend_cents\n    FROM campaign_keys k\n    LEFT JOIN touch_revenue r ON r.group_value = k.group_value\n    LEFT JOIN spend_totals s ON s.group_value = k.group_value\n)\nSELECT group_value, net_revenue_cents, spend_cents, (net_revenue_cents - spend_cents) * 1.0 / NULLIF(spend_cents, 0) AS value FROM combined ORDER BY group_value LIMIT 100",
+          "parameter_count": 4,
+          "sql_sha256": "f46c3e6dc6276566a65ba700e79f0a50500606c3e1b5de65ad245f6c62d09e9a",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2175.795,
+              "usage": {
+                "prompt_tokens": 707,
+                "completion_tokens": 276,
+                "total_tokens": 983,
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 707
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792741974
+            }
+          ]
+        },
+        {
+          "case_id": "DV-M04",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-01-15 至 2026-02-14 每个营销活动的净投资回报率是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-02-15",
+            "analysis_start": "2026-01-15",
+            "case_id": "DV-M04",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "campaign",
+            "domain": "marketing_roi",
+            "expected_rows": [
+              {
+                "group_value": "Campaign 01",
+                "net_revenue_cents": 5457420.0,
+                "spend_cents": 209173,
+                "value": 25.090461005961572
+              },
+              {
+                "group_value": "Campaign 02",
+                "net_revenue_cents": 4618840.55,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 03",
+                "net_revenue_cents": 3834619.35,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 04",
+                "net_revenue_cents": 4590781.8,
+                "spend_cents": 201131,
+                "value": 21.82483456056003
+              },
+              {
+                "group_value": "Campaign 05",
+                "net_revenue_cents": 4627174.4,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 06",
+                "net_revenue_cents": 4184318.1000000006,
+                "spend_cents": 17422,
+                "value": 239.17438296406846
+              },
+              {
+                "group_value": "Campaign 07",
+                "net_revenue_cents": 4172362.5,
+                "spend_cents": 97943,
+                "value": 41.59990504681294
+              },
+              {
+                "group_value": "Campaign 08",
+                "net_revenue_cents": 4610186.4,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 09",
+                "net_revenue_cents": 3417409.4000000004,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 10",
+                "net_revenue_cents": 4344669.449999999,
+                "spend_cents": 160130,
+                "value": 26.132139199400484
+              },
+              {
+                "group_value": "Campaign 11",
+                "net_revenue_cents": 5290516.75,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 12",
+                "net_revenue_cents": 3597663.1,
+                "spend_cents": 212347,
+                "value": 15.942377806138067
+              },
+              {
+                "group_value": "Campaign 13",
+                "net_revenue_cents": 4385080.649999999,
+                "spend_cents": 107116,
+                "value": 39.93768111206542
+              },
+              {
+                "group_value": "Campaign 14",
+                "net_revenue_cents": 4998404.949999999,
+                "spend_cents": 32827,
+                "value": 151.26505468059827
+              },
+              {
+                "group_value": "Campaign 15",
+                "net_revenue_cents": 4563803.75,
+                "spend_cents": 127107,
+                "value": 34.9052117507297
+              },
+              {
+                "group_value": "Campaign 16",
+                "net_revenue_cents": 4863551.75,
+                "spend_cents": 185907,
+                "value": 25.161208292318204
+              },
+              {
+                "group_value": "Campaign 17",
+                "net_revenue_cents": 3163271.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 18",
+                "net_revenue_cents": 4445200.6,
+                "spend_cents": 145765,
+                "value": 29.495664940143378
+              },
+              {
+                "group_value": "Campaign 19",
+                "net_revenue_cents": 4421222.2,
+                "spend_cents": 79775,
+                "value": 54.42114948292072
+              },
+              {
+                "group_value": "Campaign 20",
+                "net_revenue_cents": 3764860.8,
+                "spend_cents": 135075,
+                "value": 26.872373126041087
+              },
+              {
+                "group_value": "未归因",
+                "net_revenue_cents": 952411.0,
+                "spend_cents": 0,
+                "value": null
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "marketing_net_roi",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-01-15",
+            "end_date_exclusive": "2026-02-15",
+            "periods": [
+              [
+                "2026-01-15",
+                "2026-02-15"
+              ]
+            ],
+            "region": null,
+            "dimension": "campaign"
+          },
+          "actual_metric_id": "marketing_net_roi",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents\n    FROM orders o WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), valid_refunds AS (\n    SELECT r.refund_id, r.order_id, r.amount_cents\n    FROM refunds r CROSS JOIN data_meta m\n    WHERE r.status = 'approved' AND m.key = 'snapshot_at'\n      AND r.refunded_at < m.value AND r.recorded_at <= m.value\n), refund_reversals_by_refund AS (\n    SELECT rv.refund_id, SUM(rv.amount_cents) AS reversed_cents\n    FROM refund_reversals rv CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND rv.recorded_at <= m.value\n    GROUP BY rv.refund_id\n), net_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents - COALESCE(rv.reversed_cents, 0)) AS refund_cents\n    FROM valid_refunds r LEFT JOIN refund_reversals_by_refund rv ON rv.refund_id = r.refund_id\n    GROUP BY r.order_id\n), touch_revenue AS (\n    SELECT COALESCE(c.campaign_name, '未归因') AS group_value,\n           SUM((o.paid_amount_cents - COALESCE(r.refund_cents, 0)) *\n               CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END) AS net_revenue_cents\n    FROM eligible_orders o\n    LEFT JOIN net_refunds r ON r.order_id = o.order_id\n    LEFT JOIN campaign_attributions a ON a.order_id = o.order_id\n    LEFT JOIN campaigns c ON c.campaign_id = a.campaign_id\n    GROUP BY COALESCE(c.campaign_name, '未归因')\n), spend_ranked AS (\n    SELECT s.business_event_id, s.revision, s.recorded_at, s.event_id, s.spend_cents,\n           s.event_status, s.campaign_id, ROW_NUMBER() OVER (\n        PARTITION BY s.business_event_id ORDER BY s.revision DESC, s.recorded_at DESC, s.event_id DESC\n    ) AS revision_rank\n    FROM campaign_spend_events s CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND s.spent_at >= ? AND s.spent_at < ? AND s.recorded_at <= m.value\n), valid_spend AS (\n    SELECT s.campaign_id, s.spend_cents\n    FROM spend_ranked s WHERE s.revision_rank = 1 AND s.event_status = 'active'\n), spend_totals AS (\n    SELECT c.campaign_name AS group_value, SUM(s.spend_cents) AS spend_cents\n    FROM valid_spend s JOIN campaigns c ON c.campaign_id = s.campaign_id\n    GROUP BY c.campaign_name\n), campaign_keys AS (\n    SELECT group_value FROM touch_revenue UNION SELECT group_value FROM spend_totals\n), combined AS (\n    SELECT k.group_value, COALESCE(r.net_revenue_cents, 0) AS net_revenue_cents,\n           COALESCE(s.spend_cents, 0) AS spend_cents\n    FROM campaign_keys k\n    LEFT JOIN touch_revenue r ON r.group_value = k.group_value\n    LEFT JOIN spend_totals s ON s.group_value = k.group_value\n)\nSELECT group_value, net_revenue_cents, spend_cents, (net_revenue_cents - spend_cents) * 1.0 / NULLIF(spend_cents, 0) AS value FROM combined ORDER BY group_value LIMIT 100",
+          "parameter_count": 4,
+          "sql_sha256": "f46c3e6dc6276566a65ba700e79f0a50500606c3e1b5de65ad245f6c62d09e9a",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 3407.123,
+              "usage": {
+                "prompt_tokens": 716,
+                "completion_tokens": 498,
+                "total_tokens": 1214,
+                "prompt_cache_hit_tokens": 0,
+                "prompt_cache_miss_tokens": 716
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792741976
+            }
+          ]
+        },
+        {
+          "case_id": "DV-M05",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "question": "各营销活动ROI是多少？",
+          "oracle_gold": {
+            "case_id": "DV-M05",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "domain": "marketing_roi",
+            "expected_status": "clarify"
+          },
+          "actual_stage": null,
+          "actual_plan": null,
+          "actual_metric_id": null,
+          "compiled_sql": null,
+          "parameter_count": null,
+          "sql_sha256": null,
+          "verification_passed": null,
+          "failure_detail": null,
+          "model_calls": 0,
+          "call_usage": []
+        },
+        {
+          "case_id": "DV-M06",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "question": "2026-10-01 至 2026-10-31 华东各营销活动ROI是多少？",
+          "oracle_gold": {
+            "case_id": "DV-M06",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "domain": "marketing_roi",
+            "expected_status": "clarify"
+          },
+          "actual_stage": null,
+          "actual_plan": null,
+          "actual_metric_id": null,
+          "compiled_sql": null,
+          "parameter_count": null,
+          "sql_sha256": null,
+          "verification_passed": null,
+          "failure_detail": null,
+          "model_calls": 0,
+          "call_usage": []
+        }
+      ]
+    },
+    {
+      "backend": "postgresql",
+      "tenant_id": "tenant-a",
+      "passed": 12,
+      "total": 12,
+      "answerable_passed": 8,
+      "answerable_total": 8,
+      "guard_passed": 4,
+      "guard_total": 4,
+      "correct_refusals": 0,
+      "false_refusals": [],
+      "false_accepts": [],
+      "failures": [],
+      "cases": [
+        {
+          "case_id": "DV-R01",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-01 至 2026-10-14 批准退款订单率是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-10-15",
+            "analysis_start": "2026-10-01",
+            "case_id": "DV-R01",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": null,
+            "domain": "refunds",
+            "expected_rows": [
+              {
+                "denominator": 1824,
+                "numerator": 281,
+                "value": 0.15405701754385964
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "approved_refund_order_rate",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-01",
+            "end_date_exclusive": "2026-10-15",
+            "periods": [
+              [
+                "2026-10-01",
+                "2026-10-15"
+              ]
+            ],
+            "region": null,
+            "dimension": null
+          },
+          "actual_metric_id": "approved_refund_order_rate",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents, '全部' AS group_value\n    FROM orders o\n    WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), approved_refunds AS (\n    SELECT order_id, SUM(amount_cents) AS refund_cents\n    FROM refunds\n    WHERE status = 'approved'\n    GROUP BY order_id\n), base AS (\n    SELECT b.order_id, b.paid_amount_cents, b.group_value\n    FROM eligible_orders b\n)\nSELECT COUNT(r.order_id) AS numerator, COUNT(*) AS denominator, 1.0 * COUNT(r.order_id) / NULLIF(COUNT(*), 0) AS value\nFROM base b\nLEFT JOIN approved_refunds r ON r.order_id = b.order_id\n\n\nLIMIT 100",
+          "parameter_count": 2,
+          "sql_sha256": "c7c296ecc73a7326754ac375271cb8379a67350b9512d94d48f698f1ee79f3f5",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2149.921,
+              "usage": {
+                "prompt_tokens": 527,
+                "completion_tokens": 300,
+                "total_tokens": 827,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 143
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792741980
+            }
+          ]
+        },
+        {
+          "case_id": "DV-R02",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-01 至 2026-10-31 按渠道统计批准退款金额率。",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-11-01",
+            "analysis_start": "2026-10-01",
+            "case_id": "DV-R02",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "channel",
+            "domain": "refunds",
+            "expected_rows": [
+              {
+                "denominator_cents": 24129200,
+                "group_value": "app",
+                "numerator_cents": 2003441,
+                "value": 0.08302973161149146
+              },
+              {
+                "denominator_cents": 24324790,
+                "group_value": "partner",
+                "numerator_cents": 2535138,
+                "value": 0.10422034475939977
+              },
+              {
+                "denominator_cents": 24008930,
+                "group_value": "store",
+                "numerator_cents": 2673800,
+                "value": 0.11136689556760755
+              },
+              {
+                "denominator_cents": 21784550,
+                "group_value": "web",
+                "numerator_cents": 1650815,
+                "value": 0.07577916459141915
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "approved_refund_amount_rate",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-01",
+            "end_date_exclusive": "2026-11-01",
+            "periods": [
+              [
+                "2026-10-01",
+                "2026-11-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "channel"
+          },
+          "actual_metric_id": "approved_refund_amount_rate",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents, o.channel AS group_value\n    FROM orders o\n    WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), approved_refunds AS (\n    SELECT order_id, SUM(amount_cents) AS refund_cents\n    FROM refunds\n    WHERE status = 'approved'\n    GROUP BY order_id\n), base AS (\n    SELECT b.order_id, b.paid_amount_cents, b.group_value\n    FROM eligible_orders b\n)\nSELECT group_value, SUM(COALESCE(r.refund_cents, 0)) AS numerator_cents, SUM(b.paid_amount_cents) AS denominator_cents, 1.0 * SUM(COALESCE(r.refund_cents, 0)) / NULLIF(SUM(b.paid_amount_cents), 0) AS value\nFROM base b\nLEFT JOIN approved_refunds r ON r.order_id = b.order_id\nGROUP BY group_value\nORDER BY group_value\nLIMIT 100",
+          "parameter_count": 2,
+          "sql_sha256": "a18e43ddd2ef48ea5eb244c1ee74fa8ed2a6545ebf08b4b64476831ac2a6e29e",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2360.642,
+              "usage": {
+                "prompt_tokens": 521,
+                "completion_tokens": 356,
+                "total_tokens": 877,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 137
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792741983
+            }
+          ]
+        },
+        {
+          "case_id": "DV-R03",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-11-01 至 2026-11-30 按地区分组的批准退款订单率。",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-12-01",
+            "analysis_start": "2026-11-01",
+            "case_id": "DV-R03",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "region",
+            "domain": "refunds",
+            "expected_rows": [
+              {
+                "denominator": 1012,
+                "group_value": "华东",
+                "numerator": 150,
+                "value": 0.1482213438735178
+              },
+              {
+                "denominator": 1047,
+                "group_value": "华北",
+                "numerator": 163,
+                "value": 0.1556829035339064
+              },
+              {
+                "denominator": 990,
+                "group_value": "华南",
+                "numerator": 148,
+                "value": 0.1494949494949495
+              },
+              {
+                "denominator": 962,
+                "group_value": "西南",
+                "numerator": 144,
+                "value": 0.1496881496881497
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "approved_refund_order_rate",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-11-01",
+            "end_date_exclusive": "2026-12-01",
+            "periods": [
+              [
+                "2026-11-01",
+                "2026-12-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "region"
+          },
+          "actual_metric_id": "approved_refund_order_rate",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents, o.region AS group_value\n    FROM orders o\n    WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), approved_refunds AS (\n    SELECT order_id, SUM(amount_cents) AS refund_cents\n    FROM refunds\n    WHERE status = 'approved'\n    GROUP BY order_id\n), base AS (\n    SELECT b.order_id, b.paid_amount_cents, b.group_value\n    FROM eligible_orders b\n)\nSELECT group_value, COUNT(r.order_id) AS numerator, COUNT(*) AS denominator, 1.0 * COUNT(r.order_id) / NULLIF(COUNT(*), 0) AS value\nFROM base b\nLEFT JOIN approved_refunds r ON r.order_id = b.order_id\nGROUP BY group_value\nORDER BY group_value\nLIMIT 100",
+          "parameter_count": 2,
+          "sql_sha256": "108be3d21041d5136c631fd265e0954b5727d936f524234854ed4ae3ee253bf9",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2454.46,
+              "usage": {
+                "prompt_tokens": 530,
+                "completion_tokens": 283,
+                "total_tokens": 813,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 146
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792741986
+            }
+          ]
+        },
+        {
+          "case_id": "DV-R04",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-01 至 2026-10-31 按月趋势展示批准退款订单率。",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-11-01",
+            "analysis_start": "2026-10-01",
+            "case_id": "DV-R04",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "month_utc",
+            "domain": "refunds",
+            "expected_rows": [
+              {
+                "denominator": 4052,
+                "group_value": "2026-10",
+                "numerator": 619,
+                "value": 0.15276406712734453
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "approved_refund_order_rate",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-01",
+            "end_date_exclusive": "2026-11-01",
+            "periods": [
+              [
+                "2026-10-01",
+                "2026-11-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "month_utc"
+          },
+          "actual_metric_id": "approved_refund_order_rate",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents, substr(o.ordered_at, 1, 7) AS group_value\n    FROM orders o\n    WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), approved_refunds AS (\n    SELECT order_id, SUM(amount_cents) AS refund_cents\n    FROM refunds\n    WHERE status = 'approved'\n    GROUP BY order_id\n), base AS (\n    SELECT b.order_id, b.paid_amount_cents, b.group_value\n    FROM eligible_orders b\n)\nSELECT group_value, COUNT(r.order_id) AS numerator, COUNT(*) AS denominator, 1.0 * COUNT(r.order_id) / NULLIF(COUNT(*), 0) AS value\nFROM base b\nLEFT JOIN approved_refunds r ON r.order_id = b.order_id\nGROUP BY group_value\nORDER BY group_value\nLIMIT 100",
+          "parameter_count": 2,
+          "sql_sha256": "a287d62e8c1a89fdc1f976715ff19e890faeef0db3426dfd54611b240fbdbfe4",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 3560.258,
+              "usage": {
+                "prompt_tokens": 529,
+                "completion_tokens": 515,
+                "total_tokens": 1044,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 145
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792741989
+            }
+          ]
+        },
+        {
+          "case_id": "DV-R05",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "question": "2026-10-01 至 2026-10-31 同时给批准退款订单率和金额率。",
+          "oracle_gold": {
+            "case_id": "DV-R05",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "domain": "refunds",
+            "expected_status": "clarify"
+          },
+          "actual_stage": null,
+          "actual_plan": null,
+          "actual_metric_id": null,
+          "compiled_sql": null,
+          "parameter_count": null,
+          "sql_sha256": null,
+          "verification_passed": null,
+          "failure_detail": null,
+          "model_calls": 0,
+          "call_usage": []
+        },
+        {
+          "case_id": "DV-R06",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "question": "2026-10-01 至 2026-10-31 按华北和华东地区拆分退款订单率。",
+          "oracle_gold": {
+            "case_id": "DV-R06",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "domain": "refunds",
+            "expected_status": "clarify"
+          },
+          "actual_stage": null,
+          "actual_plan": null,
+          "actual_metric_id": null,
+          "compiled_sql": null,
+          "parameter_count": null,
+          "sql_sha256": null,
+          "verification_passed": null,
+          "failure_detail": null,
+          "model_calls": 0,
+          "call_usage": []
+        },
+        {
+          "case_id": "DV-M01",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-01-01 至 2026-01-31 各营销活动的净ROI是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-02-01",
+            "analysis_start": "2026-01-01",
+            "case_id": "DV-M01",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "campaign",
+            "domain": "marketing_roi",
+            "expected_rows": [
+              {
+                "group_value": "Campaign 01",
+                "net_revenue_cents": 5197815.5,
+                "spend_cents": 209173,
+                "value": 23.849361533276284
+              },
+              {
+                "group_value": "Campaign 02",
+                "net_revenue_cents": 4526900.8,
+                "spend_cents": 40636,
+                "value": 110.40124027955507
+              },
+              {
+                "group_value": "Campaign 03",
+                "net_revenue_cents": 4427826.75,
+                "spend_cents": 217727,
+                "value": 19.336599273402012
+              },
+              {
+                "group_value": "Campaign 04",
+                "net_revenue_cents": 4735614.800000001,
+                "spend_cents": 201131,
+                "value": 22.54492743535308
+              },
+              {
+                "group_value": "Campaign 05",
+                "net_revenue_cents": 4579122.1,
+                "spend_cents": 72027,
+                "value": 62.575077401529974
+              },
+              {
+                "group_value": "Campaign 06",
+                "net_revenue_cents": 4407696.15,
+                "spend_cents": 195074,
+                "value": 21.594995488891396
+              },
+              {
+                "group_value": "Campaign 07",
+                "net_revenue_cents": 4385235.85,
+                "spend_cents": 97943,
+                "value": 43.77334623199207
+              },
+              {
+                "group_value": "Campaign 08",
+                "net_revenue_cents": 5409024.049999999,
+                "spend_cents": 167537,
+                "value": 31.285549162274595
+              },
+              {
+                "group_value": "Campaign 09",
+                "net_revenue_cents": 3355032.85,
+                "spend_cents": 42673,
+                "value": 77.6219119818152
+              },
+              {
+                "group_value": "Campaign 10",
+                "net_revenue_cents": 4617583.4,
+                "spend_cents": 98552,
+                "value": 45.85428403279487
+              },
+              {
+                "group_value": "Campaign 11",
+                "net_revenue_cents": 5276448.899999999,
+                "spend_cents": 150445,
+                "value": 34.07227824121772
+              },
+              {
+                "group_value": "Campaign 12",
+                "net_revenue_cents": 4305112.4,
+                "spend_cents": 157553,
+                "value": 26.324851954580367
+              },
+              {
+                "group_value": "Campaign 13",
+                "net_revenue_cents": 4175767.0000000005,
+                "spend_cents": 22441,
+                "value": 185.07758121295845
+              },
+              {
+                "group_value": "Campaign 14",
+                "net_revenue_cents": 5436141.1,
+                "spend_cents": 32827,
+                "value": 164.5996923264386
+              },
+              {
+                "group_value": "Campaign 15",
+                "net_revenue_cents": 4826380.699999999,
+                "spend_cents": 127107,
+                "value": 36.971006317512014
+              },
+              {
+                "group_value": "Campaign 16",
+                "net_revenue_cents": 4210757.55,
+                "spend_cents": 185907,
+                "value": 21.649806354790297
+              },
+              {
+                "group_value": "Campaign 17",
+                "net_revenue_cents": 3609371.85,
+                "spend_cents": 165608,
+                "value": 20.794670849234336
+              },
+              {
+                "group_value": "Campaign 18",
+                "net_revenue_cents": 3642406.9,
+                "spend_cents": 164153,
+                "value": 21.18909736648127
+              },
+              {
+                "group_value": "Campaign 19",
+                "net_revenue_cents": 4538257.85,
+                "spend_cents": 79775,
+                "value": 55.88822124725791
+              },
+              {
+                "group_value": "Campaign 20",
+                "net_revenue_cents": 3795193.5,
+                "spend_cents": 135075,
+                "value": 27.09693503609106
+              },
+              {
+                "group_value": "未归因",
+                "net_revenue_cents": 973556.0,
+                "spend_cents": 0,
+                "value": null
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "marketing_net_roi",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-01-01",
+            "end_date_exclusive": "2026-02-01",
+            "periods": [
+              [
+                "2026-01-01",
+                "2026-02-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "campaign"
+          },
+          "actual_metric_id": "marketing_net_roi",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents\n    FROM orders o WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), valid_refunds AS (\n    SELECT r.refund_id, r.order_id, r.amount_cents\n    FROM refunds r CROSS JOIN data_meta m\n    WHERE r.status = 'approved' AND m.key = 'snapshot_at'\n      AND r.refunded_at < m.value AND r.recorded_at <= m.value\n), refund_reversals_by_refund AS (\n    SELECT rv.refund_id, SUM(rv.amount_cents) AS reversed_cents\n    FROM refund_reversals rv CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND rv.recorded_at <= m.value\n    GROUP BY rv.refund_id\n), net_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents - COALESCE(rv.reversed_cents, 0)) AS refund_cents\n    FROM valid_refunds r LEFT JOIN refund_reversals_by_refund rv ON rv.refund_id = r.refund_id\n    GROUP BY r.order_id\n), touch_revenue AS (\n    SELECT COALESCE(c.campaign_name, '未归因') AS group_value,\n           SUM((o.paid_amount_cents - COALESCE(r.refund_cents, 0)) *\n               CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END) AS net_revenue_cents\n    FROM eligible_orders o\n    LEFT JOIN net_refunds r ON r.order_id = o.order_id\n    LEFT JOIN campaign_attributions a ON a.order_id = o.order_id\n    LEFT JOIN campaigns c ON c.campaign_id = a.campaign_id\n    GROUP BY COALESCE(c.campaign_name, '未归因')\n), spend_ranked AS (\n    SELECT s.business_event_id, s.revision, s.recorded_at, s.event_id, s.spend_cents,\n           s.event_status, s.campaign_id, ROW_NUMBER() OVER (\n        PARTITION BY s.business_event_id ORDER BY s.revision DESC, s.recorded_at DESC, s.event_id DESC\n    ) AS revision_rank\n    FROM campaign_spend_events s CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND s.spent_at >= ? AND s.spent_at < ? AND s.recorded_at <= m.value\n), valid_spend AS (\n    SELECT s.campaign_id, s.spend_cents\n    FROM spend_ranked s WHERE s.revision_rank = 1 AND s.event_status = 'active'\n), spend_totals AS (\n    SELECT c.campaign_name AS group_value, SUM(s.spend_cents) AS spend_cents\n    FROM valid_spend s JOIN campaigns c ON c.campaign_id = s.campaign_id\n    GROUP BY c.campaign_name\n), campaign_keys AS (\n    SELECT group_value FROM touch_revenue UNION SELECT group_value FROM spend_totals\n), combined AS (\n    SELECT k.group_value, COALESCE(r.net_revenue_cents, 0) AS net_revenue_cents,\n           COALESCE(s.spend_cents, 0) AS spend_cents\n    FROM campaign_keys k\n    LEFT JOIN touch_revenue r ON r.group_value = k.group_value\n    LEFT JOIN spend_totals s ON s.group_value = k.group_value\n)\nSELECT group_value, net_revenue_cents, spend_cents, (net_revenue_cents - spend_cents) * 1.0 / NULLIF(spend_cents, 0) AS value FROM combined ORDER BY group_value LIMIT 100",
+          "parameter_count": 4,
+          "sql_sha256": "f46c3e6dc6276566a65ba700e79f0a50500606c3e1b5de65ad245f6c62d09e9a",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2884.405,
+              "usage": {
+                "prompt_tokens": 715,
+                "completion_tokens": 491,
+                "total_tokens": 1206,
+                "prompt_cache_hit_tokens": 512,
+                "prompt_cache_miss_tokens": 203
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792741992
+            }
+          ]
+        },
+        {
+          "case_id": "DV-M02",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-01 至 2026-10-31 整体营销ROI是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-11-01",
+            "analysis_start": "2026-10-01",
+            "case_id": "DV-M02",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": null,
+            "domain": "marketing_roi",
+            "expected_rows": [
+              {
+                "group_value": "全部",
+                "net_revenue_cents": 85419730.0,
+                "spend_cents": 2284500,
+                "value": 36.39099584154082
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "marketing_net_roi",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-01",
+            "end_date_exclusive": "2026-11-01",
+            "periods": [
+              [
+                "2026-10-01",
+                "2026-11-01"
+              ]
+            ],
+            "region": null,
+            "dimension": null
+          },
+          "actual_metric_id": "marketing_net_roi",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents\n    FROM orders o WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), valid_refunds AS (\n    SELECT r.refund_id, r.order_id, r.amount_cents\n    FROM refunds r CROSS JOIN data_meta m\n    WHERE r.status = 'approved' AND m.key = 'snapshot_at'\n      AND r.refunded_at < m.value AND r.recorded_at <= m.value\n), refund_reversals_by_refund AS (\n    SELECT rv.refund_id, SUM(rv.amount_cents) AS reversed_cents\n    FROM refund_reversals rv CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND rv.recorded_at <= m.value\n    GROUP BY rv.refund_id\n), net_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents - COALESCE(rv.reversed_cents, 0)) AS refund_cents\n    FROM valid_refunds r LEFT JOIN refund_reversals_by_refund rv ON rv.refund_id = r.refund_id\n    GROUP BY r.order_id\n), touch_revenue AS (\n    SELECT COALESCE(c.campaign_name, '未归因') AS group_value,\n           SUM((o.paid_amount_cents - COALESCE(r.refund_cents, 0)) *\n               CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END) AS net_revenue_cents\n    FROM eligible_orders o\n    LEFT JOIN net_refunds r ON r.order_id = o.order_id\n    LEFT JOIN campaign_attributions a ON a.order_id = o.order_id\n    LEFT JOIN campaigns c ON c.campaign_id = a.campaign_id\n    GROUP BY COALESCE(c.campaign_name, '未归因')\n), spend_ranked AS (\n    SELECT s.business_event_id, s.revision, s.recorded_at, s.event_id, s.spend_cents,\n           s.event_status, s.campaign_id, ROW_NUMBER() OVER (\n        PARTITION BY s.business_event_id ORDER BY s.revision DESC, s.recorded_at DESC, s.event_id DESC\n    ) AS revision_rank\n    FROM campaign_spend_events s CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND s.spent_at >= ? AND s.spent_at < ? AND s.recorded_at <= m.value\n), valid_spend AS (\n    SELECT s.campaign_id, s.spend_cents\n    FROM spend_ranked s WHERE s.revision_rank = 1 AND s.event_status = 'active'\n), spend_totals AS (\n    SELECT c.campaign_name AS group_value, SUM(s.spend_cents) AS spend_cents\n    FROM valid_spend s JOIN campaigns c ON c.campaign_id = s.campaign_id\n    GROUP BY c.campaign_name\n), campaign_keys AS (\n    SELECT group_value FROM touch_revenue UNION SELECT group_value FROM spend_totals\n), combined AS (\n    SELECT k.group_value, COALESCE(r.net_revenue_cents, 0) AS net_revenue_cents,\n           COALESCE(s.spend_cents, 0) AS spend_cents\n    FROM campaign_keys k\n    LEFT JOIN touch_revenue r ON r.group_value = k.group_value\n    LEFT JOIN spend_totals s ON s.group_value = k.group_value\n)\nSELECT '全部' AS group_value, SUM(net_revenue_cents) AS net_revenue_cents, SUM(spend_cents) AS spend_cents, (SUM(net_revenue_cents) - SUM(spend_cents)) * 1.0 / NULLIF(SUM(spend_cents), 0) AS value FROM combined LIMIT 1",
+          "parameter_count": 4,
+          "sql_sha256": "46b412d9fc616b16db2519c0fecde614fab04eb5b35615b1e7a3435e69037980",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2855.218,
+              "usage": {
+                "prompt_tokens": 713,
+                "completion_tokens": 396,
+                "total_tokens": 1109,
+                "prompt_cache_hit_tokens": 512,
+                "prompt_cache_miss_tokens": 201
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792741996
+            }
+          ]
+        },
+        {
+          "case_id": "DV-M03",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-31当天各营销活动净投资回报率是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-11-01",
+            "analysis_start": "2026-10-31",
+            "case_id": "DV-M03",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "campaign",
+            "domain": "marketing_roi",
+            "expected_rows": [
+              {
+                "group_value": "Campaign 01",
+                "net_revenue_cents": 60960.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 02",
+                "net_revenue_cents": 9081.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 03",
+                "net_revenue_cents": 70589.6,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 04",
+                "net_revenue_cents": 65106.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 05",
+                "net_revenue_cents": 103966.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 06",
+                "net_revenue_cents": 73471.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 07",
+                "net_revenue_cents": 9985.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 08",
+                "net_revenue_cents": 162270.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 09",
+                "net_revenue_cents": 105611.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 10",
+                "net_revenue_cents": 107981.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 11",
+                "net_revenue_cents": 3361.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 12",
+                "net_revenue_cents": 34454.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 13",
+                "net_revenue_cents": 80506.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 14",
+                "net_revenue_cents": 108804.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 15",
+                "net_revenue_cents": 130083.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 16",
+                "net_revenue_cents": 94930.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 17",
+                "net_revenue_cents": 142947.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 18",
+                "net_revenue_cents": 250946.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 19",
+                "net_revenue_cents": 121545.9,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 20",
+                "net_revenue_cents": 28955.0,
+                "spend_cents": 57383,
+                "value": -0.4954080476796264
+              },
+              {
+                "group_value": "未归因",
+                "net_revenue_cents": 1990.0,
+                "spend_cents": 0,
+                "value": null
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "marketing_net_roi",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-31",
+            "end_date_exclusive": "2026-11-01",
+            "periods": [
+              [
+                "2026-10-31",
+                "2026-11-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "campaign"
+          },
+          "actual_metric_id": "marketing_net_roi",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents\n    FROM orders o WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), valid_refunds AS (\n    SELECT r.refund_id, r.order_id, r.amount_cents\n    FROM refunds r CROSS JOIN data_meta m\n    WHERE r.status = 'approved' AND m.key = 'snapshot_at'\n      AND r.refunded_at < m.value AND r.recorded_at <= m.value\n), refund_reversals_by_refund AS (\n    SELECT rv.refund_id, SUM(rv.amount_cents) AS reversed_cents\n    FROM refund_reversals rv CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND rv.recorded_at <= m.value\n    GROUP BY rv.refund_id\n), net_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents - COALESCE(rv.reversed_cents, 0)) AS refund_cents\n    FROM valid_refunds r LEFT JOIN refund_reversals_by_refund rv ON rv.refund_id = r.refund_id\n    GROUP BY r.order_id\n), touch_revenue AS (\n    SELECT COALESCE(c.campaign_name, '未归因') AS group_value,\n           SUM((o.paid_amount_cents - COALESCE(r.refund_cents, 0)) *\n               CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END) AS net_revenue_cents\n    FROM eligible_orders o\n    LEFT JOIN net_refunds r ON r.order_id = o.order_id\n    LEFT JOIN campaign_attributions a ON a.order_id = o.order_id\n    LEFT JOIN campaigns c ON c.campaign_id = a.campaign_id\n    GROUP BY COALESCE(c.campaign_name, '未归因')\n), spend_ranked AS (\n    SELECT s.business_event_id, s.revision, s.recorded_at, s.event_id, s.spend_cents,\n           s.event_status, s.campaign_id, ROW_NUMBER() OVER (\n        PARTITION BY s.business_event_id ORDER BY s.revision DESC, s.recorded_at DESC, s.event_id DESC\n    ) AS revision_rank\n    FROM campaign_spend_events s CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND s.spent_at >= ? AND s.spent_at < ? AND s.recorded_at <= m.value\n), valid_spend AS (\n    SELECT s.campaign_id, s.spend_cents\n    FROM spend_ranked s WHERE s.revision_rank = 1 AND s.event_status = 'active'\n), spend_totals AS (\n    SELECT c.campaign_name AS group_value, SUM(s.spend_cents) AS spend_cents\n    FROM valid_spend s JOIN campaigns c ON c.campaign_id = s.campaign_id\n    GROUP BY c.campaign_name\n), campaign_keys AS (\n    SELECT group_value FROM touch_revenue UNION SELECT group_value FROM spend_totals\n), combined AS (\n    SELECT k.group_value, COALESCE(r.net_revenue_cents, 0) AS net_revenue_cents,\n           COALESCE(s.spend_cents, 0) AS spend_cents\n    FROM campaign_keys k\n    LEFT JOIN touch_revenue r ON r.group_value = k.group_value\n    LEFT JOIN spend_totals s ON s.group_value = k.group_value\n)\nSELECT group_value, net_revenue_cents, spend_cents, (net_revenue_cents - spend_cents) * 1.0 / NULLIF(spend_cents, 0) AS value FROM combined ORDER BY group_value LIMIT 100",
+          "parameter_count": 4,
+          "sql_sha256": "f46c3e6dc6276566a65ba700e79f0a50500606c3e1b5de65ad245f6c62d09e9a",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2986.426,
+              "usage": {
+                "prompt_tokens": 707,
+                "completion_tokens": 423,
+                "total_tokens": 1130,
+                "prompt_cache_hit_tokens": 512,
+                "prompt_cache_miss_tokens": 195
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792742000
+            }
+          ]
+        },
+        {
+          "case_id": "DV-M04",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-01-15 至 2026-02-14 每个营销活动的净投资回报率是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-02-15",
+            "analysis_start": "2026-01-15",
+            "case_id": "DV-M04",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "campaign",
+            "domain": "marketing_roi",
+            "expected_rows": [
+              {
+                "group_value": "Campaign 01",
+                "net_revenue_cents": 5457420.0,
+                "spend_cents": 209173,
+                "value": 25.090461005961572
+              },
+              {
+                "group_value": "Campaign 02",
+                "net_revenue_cents": 4618840.55,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 03",
+                "net_revenue_cents": 3834619.35,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 04",
+                "net_revenue_cents": 4590781.8,
+                "spend_cents": 201131,
+                "value": 21.82483456056003
+              },
+              {
+                "group_value": "Campaign 05",
+                "net_revenue_cents": 4627174.4,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 06",
+                "net_revenue_cents": 4184318.1000000006,
+                "spend_cents": 17422,
+                "value": 239.17438296406846
+              },
+              {
+                "group_value": "Campaign 07",
+                "net_revenue_cents": 4172362.5,
+                "spend_cents": 97943,
+                "value": 41.59990504681294
+              },
+              {
+                "group_value": "Campaign 08",
+                "net_revenue_cents": 4610186.4,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 09",
+                "net_revenue_cents": 3417409.4000000004,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 10",
+                "net_revenue_cents": 4344669.449999999,
+                "spend_cents": 160130,
+                "value": 26.132139199400484
+              },
+              {
+                "group_value": "Campaign 11",
+                "net_revenue_cents": 5290516.75,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 12",
+                "net_revenue_cents": 3597663.1,
+                "spend_cents": 212347,
+                "value": 15.942377806138067
+              },
+              {
+                "group_value": "Campaign 13",
+                "net_revenue_cents": 4385080.649999999,
+                "spend_cents": 107116,
+                "value": 39.93768111206542
+              },
+              {
+                "group_value": "Campaign 14",
+                "net_revenue_cents": 4998404.949999999,
+                "spend_cents": 32827,
+                "value": 151.26505468059827
+              },
+              {
+                "group_value": "Campaign 15",
+                "net_revenue_cents": 4563803.75,
+                "spend_cents": 127107,
+                "value": 34.9052117507297
+              },
+              {
+                "group_value": "Campaign 16",
+                "net_revenue_cents": 4863551.75,
+                "spend_cents": 185907,
+                "value": 25.161208292318204
+              },
+              {
+                "group_value": "Campaign 17",
+                "net_revenue_cents": 3163271.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 18",
+                "net_revenue_cents": 4445200.6,
+                "spend_cents": 145765,
+                "value": 29.495664940143378
+              },
+              {
+                "group_value": "Campaign 19",
+                "net_revenue_cents": 4421222.2,
+                "spend_cents": 79775,
+                "value": 54.42114948292072
+              },
+              {
+                "group_value": "Campaign 20",
+                "net_revenue_cents": 3764860.8,
+                "spend_cents": 135075,
+                "value": 26.872373126041087
+              },
+              {
+                "group_value": "未归因",
+                "net_revenue_cents": 952411.0,
+                "spend_cents": 0,
+                "value": null
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "marketing_net_roi",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-01-15",
+            "end_date_exclusive": "2026-02-15",
+            "periods": [
+              [
+                "2026-01-15",
+                "2026-02-15"
+              ]
+            ],
+            "region": null,
+            "dimension": "campaign"
+          },
+          "actual_metric_id": "marketing_net_roi",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents\n    FROM orders o WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), valid_refunds AS (\n    SELECT r.refund_id, r.order_id, r.amount_cents\n    FROM refunds r CROSS JOIN data_meta m\n    WHERE r.status = 'approved' AND m.key = 'snapshot_at'\n      AND r.refunded_at < m.value AND r.recorded_at <= m.value\n), refund_reversals_by_refund AS (\n    SELECT rv.refund_id, SUM(rv.amount_cents) AS reversed_cents\n    FROM refund_reversals rv CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND rv.recorded_at <= m.value\n    GROUP BY rv.refund_id\n), net_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents - COALESCE(rv.reversed_cents, 0)) AS refund_cents\n    FROM valid_refunds r LEFT JOIN refund_reversals_by_refund rv ON rv.refund_id = r.refund_id\n    GROUP BY r.order_id\n), touch_revenue AS (\n    SELECT COALESCE(c.campaign_name, '未归因') AS group_value,\n           SUM((o.paid_amount_cents - COALESCE(r.refund_cents, 0)) *\n               CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END) AS net_revenue_cents\n    FROM eligible_orders o\n    LEFT JOIN net_refunds r ON r.order_id = o.order_id\n    LEFT JOIN campaign_attributions a ON a.order_id = o.order_id\n    LEFT JOIN campaigns c ON c.campaign_id = a.campaign_id\n    GROUP BY COALESCE(c.campaign_name, '未归因')\n), spend_ranked AS (\n    SELECT s.business_event_id, s.revision, s.recorded_at, s.event_id, s.spend_cents,\n           s.event_status, s.campaign_id, ROW_NUMBER() OVER (\n        PARTITION BY s.business_event_id ORDER BY s.revision DESC, s.recorded_at DESC, s.event_id DESC\n    ) AS revision_rank\n    FROM campaign_spend_events s CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND s.spent_at >= ? AND s.spent_at < ? AND s.recorded_at <= m.value\n), valid_spend AS (\n    SELECT s.campaign_id, s.spend_cents\n    FROM spend_ranked s WHERE s.revision_rank = 1 AND s.event_status = 'active'\n), spend_totals AS (\n    SELECT c.campaign_name AS group_value, SUM(s.spend_cents) AS spend_cents\n    FROM valid_spend s JOIN campaigns c ON c.campaign_id = s.campaign_id\n    GROUP BY c.campaign_name\n), campaign_keys AS (\n    SELECT group_value FROM touch_revenue UNION SELECT group_value FROM spend_totals\n), combined AS (\n    SELECT k.group_value, COALESCE(r.net_revenue_cents, 0) AS net_revenue_cents,\n           COALESCE(s.spend_cents, 0) AS spend_cents\n    FROM campaign_keys k\n    LEFT JOIN touch_revenue r ON r.group_value = k.group_value\n    LEFT JOIN spend_totals s ON s.group_value = k.group_value\n)\nSELECT group_value, net_revenue_cents, spend_cents, (net_revenue_cents - spend_cents) * 1.0 / NULLIF(spend_cents, 0) AS value FROM combined ORDER BY group_value LIMIT 100",
+          "parameter_count": 4,
+          "sql_sha256": "f46c3e6dc6276566a65ba700e79f0a50500606c3e1b5de65ad245f6c62d09e9a",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2453.205,
+              "usage": {
+                "prompt_tokens": 716,
+                "completion_tokens": 415,
+                "total_tokens": 1131,
+                "prompt_cache_hit_tokens": 512,
+                "prompt_cache_miss_tokens": 204
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792742003
+            }
+          ]
+        },
+        {
+          "case_id": "DV-M05",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "question": "各营销活动ROI是多少？",
+          "oracle_gold": {
+            "case_id": "DV-M05",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "domain": "marketing_roi",
+            "expected_status": "clarify"
+          },
+          "actual_stage": null,
+          "actual_plan": null,
+          "actual_metric_id": null,
+          "compiled_sql": null,
+          "parameter_count": null,
+          "sql_sha256": null,
+          "verification_passed": null,
+          "failure_detail": null,
+          "model_calls": 0,
+          "call_usage": []
+        },
+        {
+          "case_id": "DV-M06",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "question": "2026-10-01 至 2026-10-31 华东各营销活动ROI是多少？",
+          "oracle_gold": {
+            "case_id": "DV-M06",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "domain": "marketing_roi",
+            "expected_status": "clarify"
+          },
+          "actual_stage": null,
+          "actual_plan": null,
+          "actual_metric_id": null,
+          "compiled_sql": null,
+          "parameter_count": null,
+          "sql_sha256": null,
+          "verification_passed": null,
+          "failure_detail": null,
+          "model_calls": 0,
+          "call_usage": []
+        }
+      ]
+    },
+    {
+      "backend": "postgresql",
+      "tenant_id": "tenant-b",
+      "passed": 12,
+      "total": 12,
+      "answerable_passed": 8,
+      "answerable_total": 8,
+      "guard_passed": 4,
+      "guard_total": 4,
+      "correct_refusals": 0,
+      "false_refusals": [],
+      "false_accepts": [],
+      "failures": [],
+      "cases": [
+        {
+          "case_id": "DV-R01",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-01 至 2026-10-14 批准退款订单率是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-10-15",
+            "analysis_start": "2026-10-01",
+            "case_id": "DV-R01",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": null,
+            "domain": "refunds",
+            "expected_rows": [
+              {
+                "denominator": 1824,
+                "numerator": 281,
+                "value": 0.15405701754385964
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "approved_refund_order_rate",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-01",
+            "end_date_exclusive": "2026-10-15",
+            "periods": [
+              [
+                "2026-10-01",
+                "2026-10-15"
+              ]
+            ],
+            "region": null,
+            "dimension": null
+          },
+          "actual_metric_id": "approved_refund_order_rate",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents, '全部' AS group_value\n    FROM orders o\n    WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), approved_refunds AS (\n    SELECT order_id, SUM(amount_cents) AS refund_cents\n    FROM refunds\n    WHERE status = 'approved'\n    GROUP BY order_id\n), base AS (\n    SELECT b.order_id, b.paid_amount_cents, b.group_value\n    FROM eligible_orders b\n)\nSELECT COUNT(r.order_id) AS numerator, COUNT(*) AS denominator, 1.0 * COUNT(r.order_id) / NULLIF(COUNT(*), 0) AS value\nFROM base b\nLEFT JOIN approved_refunds r ON r.order_id = b.order_id\n\n\nLIMIT 100",
+          "parameter_count": 2,
+          "sql_sha256": "c7c296ecc73a7326754ac375271cb8379a67350b9512d94d48f698f1ee79f3f5",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2484.423,
+              "usage": {
+                "prompt_tokens": 527,
+                "completion_tokens": 422,
+                "total_tokens": 949,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 143
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792742006
+            }
+          ]
+        },
+        {
+          "case_id": "DV-R02",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-01 至 2026-10-31 按渠道统计批准退款金额率。",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-11-01",
+            "analysis_start": "2026-10-01",
+            "case_id": "DV-R02",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "channel",
+            "domain": "refunds",
+            "expected_rows": [
+              {
+                "denominator_cents": 24129200,
+                "group_value": "app",
+                "numerator_cents": 2003441,
+                "value": 0.08302973161149146
+              },
+              {
+                "denominator_cents": 24324790,
+                "group_value": "partner",
+                "numerator_cents": 2535138,
+                "value": 0.10422034475939977
+              },
+              {
+                "denominator_cents": 24008930,
+                "group_value": "store",
+                "numerator_cents": 2673800,
+                "value": 0.11136689556760755
+              },
+              {
+                "denominator_cents": 21784550,
+                "group_value": "web",
+                "numerator_cents": 1650815,
+                "value": 0.07577916459141915
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "approved_refund_amount_rate",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-01",
+            "end_date_exclusive": "2026-11-01",
+            "periods": [
+              [
+                "2026-10-01",
+                "2026-11-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "channel"
+          },
+          "actual_metric_id": "approved_refund_amount_rate",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents, o.channel AS group_value\n    FROM orders o\n    WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), approved_refunds AS (\n    SELECT order_id, SUM(amount_cents) AS refund_cents\n    FROM refunds\n    WHERE status = 'approved'\n    GROUP BY order_id\n), base AS (\n    SELECT b.order_id, b.paid_amount_cents, b.group_value\n    FROM eligible_orders b\n)\nSELECT group_value, SUM(COALESCE(r.refund_cents, 0)) AS numerator_cents, SUM(b.paid_amount_cents) AS denominator_cents, 1.0 * SUM(COALESCE(r.refund_cents, 0)) / NULLIF(SUM(b.paid_amount_cents), 0) AS value\nFROM base b\nLEFT JOIN approved_refunds r ON r.order_id = b.order_id\nGROUP BY group_value\nORDER BY group_value\nLIMIT 100",
+          "parameter_count": 2,
+          "sql_sha256": "a18e43ddd2ef48ea5eb244c1ee74fa8ed2a6545ebf08b4b64476831ac2a6e29e",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2759.611,
+              "usage": {
+                "prompt_tokens": 521,
+                "completion_tokens": 389,
+                "total_tokens": 910,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 137
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792742008
+            }
+          ]
+        },
+        {
+          "case_id": "DV-R03",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-11-01 至 2026-11-30 按地区分组的批准退款订单率。",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-12-01",
+            "analysis_start": "2026-11-01",
+            "case_id": "DV-R03",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "region",
+            "domain": "refunds",
+            "expected_rows": [
+              {
+                "denominator": 1012,
+                "group_value": "华东",
+                "numerator": 150,
+                "value": 0.1482213438735178
+              },
+              {
+                "denominator": 1047,
+                "group_value": "华北",
+                "numerator": 163,
+                "value": 0.1556829035339064
+              },
+              {
+                "denominator": 990,
+                "group_value": "华南",
+                "numerator": 148,
+                "value": 0.1494949494949495
+              },
+              {
+                "denominator": 962,
+                "group_value": "西南",
+                "numerator": 144,
+                "value": 0.1496881496881497
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "approved_refund_order_rate",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-11-01",
+            "end_date_exclusive": "2026-12-01",
+            "periods": [
+              [
+                "2026-11-01",
+                "2026-12-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "region"
+          },
+          "actual_metric_id": "approved_refund_order_rate",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents, o.region AS group_value\n    FROM orders o\n    WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), approved_refunds AS (\n    SELECT order_id, SUM(amount_cents) AS refund_cents\n    FROM refunds\n    WHERE status = 'approved'\n    GROUP BY order_id\n), base AS (\n    SELECT b.order_id, b.paid_amount_cents, b.group_value\n    FROM eligible_orders b\n)\nSELECT group_value, COUNT(r.order_id) AS numerator, COUNT(*) AS denominator, 1.0 * COUNT(r.order_id) / NULLIF(COUNT(*), 0) AS value\nFROM base b\nLEFT JOIN approved_refunds r ON r.order_id = b.order_id\nGROUP BY group_value\nORDER BY group_value\nLIMIT 100",
+          "parameter_count": 2,
+          "sql_sha256": "108be3d21041d5136c631fd265e0954b5727d936f524234854ed4ae3ee253bf9",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 3773.648,
+              "usage": {
+                "prompt_tokens": 530,
+                "completion_tokens": 585,
+                "total_tokens": 1115,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 146
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792742011
+            }
+          ]
+        },
+        {
+          "case_id": "DV-R04",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-01 至 2026-10-31 按月趋势展示批准退款订单率。",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-11-01",
+            "analysis_start": "2026-10-01",
+            "case_id": "DV-R04",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "month_utc",
+            "domain": "refunds",
+            "expected_rows": [
+              {
+                "denominator": 4052,
+                "group_value": "2026-10",
+                "numerator": 619,
+                "value": 0.15276406712734453
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "approved_refund_order_rate",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-01",
+            "end_date_exclusive": "2026-11-01",
+            "periods": [
+              [
+                "2026-10-01",
+                "2026-11-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "month_utc"
+          },
+          "actual_metric_id": "approved_refund_order_rate",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents, substr(o.ordered_at, 1, 7) AS group_value\n    FROM orders o\n    WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), approved_refunds AS (\n    SELECT order_id, SUM(amount_cents) AS refund_cents\n    FROM refunds\n    WHERE status = 'approved'\n    GROUP BY order_id\n), base AS (\n    SELECT b.order_id, b.paid_amount_cents, b.group_value\n    FROM eligible_orders b\n)\nSELECT group_value, COUNT(r.order_id) AS numerator, COUNT(*) AS denominator, 1.0 * COUNT(r.order_id) / NULLIF(COUNT(*), 0) AS value\nFROM base b\nLEFT JOIN approved_refunds r ON r.order_id = b.order_id\nGROUP BY group_value\nORDER BY group_value\nLIMIT 100",
+          "parameter_count": 2,
+          "sql_sha256": "a287d62e8c1a89fdc1f976715ff19e890faeef0db3426dfd54611b240fbdbfe4",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 2931.285,
+              "usage": {
+                "prompt_tokens": 529,
+                "completion_tokens": 449,
+                "total_tokens": 978,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 145
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792742015
+            }
+          ]
+        },
+        {
+          "case_id": "DV-R05",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "question": "2026-10-01 至 2026-10-31 同时给批准退款订单率和金额率。",
+          "oracle_gold": {
+            "case_id": "DV-R05",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "domain": "refunds",
+            "expected_status": "clarify"
+          },
+          "actual_stage": null,
+          "actual_plan": null,
+          "actual_metric_id": null,
+          "compiled_sql": null,
+          "parameter_count": null,
+          "sql_sha256": null,
+          "verification_passed": null,
+          "failure_detail": null,
+          "model_calls": 0,
+          "call_usage": []
+        },
+        {
+          "case_id": "DV-R06",
+          "domain": "refunds",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "question": "2026-10-01 至 2026-10-31 按华北和华东地区拆分退款订单率。",
+          "oracle_gold": {
+            "case_id": "DV-R06",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "domain": "refunds",
+            "expected_status": "clarify"
+          },
+          "actual_stage": null,
+          "actual_plan": null,
+          "actual_metric_id": null,
+          "compiled_sql": null,
+          "parameter_count": null,
+          "sql_sha256": null,
+          "verification_passed": null,
+          "failure_detail": null,
+          "model_calls": 0,
+          "call_usage": []
+        },
+        {
+          "case_id": "DV-M01",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-01-01 至 2026-01-31 各营销活动的净ROI是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-02-01",
+            "analysis_start": "2026-01-01",
+            "case_id": "DV-M01",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "campaign",
+            "domain": "marketing_roi",
+            "expected_rows": [
+              {
+                "group_value": "Campaign 01",
+                "net_revenue_cents": 5197815.5,
+                "spend_cents": 209173,
+                "value": 23.849361533276284
+              },
+              {
+                "group_value": "Campaign 02",
+                "net_revenue_cents": 4526900.8,
+                "spend_cents": 40636,
+                "value": 110.40124027955507
+              },
+              {
+                "group_value": "Campaign 03",
+                "net_revenue_cents": 4427826.75,
+                "spend_cents": 217727,
+                "value": 19.336599273402012
+              },
+              {
+                "group_value": "Campaign 04",
+                "net_revenue_cents": 4735614.800000001,
+                "spend_cents": 201131,
+                "value": 22.54492743535308
+              },
+              {
+                "group_value": "Campaign 05",
+                "net_revenue_cents": 4579122.1,
+                "spend_cents": 72027,
+                "value": 62.575077401529974
+              },
+              {
+                "group_value": "Campaign 06",
+                "net_revenue_cents": 4407696.15,
+                "spend_cents": 195074,
+                "value": 21.594995488891396
+              },
+              {
+                "group_value": "Campaign 07",
+                "net_revenue_cents": 4385235.85,
+                "spend_cents": 97943,
+                "value": 43.77334623199207
+              },
+              {
+                "group_value": "Campaign 08",
+                "net_revenue_cents": 5409024.049999999,
+                "spend_cents": 167537,
+                "value": 31.285549162274595
+              },
+              {
+                "group_value": "Campaign 09",
+                "net_revenue_cents": 3355032.85,
+                "spend_cents": 42673,
+                "value": 77.6219119818152
+              },
+              {
+                "group_value": "Campaign 10",
+                "net_revenue_cents": 4617583.4,
+                "spend_cents": 98552,
+                "value": 45.85428403279487
+              },
+              {
+                "group_value": "Campaign 11",
+                "net_revenue_cents": 5276448.899999999,
+                "spend_cents": 150445,
+                "value": 34.07227824121772
+              },
+              {
+                "group_value": "Campaign 12",
+                "net_revenue_cents": 4305112.4,
+                "spend_cents": 157553,
+                "value": 26.324851954580367
+              },
+              {
+                "group_value": "Campaign 13",
+                "net_revenue_cents": 4175767.0000000005,
+                "spend_cents": 22441,
+                "value": 185.07758121295845
+              },
+              {
+                "group_value": "Campaign 14",
+                "net_revenue_cents": 5436141.1,
+                "spend_cents": 32827,
+                "value": 164.5996923264386
+              },
+              {
+                "group_value": "Campaign 15",
+                "net_revenue_cents": 4826380.699999999,
+                "spend_cents": 127107,
+                "value": 36.971006317512014
+              },
+              {
+                "group_value": "Campaign 16",
+                "net_revenue_cents": 4210757.55,
+                "spend_cents": 185907,
+                "value": 21.649806354790297
+              },
+              {
+                "group_value": "Campaign 17",
+                "net_revenue_cents": 3609371.85,
+                "spend_cents": 165608,
+                "value": 20.794670849234336
+              },
+              {
+                "group_value": "Campaign 18",
+                "net_revenue_cents": 3642406.9,
+                "spend_cents": 164153,
+                "value": 21.18909736648127
+              },
+              {
+                "group_value": "Campaign 19",
+                "net_revenue_cents": 4538257.85,
+                "spend_cents": 79775,
+                "value": 55.88822124725791
+              },
+              {
+                "group_value": "Campaign 20",
+                "net_revenue_cents": 3795193.5,
+                "spend_cents": 135075,
+                "value": 27.09693503609106
+              },
+              {
+                "group_value": "未归因",
+                "net_revenue_cents": 973556.0,
+                "spend_cents": 0,
+                "value": null
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "marketing_net_roi",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-01-01",
+            "end_date_exclusive": "2026-02-01",
+            "periods": [
+              [
+                "2026-01-01",
+                "2026-02-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "campaign"
+          },
+          "actual_metric_id": "marketing_net_roi",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents\n    FROM orders o WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), valid_refunds AS (\n    SELECT r.refund_id, r.order_id, r.amount_cents\n    FROM refunds r CROSS JOIN data_meta m\n    WHERE r.status = 'approved' AND m.key = 'snapshot_at'\n      AND r.refunded_at < m.value AND r.recorded_at <= m.value\n), refund_reversals_by_refund AS (\n    SELECT rv.refund_id, SUM(rv.amount_cents) AS reversed_cents\n    FROM refund_reversals rv CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND rv.recorded_at <= m.value\n    GROUP BY rv.refund_id\n), net_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents - COALESCE(rv.reversed_cents, 0)) AS refund_cents\n    FROM valid_refunds r LEFT JOIN refund_reversals_by_refund rv ON rv.refund_id = r.refund_id\n    GROUP BY r.order_id\n), touch_revenue AS (\n    SELECT COALESCE(c.campaign_name, '未归因') AS group_value,\n           SUM((o.paid_amount_cents - COALESCE(r.refund_cents, 0)) *\n               CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END) AS net_revenue_cents\n    FROM eligible_orders o\n    LEFT JOIN net_refunds r ON r.order_id = o.order_id\n    LEFT JOIN campaign_attributions a ON a.order_id = o.order_id\n    LEFT JOIN campaigns c ON c.campaign_id = a.campaign_id\n    GROUP BY COALESCE(c.campaign_name, '未归因')\n), spend_ranked AS (\n    SELECT s.business_event_id, s.revision, s.recorded_at, s.event_id, s.spend_cents,\n           s.event_status, s.campaign_id, ROW_NUMBER() OVER (\n        PARTITION BY s.business_event_id ORDER BY s.revision DESC, s.recorded_at DESC, s.event_id DESC\n    ) AS revision_rank\n    FROM campaign_spend_events s CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND s.spent_at >= ? AND s.spent_at < ? AND s.recorded_at <= m.value\n), valid_spend AS (\n    SELECT s.campaign_id, s.spend_cents\n    FROM spend_ranked s WHERE s.revision_rank = 1 AND s.event_status = 'active'\n), spend_totals AS (\n    SELECT c.campaign_name AS group_value, SUM(s.spend_cents) AS spend_cents\n    FROM valid_spend s JOIN campaigns c ON c.campaign_id = s.campaign_id\n    GROUP BY c.campaign_name\n), campaign_keys AS (\n    SELECT group_value FROM touch_revenue UNION SELECT group_value FROM spend_totals\n), combined AS (\n    SELECT k.group_value, COALESCE(r.net_revenue_cents, 0) AS net_revenue_cents,\n           COALESCE(s.spend_cents, 0) AS spend_cents\n    FROM campaign_keys k\n    LEFT JOIN touch_revenue r ON r.group_value = k.group_value\n    LEFT JOIN spend_totals s ON s.group_value = k.group_value\n)\nSELECT group_value, net_revenue_cents, spend_cents, (net_revenue_cents - spend_cents) * 1.0 / NULLIF(spend_cents, 0) AS value FROM combined ORDER BY group_value LIMIT 100",
+          "parameter_count": 4,
+          "sql_sha256": "f46c3e6dc6276566a65ba700e79f0a50500606c3e1b5de65ad245f6c62d09e9a",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 1781.103,
+              "usage": {
+                "prompt_tokens": 715,
+                "completion_tokens": 233,
+                "total_tokens": 948,
+                "prompt_cache_hit_tokens": 512,
+                "prompt_cache_miss_tokens": 203
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792742018
+            }
+          ]
+        },
+        {
+          "case_id": "DV-M02",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-01 至 2026-10-31 整体营销ROI是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-11-01",
+            "analysis_start": "2026-10-01",
+            "case_id": "DV-M02",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": null,
+            "domain": "marketing_roi",
+            "expected_rows": [
+              {
+                "group_value": "全部",
+                "net_revenue_cents": 85419730.0,
+                "spend_cents": 2284500,
+                "value": 36.39099584154082
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "marketing_net_roi",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-01",
+            "end_date_exclusive": "2026-11-01",
+            "periods": [
+              [
+                "2026-10-01",
+                "2026-11-01"
+              ]
+            ],
+            "region": null,
+            "dimension": null
+          },
+          "actual_metric_id": "marketing_net_roi",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents\n    FROM orders o WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), valid_refunds AS (\n    SELECT r.refund_id, r.order_id, r.amount_cents\n    FROM refunds r CROSS JOIN data_meta m\n    WHERE r.status = 'approved' AND m.key = 'snapshot_at'\n      AND r.refunded_at < m.value AND r.recorded_at <= m.value\n), refund_reversals_by_refund AS (\n    SELECT rv.refund_id, SUM(rv.amount_cents) AS reversed_cents\n    FROM refund_reversals rv CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND rv.recorded_at <= m.value\n    GROUP BY rv.refund_id\n), net_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents - COALESCE(rv.reversed_cents, 0)) AS refund_cents\n    FROM valid_refunds r LEFT JOIN refund_reversals_by_refund rv ON rv.refund_id = r.refund_id\n    GROUP BY r.order_id\n), touch_revenue AS (\n    SELECT COALESCE(c.campaign_name, '未归因') AS group_value,\n           SUM((o.paid_amount_cents - COALESCE(r.refund_cents, 0)) *\n               CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END) AS net_revenue_cents\n    FROM eligible_orders o\n    LEFT JOIN net_refunds r ON r.order_id = o.order_id\n    LEFT JOIN campaign_attributions a ON a.order_id = o.order_id\n    LEFT JOIN campaigns c ON c.campaign_id = a.campaign_id\n    GROUP BY COALESCE(c.campaign_name, '未归因')\n), spend_ranked AS (\n    SELECT s.business_event_id, s.revision, s.recorded_at, s.event_id, s.spend_cents,\n           s.event_status, s.campaign_id, ROW_NUMBER() OVER (\n        PARTITION BY s.business_event_id ORDER BY s.revision DESC, s.recorded_at DESC, s.event_id DESC\n    ) AS revision_rank\n    FROM campaign_spend_events s CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND s.spent_at >= ? AND s.spent_at < ? AND s.recorded_at <= m.value\n), valid_spend AS (\n    SELECT s.campaign_id, s.spend_cents\n    FROM spend_ranked s WHERE s.revision_rank = 1 AND s.event_status = 'active'\n), spend_totals AS (\n    SELECT c.campaign_name AS group_value, SUM(s.spend_cents) AS spend_cents\n    FROM valid_spend s JOIN campaigns c ON c.campaign_id = s.campaign_id\n    GROUP BY c.campaign_name\n), campaign_keys AS (\n    SELECT group_value FROM touch_revenue UNION SELECT group_value FROM spend_totals\n), combined AS (\n    SELECT k.group_value, COALESCE(r.net_revenue_cents, 0) AS net_revenue_cents,\n           COALESCE(s.spend_cents, 0) AS spend_cents\n    FROM campaign_keys k\n    LEFT JOIN touch_revenue r ON r.group_value = k.group_value\n    LEFT JOIN spend_totals s ON s.group_value = k.group_value\n)\nSELECT '全部' AS group_value, SUM(net_revenue_cents) AS net_revenue_cents, SUM(spend_cents) AS spend_cents, (SUM(net_revenue_cents) - SUM(spend_cents)) * 1.0 / NULLIF(SUM(spend_cents), 0) AS value FROM combined LIMIT 1",
+          "parameter_count": 4,
+          "sql_sha256": "46b412d9fc616b16db2519c0fecde614fab04eb5b35615b1e7a3435e69037980",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 4442.771,
+              "usage": {
+                "prompt_tokens": 713,
+                "completion_tokens": 621,
+                "total_tokens": 1334,
+                "prompt_cache_hit_tokens": 512,
+                "prompt_cache_miss_tokens": 201
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792742021
+            }
+          ]
+        },
+        {
+          "case_id": "DV-M03",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-10-31当天各营销活动净投资回报率是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-11-01",
+            "analysis_start": "2026-10-31",
+            "case_id": "DV-M03",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "campaign",
+            "domain": "marketing_roi",
+            "expected_rows": [
+              {
+                "group_value": "Campaign 01",
+                "net_revenue_cents": 60960.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 02",
+                "net_revenue_cents": 9081.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 03",
+                "net_revenue_cents": 70589.6,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 04",
+                "net_revenue_cents": 65106.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 05",
+                "net_revenue_cents": 103966.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 06",
+                "net_revenue_cents": 73471.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 07",
+                "net_revenue_cents": 9985.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 08",
+                "net_revenue_cents": 162270.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 09",
+                "net_revenue_cents": 105611.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 10",
+                "net_revenue_cents": 107981.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 11",
+                "net_revenue_cents": 3361.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 12",
+                "net_revenue_cents": 34454.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 13",
+                "net_revenue_cents": 80506.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 14",
+                "net_revenue_cents": 108804.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 15",
+                "net_revenue_cents": 130083.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 16",
+                "net_revenue_cents": 94930.0,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 17",
+                "net_revenue_cents": 142947.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 18",
+                "net_revenue_cents": 250946.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 19",
+                "net_revenue_cents": 121545.9,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 20",
+                "net_revenue_cents": 28955.0,
+                "spend_cents": 57383,
+                "value": -0.4954080476796264
+              },
+              {
+                "group_value": "未归因",
+                "net_revenue_cents": 1990.0,
+                "spend_cents": 0,
+                "value": null
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "marketing_net_roi",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-10-31",
+            "end_date_exclusive": "2026-11-01",
+            "periods": [
+              [
+                "2026-10-31",
+                "2026-11-01"
+              ]
+            ],
+            "region": null,
+            "dimension": "campaign"
+          },
+          "actual_metric_id": "marketing_net_roi",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents\n    FROM orders o WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), valid_refunds AS (\n    SELECT r.refund_id, r.order_id, r.amount_cents\n    FROM refunds r CROSS JOIN data_meta m\n    WHERE r.status = 'approved' AND m.key = 'snapshot_at'\n      AND r.refunded_at < m.value AND r.recorded_at <= m.value\n), refund_reversals_by_refund AS (\n    SELECT rv.refund_id, SUM(rv.amount_cents) AS reversed_cents\n    FROM refund_reversals rv CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND rv.recorded_at <= m.value\n    GROUP BY rv.refund_id\n), net_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents - COALESCE(rv.reversed_cents, 0)) AS refund_cents\n    FROM valid_refunds r LEFT JOIN refund_reversals_by_refund rv ON rv.refund_id = r.refund_id\n    GROUP BY r.order_id\n), touch_revenue AS (\n    SELECT COALESCE(c.campaign_name, '未归因') AS group_value,\n           SUM((o.paid_amount_cents - COALESCE(r.refund_cents, 0)) *\n               CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END) AS net_revenue_cents\n    FROM eligible_orders o\n    LEFT JOIN net_refunds r ON r.order_id = o.order_id\n    LEFT JOIN campaign_attributions a ON a.order_id = o.order_id\n    LEFT JOIN campaigns c ON c.campaign_id = a.campaign_id\n    GROUP BY COALESCE(c.campaign_name, '未归因')\n), spend_ranked AS (\n    SELECT s.business_event_id, s.revision, s.recorded_at, s.event_id, s.spend_cents,\n           s.event_status, s.campaign_id, ROW_NUMBER() OVER (\n        PARTITION BY s.business_event_id ORDER BY s.revision DESC, s.recorded_at DESC, s.event_id DESC\n    ) AS revision_rank\n    FROM campaign_spend_events s CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND s.spent_at >= ? AND s.spent_at < ? AND s.recorded_at <= m.value\n), valid_spend AS (\n    SELECT s.campaign_id, s.spend_cents\n    FROM spend_ranked s WHERE s.revision_rank = 1 AND s.event_status = 'active'\n), spend_totals AS (\n    SELECT c.campaign_name AS group_value, SUM(s.spend_cents) AS spend_cents\n    FROM valid_spend s JOIN campaigns c ON c.campaign_id = s.campaign_id\n    GROUP BY c.campaign_name\n), campaign_keys AS (\n    SELECT group_value FROM touch_revenue UNION SELECT group_value FROM spend_totals\n), combined AS (\n    SELECT k.group_value, COALESCE(r.net_revenue_cents, 0) AS net_revenue_cents,\n           COALESCE(s.spend_cents, 0) AS spend_cents\n    FROM campaign_keys k\n    LEFT JOIN touch_revenue r ON r.group_value = k.group_value\n    LEFT JOIN spend_totals s ON s.group_value = k.group_value\n)\nSELECT group_value, net_revenue_cents, spend_cents, (net_revenue_cents - spend_cents) * 1.0 / NULLIF(spend_cents, 0) AS value FROM combined ORDER BY group_value LIMIT 100",
+          "parameter_count": 4,
+          "sql_sha256": "f46c3e6dc6276566a65ba700e79f0a50500606c3e1b5de65ad245f6c62d09e9a",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 3349.241,
+              "usage": {
+                "prompt_tokens": 707,
+                "completion_tokens": 545,
+                "total_tokens": 1252,
+                "prompt_cache_hit_tokens": 512,
+                "prompt_cache_miss_tokens": 195
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792742026
+            }
+          ]
+        },
+        {
+          "case_id": "DV-M04",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "answered",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": true,
+          "dimension_ok": true,
+          "region_ok": true,
+          "date_window_ok": true,
+          "numeric_ok": true,
+          "independent_verifier_ok": true,
+          "question": "2026-01-15 至 2026-02-14 每个营销活动的净投资回报率是多少？",
+          "oracle_gold": {
+            "analysis_end_exclusive": "2026-02-15",
+            "analysis_start": "2026-01-15",
+            "case_id": "DV-M04",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "dimension": "campaign",
+            "domain": "marketing_roi",
+            "expected_rows": [
+              {
+                "group_value": "Campaign 01",
+                "net_revenue_cents": 5457420.0,
+                "spend_cents": 209173,
+                "value": 25.090461005961572
+              },
+              {
+                "group_value": "Campaign 02",
+                "net_revenue_cents": 4618840.55,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 03",
+                "net_revenue_cents": 3834619.35,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 04",
+                "net_revenue_cents": 4590781.8,
+                "spend_cents": 201131,
+                "value": 21.82483456056003
+              },
+              {
+                "group_value": "Campaign 05",
+                "net_revenue_cents": 4627174.4,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 06",
+                "net_revenue_cents": 4184318.1000000006,
+                "spend_cents": 17422,
+                "value": 239.17438296406846
+              },
+              {
+                "group_value": "Campaign 07",
+                "net_revenue_cents": 4172362.5,
+                "spend_cents": 97943,
+                "value": 41.59990504681294
+              },
+              {
+                "group_value": "Campaign 08",
+                "net_revenue_cents": 4610186.4,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 09",
+                "net_revenue_cents": 3417409.4000000004,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 10",
+                "net_revenue_cents": 4344669.449999999,
+                "spend_cents": 160130,
+                "value": 26.132139199400484
+              },
+              {
+                "group_value": "Campaign 11",
+                "net_revenue_cents": 5290516.75,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 12",
+                "net_revenue_cents": 3597663.1,
+                "spend_cents": 212347,
+                "value": 15.942377806138067
+              },
+              {
+                "group_value": "Campaign 13",
+                "net_revenue_cents": 4385080.649999999,
+                "spend_cents": 107116,
+                "value": 39.93768111206542
+              },
+              {
+                "group_value": "Campaign 14",
+                "net_revenue_cents": 4998404.949999999,
+                "spend_cents": 32827,
+                "value": 151.26505468059827
+              },
+              {
+                "group_value": "Campaign 15",
+                "net_revenue_cents": 4563803.75,
+                "spend_cents": 127107,
+                "value": 34.9052117507297
+              },
+              {
+                "group_value": "Campaign 16",
+                "net_revenue_cents": 4863551.75,
+                "spend_cents": 185907,
+                "value": 25.161208292318204
+              },
+              {
+                "group_value": "Campaign 17",
+                "net_revenue_cents": 3163271.5,
+                "spend_cents": 0,
+                "value": null
+              },
+              {
+                "group_value": "Campaign 18",
+                "net_revenue_cents": 4445200.6,
+                "spend_cents": 145765,
+                "value": 29.495664940143378
+              },
+              {
+                "group_value": "Campaign 19",
+                "net_revenue_cents": 4421222.2,
+                "spend_cents": 79775,
+                "value": 54.42114948292072
+              },
+              {
+                "group_value": "Campaign 20",
+                "net_revenue_cents": 3764860.8,
+                "spend_cents": 135075,
+                "value": 26.872373126041087
+              },
+              {
+                "group_value": "未归因",
+                "net_revenue_cents": 952411.0,
+                "spend_cents": 0,
+                "value": null
+              }
+            ],
+            "expected_status": "answered",
+            "metric": "marketing_net_roi",
+            "region": null
+          },
+          "actual_stage": null,
+          "actual_plan": {
+            "start_date_inclusive": "2026-01-15",
+            "end_date_exclusive": "2026-02-15",
+            "periods": [
+              [
+                "2026-01-15",
+                "2026-02-15"
+              ]
+            ],
+            "region": null,
+            "dimension": "campaign"
+          },
+          "actual_metric_id": "marketing_net_roi",
+          "compiled_sql": "WITH eligible_orders AS (\n    SELECT o.order_id, o.paid_amount_cents\n    FROM orders o WHERE o.status = 'paid' AND o.ordered_at >= ? AND o.ordered_at < ?\n), valid_refunds AS (\n    SELECT r.refund_id, r.order_id, r.amount_cents\n    FROM refunds r CROSS JOIN data_meta m\n    WHERE r.status = 'approved' AND m.key = 'snapshot_at'\n      AND r.refunded_at < m.value AND r.recorded_at <= m.value\n), refund_reversals_by_refund AS (\n    SELECT rv.refund_id, SUM(rv.amount_cents) AS reversed_cents\n    FROM refund_reversals rv CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND rv.recorded_at <= m.value\n    GROUP BY rv.refund_id\n), net_refunds AS (\n    SELECT r.order_id, SUM(r.amount_cents - COALESCE(rv.reversed_cents, 0)) AS refund_cents\n    FROM valid_refunds r LEFT JOIN refund_reversals_by_refund rv ON rv.refund_id = r.refund_id\n    GROUP BY r.order_id\n), touch_revenue AS (\n    SELECT COALESCE(c.campaign_name, '未归因') AS group_value,\n           SUM((o.paid_amount_cents - COALESCE(r.refund_cents, 0)) *\n               CASE WHEN a.campaign_id IS NULL THEN 1.0 ELSE a.weight END) AS net_revenue_cents\n    FROM eligible_orders o\n    LEFT JOIN net_refunds r ON r.order_id = o.order_id\n    LEFT JOIN campaign_attributions a ON a.order_id = o.order_id\n    LEFT JOIN campaigns c ON c.campaign_id = a.campaign_id\n    GROUP BY COALESCE(c.campaign_name, '未归因')\n), spend_ranked AS (\n    SELECT s.business_event_id, s.revision, s.recorded_at, s.event_id, s.spend_cents,\n           s.event_status, s.campaign_id, ROW_NUMBER() OVER (\n        PARTITION BY s.business_event_id ORDER BY s.revision DESC, s.recorded_at DESC, s.event_id DESC\n    ) AS revision_rank\n    FROM campaign_spend_events s CROSS JOIN data_meta m\n    WHERE m.key = 'snapshot_at' AND s.spent_at >= ? AND s.spent_at < ? AND s.recorded_at <= m.value\n), valid_spend AS (\n    SELECT s.campaign_id, s.spend_cents\n    FROM spend_ranked s WHERE s.revision_rank = 1 AND s.event_status = 'active'\n), spend_totals AS (\n    SELECT c.campaign_name AS group_value, SUM(s.spend_cents) AS spend_cents\n    FROM valid_spend s JOIN campaigns c ON c.campaign_id = s.campaign_id\n    GROUP BY c.campaign_name\n), campaign_keys AS (\n    SELECT group_value FROM touch_revenue UNION SELECT group_value FROM spend_totals\n), combined AS (\n    SELECT k.group_value, COALESCE(r.net_revenue_cents, 0) AS net_revenue_cents,\n           COALESCE(s.spend_cents, 0) AS spend_cents\n    FROM campaign_keys k\n    LEFT JOIN touch_revenue r ON r.group_value = k.group_value\n    LEFT JOIN spend_totals s ON s.group_value = k.group_value\n)\nSELECT group_value, net_revenue_cents, spend_cents, (net_revenue_cents - spend_cents) * 1.0 / NULLIF(spend_cents, 0) AS value FROM combined ORDER BY group_value LIMIT 100",
+          "parameter_count": 4,
+          "sql_sha256": "f46c3e6dc6276566a65ba700e79f0a50500606c3e1b5de65ad245f6c62d09e9a",
+          "verification_passed": true,
+          "failure_detail": null,
+          "model_calls": 1,
+          "call_usage": [
+            {
+              "latency_ms": 3711.203,
+              "usage": {
+                "prompt_tokens": 716,
+                "completion_tokens": 596,
+                "total_tokens": 1312,
+                "prompt_cache_hit_tokens": 512,
+                "prompt_cache_miss_tokens": 204
+              },
+              "response_model": "deepseek-flash",
+              "created_at": 1792742029
+            }
+          ]
+        },
+        {
+          "case_id": "DV-M05",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "question": "各营销活动ROI是多少？",
+          "oracle_gold": {
+            "case_id": "DV-M05",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "domain": "marketing_roi",
+            "expected_status": "clarify"
+          },
+          "actual_stage": null,
+          "actual_plan": null,
+          "actual_metric_id": null,
+          "compiled_sql": null,
+          "parameter_count": null,
+          "sql_sha256": null,
+          "verification_passed": null,
+          "failure_detail": null,
+          "model_calls": 0,
+          "call_usage": []
+        },
+        {
+          "case_id": "DV-M06",
+          "domain": "marketing_roi",
+          "passed": true,
+          "actual_status": "clarify",
+          "actual_reason": null,
+          "status_ok": true,
+          "reason_ok": true,
+          "metric_ok": null,
+          "dimension_ok": null,
+          "region_ok": null,
+          "date_window_ok": null,
+          "numeric_ok": null,
+          "independent_verifier_ok": null,
+          "question": "2026-10-01 至 2026-10-31 华东各营销活动ROI是多少？",
+          "oracle_gold": {
+            "case_id": "DV-M06",
+            "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+            "data_version": "insightpilot-multidomain-v1",
+            "domain": "marketing_roi",
+            "expected_status": "clarify"
+          },
+          "actual_stage": null,
+          "actual_plan": null,
+          "actual_metric_id": null,
+          "compiled_sql": null,
+          "parameter_count": null,
+          "sql_sha256": null,
+          "verification_passed": null,
+          "failure_detail": null,
+          "model_calls": 0,
+          "call_usage": []
+        }
+      ]
+    }
+  ],
+  "old_ip4_touched": false,
+  "domain_summary": [
+    {
+      "backend": "sqlite",
+      "tenant_id": null,
+      "domain": "refunds",
+      "passed": 6,
+      "total": 6,
+      "answerable_passed": 4,
+      "answerable_total": 4,
+      "guard_passed": 2,
+      "guard_total": 2,
+      "false_refusals": [],
+      "false_accepts": []
+    },
+    {
+      "backend": "sqlite",
+      "tenant_id": null,
+      "domain": "marketing_roi",
+      "passed": 6,
+      "total": 6,
+      "answerable_passed": 4,
+      "answerable_total": 4,
+      "guard_passed": 2,
+      "guard_total": 2,
+      "false_refusals": [],
+      "false_accepts": []
+    },
+    {
+      "backend": "postgresql",
+      "tenant_id": "tenant-a",
+      "domain": "refunds",
+      "passed": 6,
+      "total": 6,
+      "answerable_passed": 4,
+      "answerable_total": 4,
+      "guard_passed": 2,
+      "guard_total": 2,
+      "false_refusals": [],
+      "false_accepts": []
+    },
+    {
+      "backend": "postgresql",
+      "tenant_id": "tenant-a",
+      "domain": "marketing_roi",
+      "passed": 6,
+      "total": 6,
+      "answerable_passed": 4,
+      "answerable_total": 4,
+      "guard_passed": 2,
+      "guard_total": 2,
+      "false_refusals": [],
+      "false_accepts": []
+    },
+    {
+      "backend": "postgresql",
+      "tenant_id": "tenant-b",
+      "domain": "refunds",
+      "passed": 6,
+      "total": 6,
+      "answerable_passed": 4,
+      "answerable_total": 4,
+      "guard_passed": 2,
+      "guard_total": 2,
+      "false_refusals": [],
+      "false_accepts": []
+    },
+    {
+      "backend": "postgresql",
+      "tenant_id": "tenant-b",
+      "domain": "marketing_roi",
+      "passed": 6,
+      "total": 6,
+      "answerable_passed": 4,
+      "answerable_total": 4,
+      "guard_passed": 2,
+      "guard_total": 2,
+      "false_refusals": [],
+      "false_accepts": []
+    }
+  ],
+  "preregistration_id": "insightpilot-domain-model-blind-v1",
+  "preregistration_sha256": "86d90adc534f68d2a42e1bfa4fa4153393bdacdcd782d34cd2d509ba3f352884",
+  "harness_sha256": "56e774e8e7d54ec1201e709f9cea1a210764c431c6781d4d4b0b75ec8f7a5eba"
+}
