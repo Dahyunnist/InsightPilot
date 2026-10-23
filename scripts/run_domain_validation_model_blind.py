@@ -18,6 +18,7 @@ from insightpilot.config import load_settings
 from insightpilot.ip4_evaluate import compare
 from insightpilot.planner import OpenAICompatiblePlanner
 from insightpilot.query_engine import PostgresQueryEngine, SQLiteQueryEngine
+from insightpilot.rule_baseline import RulePlanner
 
 
 ROOT = Path(__file__).resolve().parents[1]

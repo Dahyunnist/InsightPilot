@@ -56,7 +56,7 @@
     "max_output_tokens": 1024,
     "max_attempts_per_case": 2
   },
-  "harness_sha256": "491c7a1c7f33fef157121a1f421fad35233dd45b1a883483ff5e90374eac87b0",
+  "harness_sha256": "56e774e8e7d54ec1201e709f9cea1a210764c431c6781d4d4b0b75ec8f7a5eba",
   "scorer": {
     "name": "insightpilot.ip4_evaluate.compare",
     "file": "insightpilot/ip4_evaluate.py",
