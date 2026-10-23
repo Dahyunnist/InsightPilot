@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import hashlib
 import time
 import uuid
 from datetime import datetime, timezone
@@ -54,6 +55,34 @@ class InsightPilot:
         self.database_path = database_path
         self.query_engine = query_engine or SQLiteQueryEngine(database_path)
         self.tenant_id = tenant_id or getattr(self.query_engine, "tenant_id", None)
+
+    def _failure_detail(self, exc: Exception, *, stage: str, sql: str | None = None,
+                        parameter_count: int | None = None, tenant_id: str | None = None) -> dict:
+        failure_code = getattr(exc, "failure_code", "unspecified")
+        layer = {
+            "planning": "plan",
+            "tenant_scope_missing": "tenant_scope",
+            "sql_policy": "sql_compile",
+            "sql_syntax": "sql_compile",
+            "schema_error": "schema",
+            "permission_denied": "db_execution",
+            "database_execution": "db_execution",
+            "statement_timeout": "db_execution",
+            "result_limit": "db_execution",
+            "verification": "verification",
+        }.get(failure_code, {
+            "planning": "plan", "dataset": "schema", "compilation": "sql_compile",
+            "query": "db_execution", "verification": "verification",
+        }.get(stage, stage))
+        return {
+            "layer": layer,
+            "category": failure_code,
+            "exception_class": type(exc).__name__,
+            "backend": "postgresql" if hasattr(self.query_engine, "tenant_id") else "sqlite",
+            "tenant_context": "bound" if tenant_id or self.tenant_id else "missing",
+            "sql_sha256": hashlib.sha256(sql.encode("utf-8")).hexdigest() if sql is not None else None,
+            "parameter_count": parameter_count,
+        }
 
     def analyze(self, question: str, *, run_id: str | None = None, cancel_event: Event | None = None,
                 authorized_region: str | None = None, tenant_id: str | None = None) -> dict:
@@ -110,10 +139,13 @@ class InsightPilot:
         except NeedsClarification as exc:
             return {"run_id": run_id, "status": "clarify", "message": str(exc), "choices": exc.choices}
         except PlanError as exc:
-            return {"run_id": run_id, "status": "failed", "stage": "planning", "message": str(exc)}
+            return {"run_id": run_id, "status": "failed", "stage": "planning", "message": str(exc),
+                    "failure_detail": self._failure_detail(exc, stage="planning", tenant_id=tenant_id)}
         if plan.region is not None and plan.region not in REGION_VALUES:
             return {"run_id": run_id, "status": "failed", "stage": "planning",
-                    "reason": "invalid_region_filter", "message": "地区筛选值不在已知数据目录中。"}
+                    "reason": "invalid_region_filter", "message": "地区筛选值不在已知数据目录中。",
+                    "failure_detail": {"layer": "plan", "category": "invalid_region",
+                                       "backend": "postgresql" if hasattr(self.query_engine, "tenant_id") else "sqlite"}}
         if cancel_event is not None and cancel_event.is_set():
             return {"run_id": run_id, "status": "cancelled", "stage": "planning", "message": "分析已取消。"}
         if authorized_region is not None:
@@ -130,10 +162,13 @@ class InsightPilot:
                 if (dataset_version, data_fingerprint) != (verifier_version, verifier_fingerprint):
                     return {"run_id": run_id, "status": "failed", "stage": "dataset",
                             "reason": "backend_dataset_mismatch",
-                            "message": "PostgreSQL 与独立 SQLite 复核数据指纹不一致。"}
+                            "message": "PostgreSQL 与独立 SQLite 复核数据指纹不一致。",
+                            "failure_detail": {"layer": "schema", "category": "data_identity_mismatch",
+                                               "backend": "postgresql", "tenant_context": "bound"}}
         except QueryExecutionError as exc:
             if metric.required_data_versions:
-                return {"run_id": run_id, "status": "failed", "stage": "dataset", "message": str(exc)}
+                return {"run_id": run_id, "status": "failed", "stage": "dataset", "message": str(exc),
+                        "failure_detail": self._failure_detail(exc, stage="dataset", tenant_id=trusted_tenant_id)}
             dataset_version = "unknown"
             data_fingerprint = None
         if metric.required_data_versions and dataset_version not in metric.required_data_versions:
@@ -143,23 +178,32 @@ class InsightPilot:
         try:
             compiled = compile_query(plan)
         except ValueError as exc:
-            return {"run_id": run_id, "status": "failed", "stage": "compilation", "message": str(exc)}
+            return {"run_id": run_id, "status": "failed", "stage": "compilation", "message": str(exc),
+                    "failure_detail": {"layer": "sql_compile", "category": "plan_compilation_error",
+                                       "exception_class": type(exc).__name__, "metric_id": metric.metric_id}}
         try:
             rows, _backend = self.query_engine.execute_readonly(
                 compiled, tenant_id=trusted_tenant_id, cancel_event=cancel_event)
         except QueryCancelledError as exc:
             return {"run_id": run_id, "status": "cancelled", "stage": "query", "message": str(exc)}
         except QueryExecutionError as exc:
-            return {"run_id": run_id, "status": "failed", "stage": "query", "message": str(exc)}
+            return {"run_id": run_id, "status": "failed", "stage": "query", "message": str(exc),
+                    "failure_detail": self._failure_detail(exc, stage="query", sql=compiled.sql,
+                                                           parameter_count=len(compiled.params),
+                                                           tenant_id=trusted_tenant_id)}
         try:
             verification = verify_result(plan, rows, self.database_path, cancel_event)
         except QueryCancelledError as exc:
             return {"run_id": run_id, "status": "cancelled", "stage": "verification", "message": str(exc)}
         except QueryExecutionError as exc:
-            return {"run_id": run_id, "status": "failed", "stage": "verification", "message": str(exc)}
+            return {"run_id": run_id, "status": "failed", "stage": "verification", "message": str(exc),
+                    "failure_detail": self._failure_detail(exc, stage="verification", tenant_id=trusted_tenant_id)}
         if not verification["passed"]:
             return {"run_id": run_id, "status": "failed", "stage": "verification",
-                    "message": "独立汇总复核未通过；已停止生成结论。", "verification": verification}
+                    "message": "独立汇总复核未通过；已停止生成结论。", "verification": verification,
+                    "failure_detail": {"layer": "verification", "category": "independent_reconciliation",
+                                       "backend": "postgresql" if hasattr(self.query_engine, "tenant_id") else "sqlite",
+                                       "tenant_context": "bound" if trusted_tenant_id else "missing"}}
         return {
             "run_id": run_id,
             "status": "answered",

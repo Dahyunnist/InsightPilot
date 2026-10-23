@@ -1,0 +1,2 @@
+{"dev_case_id":"DEV-IP4-R01","source_case_id":"IP4-R01","question":"2026-10-01 至 2026-10-31，各商品品类的已付款订单批准退款订单率分别是多少？","model_calls":0}
+{"dev_case_id":"DEV-IP4-R02","source_case_id":"IP4-R02","question":"2026-11-01 到 2026-11-30 按销售渠道汇总批准退款金额率（退款金额/实付金额）。","model_calls":0}

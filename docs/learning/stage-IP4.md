@@ -69,3 +69,9 @@ IP4 离线盲集、独立 SQL/Python gold、SQLite 规则基线、同一 FastAPI
 按[DeepSeek 官方峰时价格](https://api-docs.deepseek.com/quick_start/pricing/)每 1M 未缓存输入 $0.30、输出 $1.20，并把 UTF-8 字节数保守计为输入 token，上界预留 $1.2116736。运行前成本账本尚余 $3.72695595；预留后为 $2.51528235，总额仍低于 $4.00。冻结明细见 `reports/ip4-model-preregistration.json`。实际费用只按响应 usage 回执估算峰时价格；完整结果及账本增量见 `reports/ip4-model-blind-verification.json` 与 `reports/model-experiment-cost-ledger.json`。
 
 单轮执行实际发出 18 次请求，输入 11,331 tokens、输出 7,657 tokens；按峰价并把所有输入计为未缓存，估算 $0.0125877。账本剩余 $3.71436825。严格 scorer：SQLite 12/12；PostgreSQL tenant-b 12/12；tenant-a 10/12。tenant-a 的 IP4-R01、IP4-R02 失败于 query 阶段。已通过的 RulePlanner PG 全集为两租户各 12/12，故模型结果未证明常规 RLS 路径故障；本次模型报告没有保留具体 query 错误，不能进一步断定失败原因。未重跑模型盲测，冻结题集及 gold 未改。三组 guard 均全通过。
+
+## 冻结封存与无模型跟进
+
+冻结集、manifest、规则基线、PostgreSQL 验收、盲测预注册和模型结果 SHA-256 已写入 `reports/ip4-freeze-seal.json`；`scripts/verify_ip4_freeze_seal.py` 验证通过。没有修改或重跑冻结集/盲测。R01/R02 开发副本在 SQLite 与 PostgreSQL 两租户下均由 RulePlanner 通过；诊断覆盖 plan、schema identity、SQL compile、tenant scope、DB execution、verification。原始模型报告只保留 `query` 阶段，未保存脱敏错误、SQL fingerprint 或模型计划，因此无法区分 query adapter 的 SQL policy、tenant scope 或数据库执行原因；开发副本没有复现失败。后续失败会记录脱敏结构化分类，不含原始 SQL、参数、租户、DSN 或数据库错误文本。报告：`reports/ip4-r01-r02-dev-diagnostic.json`。
+
+另建 refunds 与 marketing ROI 两个独立验证集，各 4 条可答、2 条 guard；gold 由 Python 行/事件账本独立计算，并与只读 SQLite SQL 对齐。两集分别在 SQLite、PostgreSQL tenant-a、PostgreSQL tenant-b 达到 6/6；数值、false refusal、false accept 均通过。RLS tenant scope 探针确认每个已绑定作用域只见自身租户，缺上下文返回 0 行。12 并发 bearer 请求回归也通过。详见 `evals/domain-validation-v1/` 与 `reports/domain-validation-v1.json`。全程 0 模型请求，费用账本不变。

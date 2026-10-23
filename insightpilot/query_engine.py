@@ -92,7 +92,8 @@ class PostgresQueryEngine:
                          cancel_event: Any | None = None) -> tuple[list[dict[str, Any]], str]:
         effective_tenant = tenant_id or self.tenant_id
         if not effective_tenant or not effective_tenant.strip():
-            raise QueryExecutionError("A trusted tenant_id is required for PostgreSQL RLS.")
+            raise QueryExecutionError("A trusted tenant_id is required for PostgreSQL RLS.",
+                                      failure_code="tenant_scope_missing")
         if cancel_event is not None and cancel_event.is_set():
             raise QueryCancelledError("分析已取消。")
         try:
@@ -104,7 +105,7 @@ class PostgresQueryEngine:
                 raise SQLPolicyError("SQL placeholder count does not match bound parameters")
             postgres_sql = transpile(query.sql, read="sqlite", write="postgres", pretty=False)[0]
         except (SQLPolicyError, IndexError, ValueError) as exc:
-            raise QueryExecutionError(f"SQL 策略拒绝：{exc}") from None
+            raise QueryExecutionError(f"SQL 策略拒绝：{exc}", failure_code="sql_policy") from None
 
         try:
             with self._connection_pool().connection() as connection:
@@ -122,7 +123,8 @@ class PostgresQueryEngine:
                     cursor = connection.execute(postgres_sql, query.params)
                     rows = cursor.fetchmany(self.max_rows + 1)
                     if len(rows) > self.max_rows:
-                        raise QueryExecutionError(f"查询结果超过 {self.max_rows} 行限制。")
+                        raise QueryExecutionError(f"查询结果超过 {self.max_rows} 行限制.",
+                                                  failure_code="result_limit")
                     if cancel_event is not None and cancel_event.is_set():
                         raise QueryCancelledError("分析已取消。")
                     columns = [item.name for item in cursor.description]
@@ -132,14 +134,26 @@ class PostgresQueryEngine:
         except QueryExecutionError:
             raise
         except Exception as exc:
-            if getattr(exc, "sqlstate", None) == "57014":
+            sqlstate = getattr(exc, "sqlstate", None)
+            if sqlstate == "57014":
                 raise QueryTimeoutError("PostgreSQL 查询超过 statement_timeout 限制。") from None
-            raise QueryExecutionError(f"PostgreSQL 只读查询失败：{exc.__class__.__name__}") from None
+            if sqlstate == "42501":
+                code = "permission_denied"
+            elif sqlstate == "42601":
+                code = "sql_syntax"
+            elif sqlstate in ("42P01", "42703") or (
+                    isinstance(sqlstate, str) and sqlstate.startswith("3F")):
+                code = "schema_error"
+            else:
+                code = "database_execution"
+            raise QueryExecutionError(f"PostgreSQL 只读查询失败：{exc.__class__.__name__}",
+                                      failure_code=code) from None
 
     def read_data_identity(self, *, tenant_id: str | None = None) -> tuple[str, str | None]:
         effective_tenant = tenant_id or self.tenant_id
         if not effective_tenant or not effective_tenant.strip():
-            raise QueryExecutionError("A trusted tenant_id is required for PostgreSQL RLS.")
+            raise QueryExecutionError("A trusted tenant_id is required for PostgreSQL RLS.",
+                                      failure_code="tenant_scope_missing")
         try:
             with self._connection_pool().connection() as connection:
                 with connection.transaction():
@@ -153,7 +167,11 @@ class PostgresQueryEngine:
         except QueryExecutionError:
             raise
         except Exception as exc:
-            raise QueryExecutionError(f"PostgreSQL 数据身份读取失败：{exc.__class__.__name__}") from None
+            sqlstate = getattr(exc, "sqlstate", None)
+            code = ("schema_error" if isinstance(sqlstate, str) and sqlstate.startswith(("42", "3F"))
+                    else "database_execution")
+            raise QueryExecutionError(f"PostgreSQL 数据身份读取失败：{exc.__class__.__name__}",
+                                      failure_code=code) from None
 
     def close(self) -> None:
         if self._pool is not None:

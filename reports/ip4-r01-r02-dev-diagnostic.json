@@ -1,0 +1,115 @@
+{
+  "created_at_utc": "2026-10-23T07:32:10.069865+00:00",
+  "development_only": true,
+  "frozen_blind_rerun": false,
+  "model_calls": 0,
+  "dev_copy_sha256": "619ee093cfb5f478cfeba5374ef9c17951857eb3a41cb02536eb7b68138b3403",
+  "dev_sql_fingerprints": {},
+  "classification_note": "Errors include only layer/category/class, tenant-context presence, SQL fingerprint and parameter count; raw SQL, params, tenant IDs, DSN, and provider data are omitted from failure details.",
+  "diagnostics": [
+    {
+      "dev_case_id": "DEV-IP4-R01",
+      "source_case_id": "IP4-R01",
+      "backend": "sqlite",
+      "tenant_slot": null,
+      "status": "answered",
+      "stage": null,
+      "failure_detail": null,
+      "plan_passed": true,
+      "schema_identity_passed": true,
+      "sql_compile_passed": true,
+      "db_execution_passed": true,
+      "verification_passed": true,
+      "model_calls": 0
+    },
+    {
+      "dev_case_id": "DEV-IP4-R02",
+      "source_case_id": "IP4-R02",
+      "backend": "sqlite",
+      "tenant_slot": null,
+      "status": "answered",
+      "stage": null,
+      "failure_detail": null,
+      "plan_passed": true,
+      "schema_identity_passed": true,
+      "sql_compile_passed": true,
+      "db_execution_passed": true,
+      "verification_passed": true,
+      "model_calls": 0
+    },
+    {
+      "dev_case_id": "DEV-IP4-R01",
+      "source_case_id": "IP4-R01",
+      "backend": "postgresql",
+      "tenant_slot": "tenant-1",
+      "status": "answered",
+      "stage": null,
+      "failure_detail": null,
+      "plan_passed": true,
+      "schema_identity_passed": true,
+      "sql_compile_passed": true,
+      "db_execution_passed": true,
+      "verification_passed": true,
+      "model_calls": 0
+    },
+    {
+      "dev_case_id": "DEV-IP4-R02",
+      "source_case_id": "IP4-R02",
+      "backend": "postgresql",
+      "tenant_slot": "tenant-1",
+      "status": "answered",
+      "stage": null,
+      "failure_detail": null,
+      "plan_passed": true,
+      "schema_identity_passed": true,
+      "sql_compile_passed": true,
+      "db_execution_passed": true,
+      "verification_passed": true,
+      "model_calls": 0
+    },
+    {
+      "dev_case_id": "DEV-IP4-R01",
+      "source_case_id": "IP4-R01",
+      "backend": "postgresql",
+      "tenant_slot": "tenant-2",
+      "status": "answered",
+      "stage": null,
+      "failure_detail": null,
+      "plan_passed": true,
+      "schema_identity_passed": true,
+      "sql_compile_passed": true,
+      "db_execution_passed": true,
+      "verification_passed": true,
+      "model_calls": 0
+    },
+    {
+      "dev_case_id": "DEV-IP4-R02",
+      "source_case_id": "IP4-R02",
+      "backend": "postgresql",
+      "tenant_slot": "tenant-2",
+      "status": "answered",
+      "stage": null,
+      "failure_detail": null,
+      "plan_passed": true,
+      "schema_identity_passed": true,
+      "sql_compile_passed": true,
+      "db_execution_passed": true,
+      "verification_passed": true,
+      "model_calls": 0
+    }
+  ],
+  "tenant_scope_probe": {
+    "tenant-1": {
+      "visible_tenant_count": 1,
+      "only_own_tenant_visible": true
+    },
+    "tenant-2": {
+      "visible_tenant_count": 1,
+      "only_own_tenant_visible": true
+    },
+    "missing_context": {
+      "rejected": true,
+      "visible_tenant_count": 0
+    }
+  }
+}

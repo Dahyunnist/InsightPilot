@@ -1,0 +1,18 @@
+{
+  "seal_id": "insightpilot-ip4-frozen-results-seal-v1",
+  "sealed_at_utc": "2026-10-23T07:20:00Z",
+  "freeze_commit": "5d0096afa9c64e2c2f2ef91e483baab33e1adba8",
+  "result_commit": "4a766d76b1547f69762e1461ed63a1d34a8c1d15",
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+  "files": {
+    "evals/ip4-blind-v1.jsonl": "f587c11308c8cd6a1de24b57bf5b5259c618ac0d692aa60615e0419a92d5f2d2",
+    "evals/ip4-gold-v1.jsonl": "0cc4f43873eae69b1be7ba670a29bed4a9da20533ddb3cb7e8c89bf65c92a1d6",
+    "evals/ip4-manifest-v1.json": "f5aca68edbd908640d8886ffa16e590176ce8b26db7c0cfccdc1113dc5e25e5d",
+    "reports/ip4-rule-baseline.json": "7a1d9ae9e6a1d31495f4c12914138be808a6b06ec2fa68f345f59e789fab37fa",
+    "reports/ip4-postgres-verification.json": "70c039a6698aa03c49f7eed67a95f4fc06c336d2b401e11041b171b485c3e21a",
+    "reports/ip4-model-preregistration.json": "4ab991bbcc14bc78ec355cb88a46bd2876c92f782d0e70947a2d278b2c9f301c",
+    "reports/ip4-model-blind-verification.json": "d1efd69ab333fe35429c17b9535b117c96e615b8f007b9e0bde0a39accd412d0"
+  },
+  "rule": "No changes or reruns to IP4 frozen blind/gold/scorer/model report; only development copies may be used."
+}

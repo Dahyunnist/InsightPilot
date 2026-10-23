@@ -1,0 +1,13 @@
+{
+  "suite_id": "insightpilot-marketing_roi-validation-v1",
+  "domain": "marketing_roi",
+  "case_count": 6,
+  "answerable_count": 4,
+  "guard_count": 2,
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+  "blind_sha256": "475a7684c67051c6ba50194746461172dd49628b5f5c06bd3809fe7ef10bbe24",
+  "gold_sha256": "5cc3696127c6184a2909b5bf61606a6a888d431a9833829e3b10d3b3b636c0b3",
+  "gold_method": "independent Python row/event ledger, cross-checked against compiled read-only SQLite query",
+  "model_calls": 0
+}

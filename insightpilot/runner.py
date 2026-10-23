@@ -13,11 +13,14 @@ from .sql_policy import ALLOWED_COLUMNS, ALLOWED_FUNCTIONS, ALLOWED_TABLES, MAX_
 
 
 class QueryExecutionError(RuntimeError):
-    pass
+    def __init__(self, message: str, *, failure_code: str = "query_execution"):
+        super().__init__(message)
+        self.failure_code = failure_code
 
 
 class QueryTimeoutError(QueryExecutionError):
-    pass
+    def __init__(self, message: str, *, failure_code: str = "statement_timeout"):
+        super().__init__(message, failure_code=failure_code)
 
 
 class QueryBudgetError(QueryExecutionError):

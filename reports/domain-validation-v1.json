@@ -1,0 +1,194 @@
+{
+  "created_at_utc": "2026-10-23T07:30:02.542614+00:00",
+  "status": "passed",
+  "blind_ip4_modified": false,
+  "model_calls": 0,
+  "runs": [
+    {
+      "manifest": {
+        "suite_id": "insightpilot-refunds-validation-v1",
+        "domain": "refunds",
+        "case_count": 6,
+        "answerable_count": 4,
+        "guard_count": 2,
+        "data_version": "insightpilot-multidomain-v1",
+        "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+        "blind_sha256": "87ed4ca5dd0d3d63ce6897f4b93a89d06027da8056955f50b9331bc79bd8bddb",
+        "gold_sha256": "3ec995a51fbad415ce956fa477de15df741ef95dcc868ed3c14f8ecae42e1eae",
+        "gold_method": "independent Python row/event ledger, cross-checked against compiled read-only SQLite query",
+        "model_calls": 0
+      },
+      "result": {
+        "backend": "sqlite",
+        "tenant_id": null,
+        "domain": "refunds",
+        "passed": 6,
+        "total": 6,
+        "answerable_passed": 4,
+        "answerable_total": 4,
+        "guard_passed": 2,
+        "guard_total": 2,
+        "false_refusals": [],
+        "false_accepts": [],
+        "numeric_or_plan_failures": [],
+        "failures": [],
+        "model_calls": 0
+      }
+    },
+    {
+      "manifest": {
+        "suite_id": "insightpilot-refunds-validation-v1",
+        "domain": "refunds",
+        "case_count": 6,
+        "answerable_count": 4,
+        "guard_count": 2,
+        "data_version": "insightpilot-multidomain-v1",
+        "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+        "blind_sha256": "87ed4ca5dd0d3d63ce6897f4b93a89d06027da8056955f50b9331bc79bd8bddb",
+        "gold_sha256": "3ec995a51fbad415ce956fa477de15df741ef95dcc868ed3c14f8ecae42e1eae",
+        "gold_method": "independent Python row/event ledger, cross-checked against compiled read-only SQLite query",
+        "model_calls": 0
+      },
+      "result": {
+        "backend": "postgresql",
+        "tenant_id": "tenant-a",
+        "domain": "refunds",
+        "passed": 6,
+        "total": 6,
+        "answerable_passed": 4,
+        "answerable_total": 4,
+        "guard_passed": 2,
+        "guard_total": 2,
+        "false_refusals": [],
+        "false_accepts": [],
+        "numeric_or_plan_failures": [],
+        "failures": [],
+        "model_calls": 0
+      }
+    },
+    {
+      "manifest": {
+        "suite_id": "insightpilot-refunds-validation-v1",
+        "domain": "refunds",
+        "case_count": 6,
+        "answerable_count": 4,
+        "guard_count": 2,
+        "data_version": "insightpilot-multidomain-v1",
+        "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+        "blind_sha256": "87ed4ca5dd0d3d63ce6897f4b93a89d06027da8056955f50b9331bc79bd8bddb",
+        "gold_sha256": "3ec995a51fbad415ce956fa477de15df741ef95dcc868ed3c14f8ecae42e1eae",
+        "gold_method": "independent Python row/event ledger, cross-checked against compiled read-only SQLite query",
+        "model_calls": 0
+      },
+      "result": {
+        "backend": "postgresql",
+        "tenant_id": "tenant-b",
+        "domain": "refunds",
+        "passed": 6,
+        "total": 6,
+        "answerable_passed": 4,
+        "answerable_total": 4,
+        "guard_passed": 2,
+        "guard_total": 2,
+        "false_refusals": [],
+        "false_accepts": [],
+        "numeric_or_plan_failures": [],
+        "failures": [],
+        "model_calls": 0
+      }
+    },
+    {
+      "manifest": {
+        "suite_id": "insightpilot-marketing_roi-validation-v1",
+        "domain": "marketing_roi",
+        "case_count": 6,
+        "answerable_count": 4,
+        "guard_count": 2,
+        "data_version": "insightpilot-multidomain-v1",
+        "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+        "blind_sha256": "475a7684c67051c6ba50194746461172dd49628b5f5c06bd3809fe7ef10bbe24",
+        "gold_sha256": "5cc3696127c6184a2909b5bf61606a6a888d431a9833829e3b10d3b3b636c0b3",
+        "gold_method": "independent Python row/event ledger, cross-checked against compiled read-only SQLite query",
+        "model_calls": 0
+      },
+      "result": {
+        "backend": "sqlite",
+        "tenant_id": null,
+        "domain": "marketing_roi",
+        "passed": 6,
+        "total": 6,
+        "answerable_passed": 4,
+        "answerable_total": 4,
+        "guard_passed": 2,
+        "guard_total": 2,
+        "false_refusals": [],
+        "false_accepts": [],
+        "numeric_or_plan_failures": [],
+        "failures": [],
+        "model_calls": 0
+      }
+    },
+    {
+      "manifest": {
+        "suite_id": "insightpilot-marketing_roi-validation-v1",
+        "domain": "marketing_roi",
+        "case_count": 6,
+        "answerable_count": 4,
+        "guard_count": 2,
+        "data_version": "insightpilot-multidomain-v1",
+        "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+        "blind_sha256": "475a7684c67051c6ba50194746461172dd49628b5f5c06bd3809fe7ef10bbe24",
+        "gold_sha256": "5cc3696127c6184a2909b5bf61606a6a888d431a9833829e3b10d3b3b636c0b3",
+        "gold_method": "independent Python row/event ledger, cross-checked against compiled read-only SQLite query",
+        "model_calls": 0
+      },
+      "result": {
+        "backend": "postgresql",
+        "tenant_id": "tenant-a",
+        "domain": "marketing_roi",
+        "passed": 6,
+        "total": 6,
+        "answerable_passed": 4,
+        "answerable_total": 4,
+        "guard_passed": 2,
+        "guard_total": 2,
+        "false_refusals": [],
+        "false_accepts": [],
+        "numeric_or_plan_failures": [],
+        "failures": [],
+        "model_calls": 0
+      }
+    },
+    {
+      "manifest": {
+        "suite_id": "insightpilot-marketing_roi-validation-v1",
+        "domain": "marketing_roi",
+        "case_count": 6,
+        "answerable_count": 4,
+        "guard_count": 2,
+        "data_version": "insightpilot-multidomain-v1",
+        "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+        "blind_sha256": "475a7684c67051c6ba50194746461172dd49628b5f5c06bd3809fe7ef10bbe24",
+        "gold_sha256": "5cc3696127c6184a2909b5bf61606a6a888d431a9833829e3b10d3b3b636c0b3",
+        "gold_method": "independent Python row/event ledger, cross-checked against compiled read-only SQLite query",
+        "model_calls": 0
+      },
+      "result": {
+        "backend": "postgresql",
+        "tenant_id": "tenant-b",
+        "domain": "marketing_roi",
+        "passed": 6,
+        "total": 6,
+        "answerable_passed": 4,
+        "answerable_total": 4,
+        "guard_passed": 2,
+        "guard_total": 2,
+        "false_refusals": [],
+        "false_accepts": [],
+        "numeric_or_plan_failures": [],
+        "failures": [],
+        "model_calls": 0
+      }
+    }
+  ]
+}

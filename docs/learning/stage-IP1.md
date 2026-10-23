@@ -35,3 +35,5 @@ PostgreSQL 16.15 经真实 FastAPI → InsightPilot → `PostgresQueryEngine` �
 ## 认证主体隔离补记（2026-10-23）
 
 移除部署级全局 tenant 选择。`INSIGHTPILOT_API_TENANT_TOKENS` 配置 bearer token 到 tenant 的服务端映射；PG 模式无映射时拒绝启动。缺失/未知 token 均返回 401，伪造 `X-Tenant-ID` 不影响映射。tenant 随分析任务传入 `read_data_identity` 与 `execute_readonly`，每次 transaction-local RLS 设置独立。并发 API 测试在共享核心下同时发两个 tenant 请求，确认两次查询收到各自映射；RunStore 读取与取消也按 principal 隔离。IP4 PostgreSQL 脚本现由同一 API app、同一核心和连接池依次跑完两租户盲集。
+
+后续并发回归扩到 12 个同时交错请求、两 token 各 6 个。每个请求带相反的伪造 `X-Tenant-ID`；核心收到的 tenant 仍与 bearer 映射逐项一致。API 测试也核对跨租户 run 读取为 404、幂等键彼此隔离。数据库错误响应附脱敏 `failure_detail`：层、类别、异常类、后端、tenant context 是否绑定、SQL SHA-256 和参数数量；不含 SQL、参数、tenant ID、DSN 或底层异常文本。

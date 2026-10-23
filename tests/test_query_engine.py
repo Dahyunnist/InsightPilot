@@ -83,18 +83,21 @@ class QueryEngineTests(unittest.TestCase):
         self.assertIn(("SELECT set_config('app.tenant_id', %s, true)", ("tenant-a",)), connection.calls)
 
         missing_tenant = PostgresQueryEngine("unused", pool=FakePool(MetadataConnection()))
-        with self.assertRaises(QueryExecutionError):
+        with self.assertRaises(QueryExecutionError) as raised:
             missing_tenant.read_data_identity()
+        self.assertEqual(raised.exception.failure_code, "tenant_scope_missing")
 
     def test_postgres_requires_trusted_tenant_and_rejects_mutations_before_pool(self):
         pool = MagicMock()
         engine = PostgresQueryEngine("unused", pool=pool)
         query = compile_query(QueryPlan("approved_refund_order_rate", "2026-10-01", "2026-10-08", None, None))
-        with self.assertRaises(QueryExecutionError):
+        with self.assertRaises(QueryExecutionError) as missing_context:
             engine.execute_readonly(query)
+        self.assertEqual(missing_context.exception.failure_code, "tenant_scope_missing")
         for sql in ("DELETE FROM orders", "DROP TABLE orders", "SELECT customer_id FROM orders LIMIT 1"):
-            with self.subTest(sql=sql), self.assertRaises(QueryExecutionError):
+            with self.subTest(sql=sql), self.assertRaises(QueryExecutionError) as policy_error:
                 engine.execute_readonly(type(query)(sql, ()), tenant_id="tenant-a")
+            self.assertEqual(policy_error.exception.failure_code, "sql_policy")
         with self.assertRaises(QueryExecutionError):
             engine.execute_readonly(type(query)(query.sql, ("one-value",)), tenant_id="tenant-a")
         pool.connection.assert_not_called()
@@ -104,8 +107,9 @@ class QueryEngineTests(unittest.TestCase):
         timeout.sqlstate = "57014"
         engine = PostgresQueryEngine("unused", tenant_id="tenant-a", pool=FakePool(FakeConnection(error=timeout)))
         query = compile_query(QueryPlan("approved_refund_order_rate", "2026-10-01", "2026-10-08", None, None))
-        with self.assertRaises(QueryTimeoutError):
+        with self.assertRaises(QueryTimeoutError) as raised:
             engine.execute_readonly(query)
+        self.assertEqual(raised.exception.failure_code, "statement_timeout")
 
         engine = PostgresQueryEngine("unused", tenant_id="tenant-a", pool=FakePool(FakeConnection([(str(i), 0.1) for i in range(3)])), max_rows=2)
         with self.assertRaises(QueryExecutionError):
