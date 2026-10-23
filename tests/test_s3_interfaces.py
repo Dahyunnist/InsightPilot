@@ -1,13 +1,9 @@
 import asyncio
 import json
-import socket
 import tempfile
-import threading
-import time
 import unittest
 from pathlib import Path
 
-import uvicorn
 from fastapi.testclient import TestClient
 from mcp import Client
 
@@ -78,33 +74,51 @@ class S3InterfaceTests(unittest.TestCase):
 
     def test_mcp_streamable_http_transport(self):
         mcp_server = build_mcp_server(self.core)
-        app = mcp_server.streamable_http_app(streamable_http_path="/mcp", stateless_http=True, host="127.0.0.1")
-        sock = socket.socket()
-        sock.bind(("127.0.0.1", 0))
-        sock.listen(128)
-        port = sock.getsockname()[1]
-        server = uvicorn.Server(uvicorn.Config(app, log_level="critical", lifespan="on"))
-        thread = threading.Thread(target=lambda: asyncio.run(server.serve(sockets=[sock])), daemon=True)
-        thread.start()
-        try:
-            deadline = time.monotonic() + 10
-            while not server.started and time.monotonic() < deadline:
-                time.sleep(0.05)
-            self.assertTrue(server.started, "MCP HTTP server did not start")
+        app = mcp_server.streamable_http_app(streamable_http_path="/mcp", stateless_http=True, host="testserver")
+        with TestClient(app, raise_server_exceptions=False) as client:
+            headers = {"accept": "application/json, text/event-stream"}
+            initialized = client.post("/mcp", headers=headers, json={
+                "jsonrpc": "2.0", "id": 1, "method": "initialize",
+                "params": {"protocolVersion": "2025-11-25", "capabilities": {},
+                           "clientInfo": {"name": "test", "version": "1"}},
+            })
+            self.assertEqual(initialized.status_code, 200, initialized.text)
+            session_id = initialized.headers.get("mcp-session-id")
+            if session_id:
+                headers["mcp-session-id"] = session_id
+            headers["mcp-protocol-version"] = "2025-11-25"
+            notification = client.post("/mcp", headers=headers, json={
+                "jsonrpc": "2.0", "method": "notifications/initialized",
+            })
+            self.assertIn(notification.status_code, (200, 202), notification.text)
 
-            async def invoke():
-                async with Client(f"http://127.0.0.1:{port}/mcp") as client:
-                    tools = (await client.list_tools()).tools
-                    self.assertEqual([tool.name for tool in tools], ["analyze_refund"])
-                    result = await client.call_tool("analyze_refund", {"question": "问题"})
-                    payload = json.loads(result.content[0].text)
-                    self.assertEqual(payload["status"], "answered")
+            tools_response = client.post("/mcp", headers=headers, json={
+                "jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {},
+            })
+            self.assertEqual(tools_response.status_code, 200, tools_response.text)
+            tools_payload = self._mcp_http_payload(tools_response)
+            self.assertEqual([tool["name"] for tool in tools_payload["result"]["tools"]],
+                             ["analyze_refund"])
 
-            asyncio.run(invoke())
-        finally:
-            server.should_exit = True
-            thread.join(timeout=10)
-            sock.close()
+            call_response = client.post("/mcp", headers=headers, json={
+                "jsonrpc": "2.0", "id": 3, "method": "tools/call",
+                "params": {"name": "analyze_refund", "arguments": {"question": "问题"}},
+            })
+            self.assertEqual(call_response.status_code, 200, call_response.text)
+            call_payload = self._mcp_http_payload(call_response)
+            result = call_payload["result"]
+            payload = json.loads(result["content"][0]["text"])
+            self.assertEqual(payload["status"], "answered")
+            self.assertAlmostEqual(payload["rows"][0]["value"], 5 / 9)
+
+    @staticmethod
+    def _mcp_http_payload(response):
+        if "text/event-stream" not in response.headers.get("content-type", ""):
+            return response.json()
+        data = [line[6:] for line in response.text.splitlines() if line.startswith("data: ")]
+        if not data:
+            raise AssertionError("MCP event stream contained no JSON data")
+        return json.loads(data[-1])
 
 
 if __name__ == "__main__":

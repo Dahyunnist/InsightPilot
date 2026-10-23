@@ -16,7 +16,9 @@
 .\.venv\Scripts\python.exe -m unittest discover -s tests -q
 ```
 
-共 94 项。一次完整运行通过；其余完整运行偶发 `test_mcp_streamable_http_transport` 的 `httpx2.ReadError`，单独运行该测试通过。该传输测试存在间歇性，暂未改测试代码。
+共 94 项。MCP Streamable HTTP 回归使用 FastAPI `TestClient` 运行完整 JSON-RPC 初始化、工具枚举和工具调用，避免随机端口及手动 Uvicorn 线程的生命周期抖动。该回归连续 10 次通过；修复后全套测试连续两次 94/94 通过。
+
+一键验收命令也连续两次通过。每次重建临时 PostgreSQL，R01/R02 开发诊断通过，分域规则基线六臂通过，旧 IP4 封存与模型盲评报告哈希校验通过。全程 0 模型 API 调用，冻结评测结果未改。
 
 ## 结果索引
 
