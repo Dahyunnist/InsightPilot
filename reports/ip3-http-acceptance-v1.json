@@ -1,0 +1,68 @@
+{
+  "service": "FastAPI real HTTP; local runner because Docker Hub image pull was blocked",
+  "planner": "fixed synthetic planner with 150ms delay",
+  "backend": "synthetic SQLite",
+  "model_calls": 0,
+  "idempotency": {
+    "first_status": 200,
+    "replay_status": 200,
+    "same_run_id": true,
+    "replay_header": "true",
+    "conflict_status": 409
+  },
+  "cases": [
+    {
+      "concurrency": 1,
+      "requests": 1,
+      "status_counts": {
+        "200": 1
+      },
+      "latency_ms": {
+        "p50": 209.027,
+        "p95": 209.027,
+        "max": 209.027
+      },
+      "success_count": 1,
+      "http_429_count": 0,
+      "http_503_count": 0,
+      "successful_responses": 1,
+      "mode": "real_http_synthetic_sqlite_fixed_planner_no_model_calls"
+    },
+    {
+      "concurrency": 5,
+      "requests": 5,
+      "status_counts": {
+        "200": 5
+      },
+      "latency_ms": {
+        "p50": 224.398,
+        "p95": 234.743,
+        "max": 250.796
+      },
+      "success_count": 5,
+      "http_429_count": 0,
+      "http_503_count": 0,
+      "successful_responses": 5,
+      "mode": "real_http_synthetic_sqlite_fixed_planner_no_model_calls"
+    },
+    {
+      "concurrency": 20,
+      "requests": 20,
+      "status_counts": {
+        "200": 8,
+        "429": 12
+      },
+      "latency_ms": {
+        "p50": 13.39,
+        "p95": 261.613,
+        "max": 274.351
+      },
+      "success_count": 8,
+      "http_429_count": 12,
+      "http_503_count": 0,
+      "successful_responses": 8,
+      "mode": "real_http_synthetic_sqlite_fixed_planner_no_model_calls"
+    }
+  ],
+  "interpretation": "Synchronous HTTP requests wait for analysis results; concurrency is a burst, not async job throughput. Rejected 429s are included in latency percentiles."
+}

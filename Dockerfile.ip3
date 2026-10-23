@@ -1,0 +1,9 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+COPY insightpilot ./insightpilot
+COPY data ./data
+COPY scripts/ip3_probe_app.py ./scripts/ip3_probe_app.py
+ENV PYTHONPATH=/app
+CMD ["python", "scripts/ip3_probe_app.py"]
