@@ -19,6 +19,26 @@ class RulePlanner:
 
     def plan(self, question: str) -> QueryPlan:
         q = question.strip()
+        marketing = any(cue in q.lower() for cue in ("roi", "投资回报率", "投资回报"))
+        if marketing:
+            raw_dates = re.findall(r"\d{4}-\d{2}-\d{2}", q)
+            try:
+                dates = [date.fromisoformat(value) for value in raw_dates]
+            except ValueError:
+                raise NeedsClarification("日期无效。") from None
+            if len(dates) == 1 and any(word in q for word in ("当天", "当日")):
+                start, end = dates[0], date.fromordinal(dates[0].toordinal() + 1)
+            elif len(dates) == 2:
+                start, end = dates[0], date.fromordinal(dates[1].toordinal() + 1)
+            else:
+                raise NeedsClarification("规则基线需要一个明确时间窗。")
+            if any(region in q for region in REGION_VALUES):
+                raise NeedsClarification("营销费用没有地区分摊。")
+            dimension = "campaign" if any(word in q for word in (
+                "各活动", "各营销活动", "按活动", "不同活动", "逐个营销活动", "每个营销活动"
+            )) else None
+            return QueryPlan("marketing_net_roi", start.isoformat(), end.isoformat(), None, dimension)
+
         if "截至" in q and any(word in q for word in ("当时", "可见", "入库", "记录")):
             raise NeedsClarification("合成规则基线不支持历史入库快照。")
         if ("地区" in q and "渠道" in q) or sum(region in q for region in REGION_VALUES) > 1:
@@ -37,6 +57,12 @@ class RulePlanner:
             raise NeedsClarification("规则基线需要一个明确时间窗。")
         if start >= end:
             raise NeedsClarification("结束日期必须晚于开始日期。")
+
+        if "活动" in q and any(word in q for word in ("退款金额贡献", "活动退款贡献", "活动归因")):
+            if "贡献" not in q and "归因" not in q:
+                raise NeedsClarification("规则基线无法确定活动归因口径。")
+            return QueryPlan("approved_refund_campaign_attribution", start.isoformat(), end.isoformat(),
+                             next((value for value in REGION_VALUES if value in q), None), "campaign")
 
         amount_cues = ("金额率", "金额退款率", "占实付", "实付金额")
         order_cues = ("订单率", "订单退款率")

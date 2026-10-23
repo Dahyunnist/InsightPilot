@@ -21,3 +21,9 @@
 部署前，DB owner 必须为合成数据补齐并核对 `tenant_id`，执行 bootstrap SQL，再把应用登录角色加入 `insightpilot_reader`。tenant id 必须来自认证上下文，不能接受模型或用户自由指定。接入 API 前需补 PostgreSQL 集成 fixture，实测跨租户 JOIN、无租户上下文、只读角色、超时和 SQLite/PostgreSQL 数值一致性。
 
 本阶段不调用模型，不产生模型费用。账本未变。
+
+## IP4 PostgreSQL 验证补记（2026-10-23）
+
+使用 PostgreSQL 16.15 一次性容器与 `scripts/verify_ip4_postgres_psql.py` 直接执行 SQLGlot 转换后的查询。退款订单率、退款金额率、退款活动归因、营销 ROI 三种查询，在 tenant-a 和 tenant-b 各 6/6 匹配独立 Python gold；数据重复导入到两个租户，避免空租户造成的假通过。无 tenant 上下文 fail-closed，应用角色 DML 被拒，statement timeout 被触发且后续查询成功。
+
+这补过真实 PostgreSQL/RLS SQL 验证，但没有运行 Python `PostgresQueryEngine` 的 psycopg 连接池。当前虚拟环境缺 psycopg，PyPI 安装超时；SQLite `InsightPilot` 端到端与 PostgreSQL adapter pool exhaustion 仍未验收。

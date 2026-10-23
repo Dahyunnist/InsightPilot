@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: insightpilot-ip4-postgres
+    environment:
+      POSTGRES_DB: insightpilot_ip4
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${INSIGHTPILOT_IP4_ADMIN_PASSWORD:?set a local test-only PostgreSQL password}
+    ports:
+      - "127.0.0.1:55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d insightpilot_ip4"]
+      interval: 2s
+      timeout: 2s
+      retries: 20

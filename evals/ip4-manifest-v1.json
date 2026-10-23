@@ -1,0 +1,20 @@
+{
+  "suite_id": "insightpilot-ip4-cross-domain-v1",
+  "case_count": 12,
+  "domains": {
+    "refunds": 6,
+    "marketing_roi": 6
+  },
+  "answerable_case_count": 6,
+  "guard_case_count": 6,
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+  "seed": "20261023",
+  "snapshot_at": "2027-03-01T00:00:00Z",
+  "blind_sha256": "f587c11308c8cd6a1de24b57bf5b5259c618ac0d692aa60615e0419a92d5f2d2",
+  "gold_sha256": "0cc4f43873eae69b1be7ba670a29bed4a9da20533ddb3cb7e8c89bf65c92a1d6",
+  "gold_method": "refunds: independent row-ledger Python aggregation; marketing: independent event-ledger Python aggregation; all numeric rows cross-checked against compiled read-only SQLite SQL",
+  "synthetic_only": true,
+  "scope": "Small stratified cross-domain contract holdout; exact prompt overlap checked; confidence intervals describe this set only.",
+  "exact_normalized_prompt_overlap_count": 0
+}

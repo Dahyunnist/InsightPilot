@@ -1,0 +1,57 @@
+{
+  "created_at_utc": "2026-10-23T06:11:26.068998+00:00",
+  "suite_id": "insightpilot-ip4-cross-domain-v1",
+  "backend": "SQLite",
+  "planner": "RulePlanner",
+  "model_calls": 0,
+  "estimated_model_cost_usd": 0.0,
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+  "case_count": 12,
+  "passed": 12,
+  "strict_accuracy": 1.0,
+  "wilson_95_ci": [
+    0.7575,
+    1
+  ],
+  "case_bootstrap_95_ci": [
+    1.0,
+    1.0
+  ],
+  "by_domain": {
+    "marketing_roi": {
+      "passed": 6,
+      "total": 6,
+      "strict_accuracy": 1.0,
+      "wilson_95_ci": [
+        0.6097,
+        1.0
+      ],
+      "failures": []
+    },
+    "refunds": {
+      "passed": 6,
+      "total": 6,
+      "strict_accuracy": 1.0,
+      "wilson_95_ci": [
+        0.6097,
+        1.0
+      ],
+      "failures": []
+    }
+  },
+  "answerable": {
+    "passed": 6,
+    "total": 6
+  },
+  "refusal_metrics": {
+    "expected_refusal_count": 3,
+    "correct_refusals": 3,
+    "correct_refusal_recall": 1.0,
+    "false_refusals_on_answerable": [],
+    "false_accepts_on_refusal_cases": [],
+    "unsupported_region_accepted": []
+  },
+  "failures": [],
+  "confidence_interval_note": "此为按业务域分层的小型合成固定集；Wilson 与题目 bootstrap 区间仅描述本冻结集，不代表生产总体准确率。"
+}

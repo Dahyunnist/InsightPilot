@@ -1,0 +1,65 @@
+{
+  "status": "passed",
+  "backend": "PostgreSQL 16 / psql + compiled SQLGlot output",
+  "answerable_case_count": 6,
+  "tenant_results": {
+    "tenant-a": [
+      {
+        "case_id": "IP4-R01",
+        "passed": true
+      },
+      {
+        "case_id": "IP4-R02",
+        "passed": true
+      },
+      {
+        "case_id": "IP4-R03",
+        "passed": true
+      },
+      {
+        "case_id": "IP4-M01",
+        "passed": true
+      },
+      {
+        "case_id": "IP4-M02",
+        "passed": true
+      },
+      {
+        "case_id": "IP4-M03",
+        "passed": true
+      }
+    ],
+    "tenant-b": [
+      {
+        "case_id": "IP4-R01",
+        "passed": true
+      },
+      {
+        "case_id": "IP4-R02",
+        "passed": true
+      },
+      {
+        "case_id": "IP4-R03",
+        "passed": true
+      },
+      {
+        "case_id": "IP4-M01",
+        "passed": true
+      },
+      {
+        "case_id": "IP4-M02",
+        "passed": true
+      },
+      {
+        "case_id": "IP4-M03",
+        "passed": true
+      }
+    ]
+  },
+  "missing_tenant_fails_closed": true,
+  "dml_denied": true,
+  "statement_timeout_observed": true,
+  "connection_after_timeout_works": true,
+  "pool_exhaustion": "not_measured; psycopg_pool is unavailable in this host environment",
+  "application_role": "insightpilot_ip4_app SET ROLE insightpilot_reader"
+}
