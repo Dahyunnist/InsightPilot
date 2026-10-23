@@ -35,6 +35,7 @@
 | IP-3 HTTP 压测 | `reports/ip3-http-acceptance-v1.json` | 本机真实 HTTP 合成压测；Compose 镜像拉取受网络阻断，未声称容器内通过 |
 | IP-4 独立集比较 | `reports/ip4-stage-comparison-v1.json` | 冻结哈希、双后端规则基线、历史消融、拒答/误接受与样本限制 |
 | IP-4 v8 离线预登记 | `reports/enterprise-v8-preparation-report.json` | 新 seed 题集与 gold 哈希、规则基线、模型盲区、费用上界；尚未调用模型 |
+| IP-4 v8 配对结果 | `reports/enterprise-v8-model-diff.json` | 规则与模型系统同集比较、逐题模型覆盖、usage 费用与限制 |
 | 费用账本 | `reports/model-experiment-cost-ledger.json` | 请求与 token 记录、估价方法及剩余预算 |
 | 阶段说明 | `docs/learning/stage-IP4.md` | IP4 冻结、失败边界和分域复验背景 |
 

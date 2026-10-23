@@ -87,7 +87,7 @@
     "max_completion_tokens": 1024,
     "per_request_prompt_ceiling": 2000,
     "max_api_calls": 50,
-    "cap_usd": 0.10,
+    "cap_usd": 0.1,
     "per_call_peak_reserve_usd": 0.0018288,
     "maximum_peak_reserve_usd": 0.09144,
     "remaining_global_cap_before_run_usd": 3.79755285,
@@ -97,11 +97,21 @@
     "answerable_passed": "6/11",
     "guard_passed": "8/9",
     "sql_verified": "6/11",
-    "ablations_passed": {"without_semantic_retrieval": "9/20", "without_verifier": "8/20"},
+    "ablations_passed": {
+      "without_semantic_retrieval": "9/20",
+      "without_verifier": "8/20"
+    },
     "api_request_attempts_all_arms": 33,
     "total_tokens_all_arms": 35043,
     "peak_list_price_estimate_usd": 0.0301068,
-    "failed_cases": ["X01", "X02", "X05", "X06", "X11", "X19"],
+    "failed_cases": [
+      "X01",
+      "X02",
+      "X05",
+      "X06",
+      "X11",
+      "X19"
+    ],
     "failure_analysis": "Five natural-language variants had no metric candidate before model call; one prompt-injection paraphrase was not recognized. All six failed before model planning."
   },
   "v7_independent_holdout": {
@@ -113,7 +123,7 @@
     "max_completion_tokens": 1024,
     "per_request_prompt_ceiling": 2000,
     "max_api_calls": 50,
-    "cap_usd": 0.10,
+    "cap_usd": 0.1,
     "per_call_peak_reserve_usd": 0.0018288,
     "maximum_peak_reserve_usd": 0.09144,
     "remaining_global_cap_before_run_usd": 3.76744605,
@@ -123,7 +133,10 @@
     "answerable_passed": "10/11",
     "guard_passed": "9/9",
     "sql_verified": "10/11",
-    "ablations_passed": {"without_semantic_retrieval": "14/20", "without_verifier": "9/20"},
+    "ablations_passed": {
+      "without_semantic_retrieval": "14/20",
+      "without_verifier": "9/20"
+    },
     "api_request_attempts_all_arms": 43,
     "total_tokens_all_arms": 44269,
     "peak_list_price_estimate_usd": 0.0404901,
@@ -143,7 +156,11 @@
     "suite": "insightpilot-ip4-cross-domain-v1",
     "model": "deepseek-v4-flash",
     "case_runs": 36,
-    "strict_passed": {"sqlite:shared": "12/12", "postgresql:tenant-a": "10/12", "postgresql:tenant-b": "12/12"},
+    "strict_passed": {
+      "sqlite:shared": "12/12",
+      "postgresql:tenant-a": "10/12",
+      "postgresql:tenant-b": "12/12"
+    },
     "api_request_attempts": 18,
     "prompt_tokens": 11331,
     "completion_tokens": 7657,
@@ -153,8 +170,18 @@
     "remaining_global_cap_before_run_usd": 3.72695595,
     "remaining_global_cap_after_actual_usage_usd": 3.71436825,
     "failures": [
-      {"backend": "postgresql", "tenant_id": "tenant-a", "case_id": "IP4-R01", "stage": "query"},
-      {"backend": "postgresql", "tenant_id": "tenant-a", "case_id": "IP4-R02", "stage": "query"}
+      {
+        "backend": "postgresql",
+        "tenant_id": "tenant-a",
+        "case_id": "IP4-R01",
+        "stage": "query"
+      },
+      {
+        "backend": "postgresql",
+        "tenant_id": "tenant-a",
+        "case_id": "IP4-R02",
+        "stage": "query"
+      }
     ],
     "holdout_manifest_sha256": "f5aca68edbd908640d8886ffa16e590176ce8b26db7c0cfccdc1113dc5e25e5d",
     "blind_sha256": "f587c11308c8cd6a1de24b57bf5b5259c618ac0d692aa60615e0419a92d5f2d2",
@@ -167,7 +194,10 @@
     "status": "completed_once",
     "preregistration_sha256": "86d90adc534f68d2a42e1bfa4fa4153393bdacdcd782d34cd2d509ba3f352884",
     "report_sha256": "ce98a9fe21e178d7f1ac4bcdbd783b5f9caa42f782885cad491e78ccf3724c7d",
-    "suite_ids": ["insightpilot-refunds-validation-v1", "insightpilot-marketing_roi-validation-v1"],
+    "suite_ids": [
+      "insightpilot-refunds-validation-v1",
+      "insightpilot-marketing_roi-validation-v1"
+    ],
     "model": "deepseek-v4-flash",
     "case_runs": 36,
     "strict_passed": {
@@ -199,5 +229,20 @@
     "scorer_sha256": "6fdca63711d8efb504f2b3f4b29d6018f4a8cbb9dc842404985ea941e7b29479",
     "pricing_basis": "Peak DeepSeek Flash rates, all reported input tokens priced as cache misses; actual provider invoice not available."
   },
-  "remaining_global_cap_after_domain_model_usd": 3.69709005
+  "remaining_global_cap_after_domain_model_usd": 3.69709005,
+  "remaining_global_cap_after_v8_model_usd": 3.69558975,
+  "v8_independent_holdout": {
+    "status": "completed",
+    "holdout": "enterprise-blind-v8",
+    "seed": 20261023,
+    "blind_sha256": "499d241dedfe5aadf393d3127fa3b6b63dc9299bcbe2475d0c6c004d035f1e69",
+    "gold_sha256": "bbde27b0e72338404cf60f4713b54c689190104d771c6fa7c370a4b22f24153b",
+    "model_calls": 2,
+    "strict_passed": "10/20",
+    "peak_list_price_estimate_usd": 0.0015003,
+    "worst_case_reserve_usd": 0.073152,
+    "global_remaining_before_usd": 3.69709005,
+    "global_remaining_after_actual_usage_usd": 3.69558975,
+    "no_old_ip4_rerun": true
+  }
 }

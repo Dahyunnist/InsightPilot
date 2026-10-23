@@ -28,6 +28,16 @@ class EnterpriseV8FreezeTests(unittest.TestCase):
                                lock["global_remaining_before_usd"] - lock["worst_case_reserve_usd"])
         self.assertFalse(lock["old_ip4_touched"])
 
+    def test_v8_model_run_stays_within_locked_budget(self):
+        lock = json.loads((ROOT / "reports/enterprise-v8-model-preregistration.json").read_text(encoding="utf-8"))
+        report = json.loads((ROOT / "reports/enterprise-v8-model-blind-report.json").read_text(encoding="utf-8"))
+        self.assertLessEqual(report["model_calls"], lock["max_api_calls"])
+        self.assertLessEqual(report["reserved_worst_case_usd"], lock["worst_case_reserve_usd"])
+        self.assertAlmostEqual(report["global_remaining_after_actual_usage_usd"],
+                               report["global_remaining_before_usd"] - report["peak_list_price_estimate_usd"])
+        self.assertEqual(report["usage_missing_calls"], 0)
+        self.assertFalse(report["old_ip4_touched"])
+
 
 if __name__ == "__main__":
     unittest.main()

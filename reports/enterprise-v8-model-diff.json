@@ -1,0 +1,27 @@
+{
+  "suite": "enterprise-blind-v8",
+  "paired_backend": "SQLite; same 20 frozen blind questions and independent gold",
+  "model_calls": 2,
+  "prompt_tokens": 1033,
+  "completion_tokens": 992,
+  "usage_missing_calls": 0,
+  "estimated_peak_price_usd": 0.0015003,
+  "global_remaining_after_run_usd": 3.69558975,
+  "arms": {
+    "RulePlanner": {"strict": "8/20", "answerable": "0/11", "guard": "8/9", "false_refusals": 11, "false_accepts": 0},
+    "model_with_retrieval_and_verifier": {"strict": "10/20", "answerable": "2/11", "guard": "8/9", "false_refusals": 9, "false_accepts": 0}
+  },
+  "request_coverage": {
+    "cases_with_model_calls": ["X04", "X05"],
+    "answerable_cases_stopped_before_model": ["X01", "X02", "X03", "X06", "X08", "X09", "X10", "X11", "X12"],
+    "interpretation": "Strict end-to-end planner result. Retrieval/preflight clarification paths prevented model calls on nine answerable cases; do not report 2/11 as standalone model accuracy."
+  },
+  "false_accept_or_unauthorized_guard_cases": [],
+  "old_ip4_r01_r02": "untouched; prior frozen failures retained",
+  "v6_v7": "not rerun; prior exposed sets are not test data for this run",
+  "limitations": [
+    "20 designed synthetic cases on one seed; confidence intervals do not establish production performance.",
+    "Only two cases reached the model endpoint; this run mainly measures the complete system and its deterministic retrieval gates.",
+    "No PostgreSQL model arm was run; this pairing is SQLite only."
+  ]
+}
