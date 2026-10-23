@@ -1,0 +1,38 @@
+{
+  "status": "frozen_offline_ready_for_next_round",
+  "suite": "enterprise-blind-v8",
+  "model_calls": 0,
+  "seed": 20261023,
+  "cases": {"total": 20, "answerable": 11, "clarify": 6, "refuse": 3},
+  "data_fingerprint": "06d50cdabeba51807fe155ba5fa3a7f65ab625125e2b94dacf9a80020e66d5c9",
+  "blind_sha256": "499d241dedfe5aadf393d3127fa3b6b63dc9299bcbe2475d0c6c004d035f1e69",
+  "gold_sha256": "bbde27b0e72338404cf60f4713b54c689190104d771c6fa7c370a4b22f24153b",
+  "manifest_sha256": "4ea11a3c2e5403ebcd24dc164e45b2d078eb941e75265a5ef8ffe581a6ec176c",
+  "normalized_exact_prompt_overlap_with_prior_sets": 0,
+  "model_visibility": {"gold_not_passed_to_agent": true, "evaluation_agent_input": "blind question only", "gold_used_after_analysis_by_scorer": true},
+  "rule_baseline": {
+    "report": "reports/enterprise-v8-rule-baseline.json",
+    "strict": "8/20",
+    "answerable": "0/11",
+    "guard": "8/9",
+    "false_refusals": 11,
+    "false_accepts": 0,
+    "model_calls": 0
+  },
+  "prior_model_runs_are_not_v8": {
+    "v6": "14/20, previously exposed; diagnostic only",
+    "v7": "19/20, previously exposed; diagnostic only",
+    "old_ip4_modified_or_rerun": false
+  },
+  "budget_lock": {
+    "audit": "reports/cost-audit-v8.json",
+    "remaining_before_reserve_usd": 3.69709005,
+    "v8_worst_case_reserve_usd": 0.073152,
+    "remaining_after_reserve_usd": 3.62393805,
+    "global_cap_usd": 4.0,
+    "model": "deepseek-v4-flash",
+    "max_calls": 40,
+    "cost_invoice_verified": false
+  },
+  "docker_compose": "not_verified_after_prior Docker Hub timeout; next run should use cached PostgreSQL image or host PostgreSQL"
+}

@@ -1,0 +1,46 @@
+{
+  "audited_on": "2026-10-23",
+  "global_cap_usd": 4.0,
+  "ledger_remaining_before_v8_usd": 3.69709005,
+  "booked_usage_and_reserves_usd": 0.30290995,
+  "named_usage_priced_runs_usd": 0.1795704,
+  "residual_prior_reserve_or_unreconciled_usage_usd": 0.12333955,
+  "run_estimates_peak_price_all_reported_input_as_cache_miss": {
+    "v4": 0.01397944,
+    "post_fix_smoke": 0.00291461,
+    "v5_capacity_diagnostic": 0.0321983,
+    "v5_default_run": 0.03001525,
+    "v6_independent_holdout": 0.0301068,
+    "v7_independent_holdout": 0.0404901,
+    "ip4_model_run": 0.0125877,
+    "domain_validation_model_run": 0.0172782
+  },
+  "historical_jsonl_usage_inventory": {
+    "attempts": 76,
+    "prompt_tokens": 33116,
+    "completion_tokens": 46348,
+    "all_cache_miss_peak_estimate_usd": 0.065552,
+    "missing_usage_reserve_usd": 0.034448,
+    "treatment": "Cross-check only. Not added again because historical rows may overlap named run reports."
+  },
+  "reconciliation": {
+    "formula": "global cap minus booked usage and reserves equals unreserved balance",
+    "checked": true,
+    "provider_invoice_available": false,
+    "meaning": "Usage-priced estimates and conservative reserves; not provider invoice spend."
+  },
+  "v8_reservation": {
+    "cases": 20,
+    "attempts_per_case": 2,
+    "maximum_api_calls": 40,
+    "input_token_limit_per_call": 2000,
+    "output_token_limit_per_call": 1024,
+    "peak_input_usd_per_million": 0.3,
+    "peak_output_usd_per_million": 1.2,
+    "per_call_worst_case_usd": 0.0018288,
+    "worst_case_reserve_usd": 0.073152,
+    "global_remaining_after_reserve_usd": 3.62393805,
+    "model_calls_this_preparation": 0,
+    "pricing_source": "https://api-docs.deepseek.com/quick_start/pricing/"
+  }
+}
