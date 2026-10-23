@@ -1,0 +1,22 @@
+{
+  "suite": "enterprise-blind-v8",
+  "classification": "seen-development-set; never use as future test",
+  "model_calls": 2,
+  "cases_reviewed": 9,
+  "root_causes": [
+    {
+      "layer": "planner date extraction",
+      "case_ids": ["X01", "X02", "X03", "X06", "X08", "X09", "X10", "X12"],
+      "evidence": "All 8 are clarification results with planning blocked and no provider call. Their dates use Chinese year/month, quarter, or day-range notation; planner only extracted YYYY-MM-DD.",
+      "fix_scope": "Normalize Chinese month, quarter, and same-month day range to inclusive calendar dates before existing planner validation."
+    },
+    {
+      "layer": "semantic metric retrieval",
+      "case_ids": ["X11"],
+      "evidence": "Clarification states no supported metric; the query says actual approved refund total without the event-date cue currently recognized by the catalog.",
+      "status": "documented, not changed in this repair"
+    }
+  ],
+  "v8_blind_gold_changed": false,
+  "fix_validation": "Chinese month, quarter, and same-month day-range parsing now has regression coverage; v8 model was not replayed."
+}

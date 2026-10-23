@@ -1,0 +1,28 @@
+{
+  "audited_on": "2026-10-23",
+  "provider_invoice_available": false,
+  "prior_cap_usd": 4.0,
+  "authorized_cap_increase_usd": 1.0,
+  "new_cap_usd": 5.0,
+  "provider_usage_priced_run_estimates_before_v8_usd": 0.1795704,
+  "v8_provider_usage_peak_estimate_usd": 0.0015003,
+  "named_usage_estimates_after_v8_usd": 0.1810707,
+  "prior_reserve_or_unreconciled_usage_usd": 0.12333955,
+  "booked_usage_and_reserves_usd": 0.30441025,
+  "available_before_v9_reserve_usd": 4.69558975,
+  "v9_reservation": {
+    "cases": 20,
+    "attempts_per_case": 2,
+    "maximum_provider_requests": 40,
+    "input_tokens_per_request_ceiling": 2000,
+    "output_tokens_per_request_ceiling": 1024,
+    "price_basis": "DeepSeek Flash peak rate; every input token treated as cache miss",
+    "peak_input_usd_per_million": 0.30,
+    "peak_output_usd_per_million": 1.20,
+    "per_request_max_usd": 0.0018288,
+    "full_task_max_usd": 0.073152,
+    "available_after_reservation_usd": 4.62243775
+  },
+  "reconciliation": "5.00 cap - 0.30441025 booked usage/reserves = 4.69558975 available before v9; historical raw JSONL usage inventory is a cross-check and not double-counted.",
+  "pricing_source": "https://api-docs.deepseek.com/quick_start/pricing/"
+}

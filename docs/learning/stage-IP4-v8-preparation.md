@@ -35,3 +35,7 @@ DeepSeek 当前 Flash 峰价按未缓存输入 `$0.30/M`、输出 `$1.20/M`。v8
 预登记通过后仅运行 v8 模型主臂；未重跑 v6、v7 或旧 IP4。严格主臂 10/20：可答 2/11，guard 8/9。规则基线为 8/20：可答 0/11，guard 8/9。两臂均无 guard false accept；规则路径 11 个可答题均未回答，模型系统路径 9 个可答题在检索/预检后澄清，未到模型端。仅 X04、X05 产生模型请求。因此 2/11 是端到端可答题结果，不能称作模型单独准确率。
 
 共 2 次请求，prompt 1,033 tokens、completion 992 tokens，无缺失 usage；按峰价估算 `$0.0015003`。全局账本余 `$3.69558975`。逐题输出和规则差异见 `reports/enterprise-v8-model-blind-report.json`、`reports/enterprise-v8-model-diff.json`。结果只来自 20 道合成题和一个 seed。仅跑 SQLite，未跑 PostgreSQL 模型臂。
+
+### 失败归因与修复
+
+v8 现为已见开发集，不再作 test。9 个端到端错误拒答中，8 个在 planner 日期抽取阶段被挡：它们用中文年月、季度或同月日范围，旧解析器只认 `YYYY-MM-DD`。X11 因退款事件指标检索词未命中而澄清。只修 planner 日期解析，增加中文月份、季度和同月日范围回归；未改 v8 blind/gold，也未重跑模型。X11 检索缺口留待后续修复。

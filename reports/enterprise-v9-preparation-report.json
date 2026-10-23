@@ -1,0 +1,18 @@
+{
+  "status": "frozen_pre_model",
+  "suite": "enterprise-blind-v9",
+  "seed": 20261024,
+  "model_calls": 0,
+  "cases": {"total": 20, "answerable": 11, "clarify": 6, "refuse": 3},
+  "data_fingerprint": "188df9fab3d518334d30f3fd6de00b6ea4df5ec71ce54142fe390609e4d3aea7",
+  "blind_sha256": "56113bc1471739374b0477f341c733d2a2f423c9ea6a9d8138ab695424b16797",
+  "gold_sha256": "7d07afd40a3709c73a74678412374e195e5e46ea2bdf5f789cfb453a17a51bd1",
+  "manifest_sha256": "42fb240d2502819101f4e76ca8bf1b6baa3c3a9f40a9ccf606ddc25bf206ae6b",
+  "exact_prompt_overlap_count": 0,
+  "gold_not_in_agent_context": true,
+  "rule_baseline": {"strict": "8/20", "answerable": "0/11", "guard": "8/9", "false_refusals": 11, "false_accepts": 0},
+  "budget_lock": {"cap_usd": 5.0, "remaining_before_usd": 4.69558975, "request_limit": 40, "worst_case_reserve_usd": 0.073152, "remaining_after_reserve_usd": 4.62243775},
+  "old_ip4_touched": false,
+  "v6_v7_reused_as_test": false,
+  "docker_compose": "not verified; use cached PostgreSQL image or host PostgreSQL in the next run"
+}

@@ -8,6 +8,7 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import asdict, dataclass
+from calendar import monthrange
 from datetime import date
 
 from .config import Settings
@@ -153,6 +154,36 @@ class OpenAICompatiblePlanner:
         if "退款率" in q and any(term in q for term in ("贡献", "贡献度")):
             raise NeedsClarification("S1 一次处理一个指标；请先分别询问退款率或品类贡献度。")
         date_strings = re.findall(r"\d{4}-\d{2}-\d{2}", q)
+        if not date_strings:
+            year_match = re.search(r"(\d{4})\s*年", q)
+            year = int(year_match.group(1)) if year_match else None
+            quarter = re.search(r"(\d{4})\s*年\s*第?([一二三四1-4])季度", q)
+            if quarter:
+                quarter_index = {"一": 1, "二": 2, "三": 3, "四": 4}.get(quarter.group(2))
+                quarter_index = quarter_index or int(quarter.group(2))
+                first_month = (quarter_index - 1) * 3 + 1
+                last_month = first_month + 2
+                date_strings = [f"{quarter.group(1)}-{first_month:02d}-01",
+                                f"{quarter.group(1)}-{last_month:02d}-{monthrange(int(quarter.group(1)), last_month)[1]:02d}"]
+            elif re.search(r"(\d{4})\s*年", q):
+                month_matches = list(re.finditer(r"(?:(\d{4})\s*年\s*)?(\d{1,2})\s*月(?:\s*(\d{1,2})\s*日)?", q))
+                if month_matches:
+                    months = [(int(match.group(1) or year), int(match.group(2)), match.group(3))
+                              for match in month_matches]
+                    if len(months) == 1 and months[0][2]:
+                        start_day = int(months[0][2])
+                        tail = q[month_matches[0].end():]
+                        end_match = re.search(r"(?:到|至|截至)\s*(\d{1,2})\s*日", tail)
+                        end_day = int(end_match.group(1)) if end_match else start_day
+                        dates = [date(months[0][0], months[0][1], start_day),
+                                 date(months[0][0], months[0][1], end_day)]
+                        date_strings = [item.isoformat() for item in dates]
+                    else:
+                        first_year, first_month, _ = months[0]
+                        last_year, last_month, _ = months[-1]
+                        date_strings = [date(first_year, first_month, 1).isoformat(),
+                                        date(last_year, last_month,
+                                             monthrange(last_year, last_month)[1]).isoformat()]
         source_periods: tuple[tuple[str, str], ...] = ()
         try:
             parsed_days = [date.fromisoformat(value) for value in date_strings]
