@@ -19,5 +19,16 @@
   },
   "pricing_source": "https://api-docs.deepseek.com/quick_start/pricing/",
   "provider_invoice_available": false,
-  "model_calls_during_v10_preparation": 0
+  "model_calls_during_v10_preparation": 0,
+  "v10_model_run": {
+    "status": "completed",
+    "model_calls": 6,
+    "prompt_tokens": 3169,
+    "completion_tokens": 2239,
+    "usage_missing_calls": 0,
+    "peak_list_price_estimate_usd": 0.0036375,
+    "global_remaining_before_usd": 4.68622135,
+    "global_remaining_after_actual_usage_usd": 4.68258385,
+    "provider_invoice_available": false
+  }
 }
