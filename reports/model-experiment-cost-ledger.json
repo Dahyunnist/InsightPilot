@@ -300,15 +300,26 @@
   "remaining_global_cap_after_v10_model_usd": 4.68258385,
   "remaining_global_cap_after_v11_reserve_usd": 4.60943185,
   "v11_independent_holdout": {
-    "status": "preregistered",
+    "status": "completed",
     "holdout": "enterprise-blind-v11",
     "seed": 20261026,
     "blind_sha256": "85b8a716a037ef4da3cf8eaa3af7fa116920ef57507154f9aa7011835f807a04",
     "gold_sha256": "971e32e4d9b1424b18d2d13d206efc632ba22b74a519c8fdaeb541066a2bcc7f",
-    "model_calls": 0,
+    "model_calls": 14,
+    "prompt_tokens": 7583,
+    "completion_tokens": 8296,
+    "strict_passed": "15/20",
+    "answerable_passed": "7/11",
+    "guard_passed": "8/9",
+    "false_refusals": 4,
+    "false_accepts": 0,
+    "score_valid": true,
+    "gold_pairing_verified": true,
+    "peak_list_price_estimate_usd": 0.0122301,
     "worst_case_reserve_usd": 0.073152,
     "global_remaining_before_usd": 4.68258385,
-    "global_remaining_after_reserve_usd": 4.60943185,
+    "global_remaining_after_actual_usage_usd": 4.67035375,
     "no_old_ip4_rerun": true
-  }
+  },
+  "remaining_global_cap_after_v11_model_usd": 4.67035375
 }
