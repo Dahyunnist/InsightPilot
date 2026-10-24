@@ -1,0 +1,71 @@
+{
+  "suite_id": "enterprise-blind-v12",
+  "status": "frozen_pre_model",
+  "model_calls": 0,
+  "seed": 20261027,
+  "data_fingerprint": "ee0e0cc7566a058fc54a9ebb388d39f7fd97889ee3eeec6a6ab343f779fd50c4",
+  "case_count": 20,
+  "answerable": 11,
+  "guard": 9,
+  "blind_sha256": "994e9dc2da5fbb5cb796c9e9316d4bd486142b9b674251f372a0307390ff7a27",
+  "gold_sha256": "9eeed13d89fc6152a704cf8c29783fa94fe6a1d8ff93629e76f1f9cfad5899d6",
+  "manifest_blind_questions_sha256": "1d2563b8ae23f60d185ea3a70d62b80addf9ee6a0be1df2b6217c4429bf309d1",
+  "manifest_gold_sha256": "d8d7d82ca8138636a52a05e465ca4c118ceab49f9d5b456eb898c3753ec15321",
+  "manifest_sha256": "d84fab1abdfe46817648113cbda5a2d70c07ffdd43abc453d98478bc3a02d159",
+  "gold_oracle": "Independent Python aggregation over synthetic source rows; no generated SQL or model output used.",
+  "exact_prompt_overlap_count": 0,
+  "gold_not_in_agent_context": true,
+  "agent_input_contract": "Each model call receives one blind question; scorer alone loads gold after analysis.",
+  "model": "deepseek-v4-flash",
+  "base_url_origin": "https://api.deepseek.com",
+  "temperature": 0,
+  "max_output_tokens": 1024,
+  "max_attempts_per_case": 2,
+  "max_api_calls": 40,
+  "prompt_token_ceiling": 2000,
+  "pricing": {
+    "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "basis": "peak uncached Flash rates",
+    "input_usd_per_million": 0.3,
+    "output_usd_per_million": 1.2
+  },
+  "per_call_worst_case_usd": 0.0018288,
+  "worst_case_reserve_usd": 0.073152,
+  "global_cap_usd": 5.0,
+  "global_remaining_before_usd": 4.67035375,
+  "global_remaining_after_reserve_usd": 4.59720175,
+  "provider_balance_snapshot": {
+    "checked_at_utc": "2026-10-24T02:39:20.301446+00:00",
+    "is_available": true,
+    "balances": [
+      {
+        "currency": "CNY",
+        "total_balance": "9.47",
+        "granted_balance": "0.00",
+        "topped_up_balance": "9.47"
+      },
+      {
+        "currency": "USD",
+        "total_balance": "0.00",
+        "granted_balance": "0.00",
+        "topped_up_balance": "0.00"
+      }
+    ]
+  },
+  "provider_balance_reserve_check": {
+    "currency": "CNY",
+    "available": 9.47,
+    "required": 0.487997,
+    "sufficient": true,
+    "usd_to_cny_rate": 6.671,
+    "fx_source": "https://www.imf.org/external/np/fin/ert/GUI/Pages/Report.aspx?CF=Compressed&CT=%27CHN%27&CUF=Period&DS=Ascending&DT=Blank&EX=REP&P=MonthToDate",
+    "post_reserve_estimate": 8.982003
+  },
+  "scorer_sha256": "0bdfeb6afe819305aecb8248e007f7b45370471a32cec1a46f620f82cb0000c4",
+  "planner_sha256": "ad2d874a87de5b16db1251c308a2ccdfbf7b5b08105f1b8f116a56676995d76d",
+  "evaluator_sha256": "0bdfeb6afe819305aecb8248e007f7b45370471a32cec1a46f620f82cb0000c4",
+  "model_runner_sha256": "576b42d6257fb1d3ddffeb22dd0c44c68ed76c50416b492d01abe579abca71b3",
+  "rule_baseline_sha256": "bfb324ee59da91df86cf0c642d85919df35afbf4cc1d4fd4e289c546b78d3e4c",
+  "old_ip4_touched": false,
+  "v6_v7_reused_as_test": false
+}

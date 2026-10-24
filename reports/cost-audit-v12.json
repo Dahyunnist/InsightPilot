@@ -1,0 +1,35 @@
+{
+  "authorized_cap_usd": 5.0,
+  "remaining_before_v12_reserve_usd": 4.67035375,
+  "v11_model_usage_usd": 0.0122301,
+  "v11_model_requests": 14,
+  "v11_usage_missing_calls": 0,
+  "v12_reservation": {
+    "cases": 20,
+    "attempts_per_case": 2,
+    "max_provider_requests": 40,
+    "input_tokens_per_request": 2000,
+    "output_tokens_per_request": 1024,
+    "input_peak_usd_per_million": 0.30,
+    "output_peak_usd_per_million": 1.20,
+    "per_request_peak_usd": 0.0018288,
+    "whole_run_peak_reserve_usd": 0.073152,
+    "remaining_after_reserve_usd": 4.59720175
+  },
+  "provider_balance": {
+    "checked_at_utc": "2026-10-24T02:39:20.301446+00:00",
+    "endpoint": "https://api.deepseek.com/user/balance",
+    "is_available": true,
+    "balances": [
+      {"currency": "CNY", "total_balance": 9.47, "granted_balance": 0.0, "topped_up_balance": 9.47},
+      {"currency": "USD", "total_balance": 0.0, "granted_balance": 0.0, "topped_up_balance": 0.0}
+    ],
+    "usd_to_cny_rate": 6.671,
+    "fx_source": "https://www.imf.org/external/np/fin/ert/GUI/Pages/Report.aspx?CF=Compressed&CT=%27CHN%27&CUF=Period&DS=Ascending&DT=Blank&EX=REP&P=MonthToDate",
+    "v12_reserve_equivalent_cny": 0.487997,
+    "estimated_cny_after_reserve": 8.982003
+  },
+  "pricing_source": "https://api-docs.deepseek.com/quick_start/pricing/",
+  "provider_invoice_available": false,
+  "model_calls_during_v12_preparation": 0
+}
