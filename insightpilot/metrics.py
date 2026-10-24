@@ -127,7 +127,8 @@ def retrieve_metrics(question: str) -> list[Metric]:
     if any(term in q for term in ("campaign", "活动归因", "营销活动", "投放活动", "广告活动")):
         scores["approved_refund_campaign_attribution"] = 12
     if any(term in q for term in ("每天", "逐日", "按退款日期", "退款日期", "退款事件日", "退款事件日期",
-                                  "退款发生日", "退款发生时间")):
+                                  "退款发生日", "退款发生时间", "退款实际发生", "实际发生的批准退款",
+                                  "退款入账日", "退款入账日期")):
         scores["approved_refund_event_amount"] = 10
     if any(term in q for term in ("退款状态", "退款处理状态", "退款处理结果", "待处理金额", "批准和待处理", "按状态")):
         scores["refund_amount_by_status"] = 10

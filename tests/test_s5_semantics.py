@@ -1,5 +1,6 @@
 import json
 import unittest
+from pathlib import Path
 
 from insightpilot.metrics import METRICS, catalog_document, retrieve_metrics
 from insightpilot.planner import OpenAICompatiblePlanner, PlanError
@@ -51,6 +52,20 @@ class S5SemanticTests(unittest.TestCase):
         for question, expected in cases.items():
             with self.subTest(question=question):
                 self.assertEqual([metric.metric_id for metric in retrieve_metrics(question)], [expected])
+
+    def test_v8_x11_event_refund_retrieval_aliases_and_negative_examples(self):
+        fixture = json.loads((Path(__file__).parent / "fixtures/retrieval-cases-x11.json").read_text(encoding="utf-8"))
+        self.assertTrue(fixture["development_only"])
+        self.assertEqual(fixture["source_case_id"], "X11")
+        for question in fixture["positive"]:
+            with self.subTest(question=question):
+                self.assertEqual([metric.metric_id for metric in retrieve_metrics(question)],
+                                 ["approved_refund_event_amount"])
+        for row in fixture["negative"]:
+            with self.subTest(question=row["question"]):
+                ids = [metric.metric_id for metric in retrieve_metrics(row["question"])]
+                self.assertEqual(ids, row["expected_metrics"])
+                self.assertNotIn("approved_refund_event_amount", ids)
 
     def test_paid_amount_ratio_does_not_retrieve_plain_refund_amount(self):
         for question in ("批准退款金额占实付金额的比率", "批准退款金额与实付金额之比"):

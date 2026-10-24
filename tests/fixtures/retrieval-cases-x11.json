@@ -1,0 +1,24 @@
+{
+  "source_suite": "enterprise-blind-v8",
+  "source_case_id": "X11",
+  "development_only": true,
+  "positive": [
+    "汇总 2026-11-15 至 2026-11-21 区间内实际发生的批准退款总额。",
+    "按退款实际发生日，统计2026-11-15至2026-11-21获批金额。",
+    "2026-11-15至2026-11-21退款入账日期内的批准退款金额合计是多少？"
+  ],
+  "negative": [
+    {
+      "question": "2026-11-15至2026-11-21按下单时间计算批准退款订单率。",
+      "expected_metrics": ["approved_refund_order_rate"]
+    },
+    {
+      "question": "2026-11-15至2026-11-21各退款处理状态对应的记录金额分别是多少？",
+      "expected_metrics": ["refund_amount_by_status"]
+    },
+    {
+      "question": "2026-11-15至2026-11-21退款比例是多少？",
+      "expected_metrics": ["approved_refund_amount_rate", "approved_refund_order_rate"]
+    }
+  ]
+}
