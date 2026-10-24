@@ -1,0 +1,47 @@
+{
+  "holdout_id": "enterprise-blind-v11",
+  "case_count": 20,
+  "answerable_case_count": 11,
+  "clarify_case_count": 6,
+  "refuse_case_count": 3,
+  "data_version": "insightpilot-enterprise-v1",
+  "data_fingerprint": "334a98732de270d6329c0417111c12f534c1783ecddae636b568789a071eb497",
+  "blind_questions_sha256": "45b152ea2d9a67b47a40347aab4265bb78785521f47f2aa96f7aec8321e0fc7e",
+  "gold_sha256": "195d8b77092fbc30b0364f85a75b7b5ce753c2b8328dcbfaf7d7218426237ae6",
+  "oracle": "Independent Python aggregation over synthetic source rows; no generated SQL or model output used.",
+  "scope": "Single 20-case synthetic holdout; exact-text overlap checks do not exclude semantic similarity.",
+  "exact_prompt_overlap_count": 0,
+  "metrics": [
+    "approved_refund_amount_contribution",
+    "approved_refund_amount_rate",
+    "approved_refund_campaign_attribution",
+    "approved_refund_event_amount",
+    "approved_refund_order_counts",
+    "approved_refund_order_rate",
+    "refund_amount_by_status"
+  ],
+  "answerable_case_ids": [
+    "X01",
+    "X02",
+    "X03",
+    "X04",
+    "X05",
+    "X06",
+    "X08",
+    "X09",
+    "X10",
+    "X11",
+    "X12"
+  ],
+  "deterministic_guard_case_ids": [
+    "X07",
+    "X13",
+    "X14",
+    "X15",
+    "X16",
+    "X17",
+    "X18",
+    "X19",
+    "X20"
+  ]
+}
