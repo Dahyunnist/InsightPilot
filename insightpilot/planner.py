@@ -173,7 +173,7 @@ class OpenAICompatiblePlanner:
                     if len(months) == 1 and months[0][2]:
                         start_day = int(months[0][2])
                         tail = q[month_matches[0].end():]
-                        end_match = re.search(r"(?:到|至|截至)\s*(\d{1,2})\s*日", tail)
+                        end_match = re.search(r"(?:到|至|截至|[-—–~～])\s*(\d{1,2})\s*日", tail)
                         end_day = int(end_match.group(1)) if end_match else start_day
                         dates = [date(months[0][0], months[0][1], start_day),
                                  date(months[0][0], months[0][1], end_day)]

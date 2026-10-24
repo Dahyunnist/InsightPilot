@@ -1,0 +1,8 @@
+{
+  "source_suite": "enterprise-blind-v10",
+  "source_case_id": "X12",
+  "question": "请算出2028年1月1日—7日对应的已付款订单批准退款额与实付总额之比。",
+  "expected_start_date": "2028-01-01",
+  "expected_end_date_exclusive": "2028-01-08",
+  "observed_before_fix": ["2028-01-01", "2028-01-02"]
+}

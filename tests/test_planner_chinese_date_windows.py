@@ -1,4 +1,6 @@
 import unittest
+import json
+from pathlib import Path
 from unittest.mock import patch
 
 from insightpilot.metrics import METRICS
@@ -6,6 +8,21 @@ from insightpilot.planner import OpenAICompatiblePlanner
 
 
 class ChineseDateWindowTests(unittest.TestCase):
+    def test_v10_x12_em_dash_range_failure_sample_ends_on_day_seven(self):
+        sample = json.loads((Path(__file__).parent / "fixtures/date-window-failure-v10-x12.json").read_text(encoding="utf-8"))
+        question = sample["question"]
+        planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)
+        planner._complete = lambda *_: {
+            "clarify": False, "metric_id": "approved_refund_amount_rate",
+            "start_date": sample["expected_start_date"],
+            "end_date_exclusive": sample["expected_end_date_exclusive"],
+            "comparison_periods": [], "region": None, "dimension": None,
+        }
+        with patch("insightpilot.planner.retrieve_metrics", return_value=[METRICS["approved_refund_amount_rate"]]):
+            plan = planner.plan(question)
+        self.assertEqual((plan.start_date, plan.end_date),
+                         (sample["expected_start_date"], sample["expected_end_date_exclusive"]))
+
     def test_year_month_quarter_and_day_range_normalize_to_inclusive_calendar_windows(self):
         cases = [
             ("统计 2026 年 10 月每个商品品类中，至少有一笔批准退款的付款订单占比。",
