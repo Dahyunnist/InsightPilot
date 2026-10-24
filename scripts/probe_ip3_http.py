@@ -58,14 +58,20 @@ def main() -> None:
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     deadline = time.monotonic() + 30
+    last_health_error = "没有收到健康响应"
     while time.monotonic() < deadline:
         try:
             if request("/health")[0] == 200:
                 break
-        except (OSError, TimeoutError):
+        except (OSError, TimeoutError) as exc:
+            last_health_error = f"{type(exc).__name__}: {exc}"
             time.sleep(.25)
     else:
-        raise SystemExit("Compose API health check timed out")
+        raise SystemExit(
+            f"IP-3 API 在 {BASE}/health 30 秒内未就绪；最近错误：{last_health_error}。"
+            "先运行 `scripts/run_ip3_compose.ps1`；若 Docker 不可用，改跑 "
+            "`.\\.venv\\Scripts\\python.exe scripts\\smoke_local.py`。本机冒烟只验证功能，不代表容器性能。"
+        )
 
     headers = {"Authorization": f"Bearer {TOKEN}", "Idempotency-Key": "ip3-replay-case"}
     first = request("/analysis", payload={"question": "合成退款幂等验收"}, headers=headers)

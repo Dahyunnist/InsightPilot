@@ -10,6 +10,14 @@ import uvicorn
 
 from data.seed import create_database
 from insightpilot.agent import InsightPilot
+
+# Importing the API module builds its unused default app; keep this fixture
+# bootable without model settings because the served app uses FixedPlanner.
+os.environ.setdefault("LLM_API_KEY", "ip3-fixed-planner-no-model")
+os.environ.setdefault("LLM_BASE_URL", "http://127.0.0.1:9")
+os.environ.setdefault("LLM_MODEL", "ip3-fixed-planner-no-model")
+os.environ.setdefault("INSIGHTPILOT_DATABASE_URL", "")
+
 from insightpilot.api import create_app
 from insightpilot.planner import QueryPlan
 from insightpilot.run_store import RunStore

@@ -21,9 +21,9 @@
 结果：`reports/ip3-http-acceptance-v1.json`。容器可用时复跑：
 
 ```powershell
-docker compose -f docker-compose.ip3.yml up --build -d --wait
-.\.venv\Scripts\python.exe scripts\probe_ip3_http.py --output reports\ip3-http-acceptance-v1.json
-docker compose -f docker-compose.ip3.yml down
+.\scripts\run_ip3_compose.ps1
 ```
 
 费用账本没有变化；模型调用 0。
+
+2026-10-24 复核：Compose 配置解析通过；`up --pull never` 单次尝试未取得容器就绪结果。Docker Engine 的 named pipe 返回访问拒绝，`python:3.12-slim` 缓存状态也无法在当前权限下确认；未重复拉取，也未新增容器性能结论。后续使用 `scripts/run_ip3_compose.ps1` 检查依赖并启动；Docker 不可用时用 `scripts/smoke_local.py` 验证功能，这不替代 Compose 测量。

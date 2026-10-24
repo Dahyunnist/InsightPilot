@@ -8,6 +8,8 @@
 
 首次配置可复制 `.env.example` 为 `.env` 并填写模型服务配置。`.env.example` 只含空白占位值。
 
+IP-3 Compose HTTP 验收需 Docker Engine 可访问、本地已有 `python:3.12-slim` 镜像，并能从包索引安装依赖。运行 `scripts/run_ip3_compose.ps1` 会先检查条件，再以禁止拉取镜像的方式启动 fixture；条件不满足时会提示本机回退命令。离线冒烟只验证健康检查和只读查询，不代表容器性能测量。
+
 只验证本地 API 和固定 S0 数据查询时，无需 `.env` 或模型服务。离线冒烟脚本会临时生成固定数据，启动本机 API，检查健康状态，并将查询答案与独立 SQL 结果比较：
 
 ```text
