@@ -81,7 +81,7 @@ def main() -> None:
                    "same_run_id": first[1].get("run_id") == replay[1].get("run_id"),
                    "replay_header": replay[2].get("idempotency-replay"), "conflict_status": conflict[0]}
     cases = [pressure(n) for n in (1, 5, 20)]
-    report = {"service": "FastAPI real HTTP; local runner because Docker Hub image pull was blocked",
+    report = {"service": "FastAPI real HTTP via Docker Compose",
               "planner": "fixed synthetic planner with 150ms delay", "backend": "synthetic SQLite",
               "model_calls": 0, "idempotency": idempotency, "cases": cases,
               "interpretation": "Synchronous HTTP requests wait for analysis results; concurrency is a burst, not async job throughput. Rejected 429s are included in latency percentiles."}
