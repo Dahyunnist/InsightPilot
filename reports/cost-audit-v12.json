@@ -31,5 +31,25 @@
   },
   "pricing_source": "https://api-docs.deepseek.com/quick_start/pricing/",
   "provider_invoice_available": false,
-  "model_calls_during_v12_preparation": 0
+  "model_calls_during_v12_preparation": 0,
+  "v12_model_run": {
+    "status": "completed",
+    "score_valid": true,
+    "gold_pairing_verified": true,
+    "model_calls": 12,
+    "prompt_tokens": 6348,
+    "completion_tokens": 5523,
+    "usage_missing_calls": 0,
+    "peak_list_price_estimate_usd": 0.008532,
+    "global_remaining_before_usd": 4.67035375,
+    "global_remaining_after_actual_usage_usd": 4.66182175,
+    "provider_invoice_available": false
+  },
+  "provider_balance_after_model": {
+    "checked_at_utc": "2026-10-24T02:41:41.464984+00:00",
+    "is_available": true,
+    "cny_total_balance": 9.47,
+    "usd_total_balance": 0.0,
+    "unchanged_at_reported_precision": true
+  }
 }
