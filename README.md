@@ -4,9 +4,15 @@
 
 ## 启动
 
-需要 Python 3.11+。SQL 策略使用 SQLGlot。根目录 `.env` 需包含 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`；可选 `LLM_TIMEOUT_SECONDS`、`LLM_MAX_COMPLETION_TOKENS`。`.env` 已加入忽略列表，不应提交密钥。
+需要 Python 3.11+。SQL 策略使用 SQLGlot。模型驱动的评测与 CLI 需要根目录 `.env`，包含 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`；可选 `LLM_TIMEOUT_SECONDS`、`LLM_MAX_COMPLETION_TOKENS`。`.env` 已加入忽略列表，不应提交密钥。
 
 首次配置可复制 `.env.example` 为 `.env` 并填写模型服务配置。`.env.example` 只含空白占位值。
+
+只验证本地 API 和固定 S0 数据查询时，无需 `.env` 或模型服务。离线冒烟脚本会临时生成固定数据，启动本机 API，检查健康状态，并将查询答案与独立 SQL 结果比较：
+
+```text
+.\.venv\Scripts\python.exe scripts/smoke_local.py
+```
 
 ```text
 python -m venv .venv
