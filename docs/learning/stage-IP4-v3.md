@@ -14,6 +14,6 @@ v3 共 24 题：退款 12 题、营销 ROI 12 题；16 道可答题和 8 道 gua
 
 ## 验证与限制
 
-`tests/test_ip4_v3_holdout.py` 检查 24 题规模、域分布、guard/answer 状态、重复构建稳定性和 manifest 哈希；固定 RulePlanner 另核对 guard 标签。构建时 SQL 与独立 Python oracle 已逐题交叉核对。未运行模型，不报告模型分数；24 题和单一合成 seed 仍不足以估计生产准确率或总体泛化。v3 使用与 v2 相同的合成数据 fingerprint 和 seed；独立性指新问题和独立 gold 计算，不是独立抽样数据集。精确文本检查不排除语义相似。
+`tests/test_ip4_v3_holdout.py` 检查 24 题规模、域分布、guard/answer 状态、重复构建稳定性和 manifest 哈希；固定 RulePlanner 另核对 guard 标签。构建时 SQL 与独立 Python oracle 已逐题交叉核对。RulePlanner 基线为 19/24（严格准确率 79.17%），可答题 11/16，4 道拒绝题 4/4；5 个失败 ID 为 R03、R05、R06、R08、M01，详情见 `reports/ip4-v3-rule-baseline.json`。未运行模型，不报告模型分数；24 题和单一合成 seed 仍不足以估计生产准确率或总体泛化。v3 使用与 v2 相同的合成数据 fingerprint 和 seed；独立性指新问题和独立 gold 计算，不是独立抽样数据集。精确文本检查不排除语义相似。
 
 IP4 v3 定向测试和 v2 回归在 Python 3.12.15 容器 tmpfs 下通过；全部测试 117/117 通过。环境、命令、耗时、宿主 Python 3.14 对照和失败尝试见 `reports/ip4-v3-verification.json`。容器网络关闭，未传 `.env`，只设置 dummy 环境变量；未调用真实模型或外部 API。

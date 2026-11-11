@@ -1,0 +1,140 @@
+{
+  "created_at_utc": "2026-11-11T12:37:38.026797+00:00",
+  "suite_id": "insightpilot-ip4-independent-v3",
+  "backend": "SQLite",
+  "planner": "RulePlanner",
+  "model_calls": 0,
+  "estimated_model_cost_usd": 0.0,
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+  "case_count": 24,
+  "passed": 19,
+  "strict_accuracy": 0.7917,
+  "wilson_95_ci": [
+    0.5953,
+    0.9076
+  ],
+  "case_bootstrap_95_ci": [
+    0.625,
+    0.9583
+  ],
+  "by_domain": {
+    "marketing_roi": {
+      "passed": 11,
+      "total": 12,
+      "strict_accuracy": 0.9167,
+      "wilson_95_ci": [
+        0.6461,
+        0.9851
+      ],
+      "failures": [
+        "IP4V3-M01"
+      ]
+    },
+    "refunds": {
+      "passed": 8,
+      "total": 12,
+      "strict_accuracy": 0.6667,
+      "wilson_95_ci": [
+        0.3906,
+        0.8619
+      ],
+      "failures": [
+        "IP4V3-R03",
+        "IP4V3-R05",
+        "IP4V3-R06",
+        "IP4V3-R08"
+      ]
+    }
+  },
+  "answerable": {
+    "passed": 11,
+    "total": 16
+  },
+  "refusal_metrics": {
+    "expected_refusal_count": 4,
+    "correct_refusals": 4,
+    "correct_refusal_recall": 1.0,
+    "false_refusals_on_answerable": [],
+    "false_accepts_on_refusal_cases": [],
+    "unsupported_region_accepted": []
+  },
+  "failures": [
+    {
+      "case_id": "IP4V3-R03",
+      "domain": "refunds",
+      "passed": false,
+      "actual_status": "clarify",
+      "actual_reason": null,
+      "status_ok": false,
+      "reason_ok": true,
+      "metric_ok": false,
+      "dimension_ok": false,
+      "region_ok": true,
+      "date_window_ok": false,
+      "numeric_ok": false,
+      "independent_verifier_ok": false
+    },
+    {
+      "case_id": "IP4V3-R05",
+      "domain": "refunds",
+      "passed": false,
+      "actual_status": "clarify",
+      "actual_reason": null,
+      "status_ok": false,
+      "reason_ok": true,
+      "metric_ok": false,
+      "dimension_ok": false,
+      "region_ok": true,
+      "date_window_ok": false,
+      "numeric_ok": false,
+      "independent_verifier_ok": false
+    },
+    {
+      "case_id": "IP4V3-R06",
+      "domain": "refunds",
+      "passed": false,
+      "actual_status": "clarify",
+      "actual_reason": null,
+      "status_ok": false,
+      "reason_ok": true,
+      "metric_ok": false,
+      "dimension_ok": false,
+      "region_ok": true,
+      "date_window_ok": false,
+      "numeric_ok": false,
+      "independent_verifier_ok": false
+    },
+    {
+      "case_id": "IP4V3-R08",
+      "domain": "refunds",
+      "passed": false,
+      "actual_status": "clarify",
+      "actual_reason": null,
+      "status_ok": false,
+      "reason_ok": true,
+      "metric_ok": false,
+      "dimension_ok": true,
+      "region_ok": true,
+      "date_window_ok": false,
+      "numeric_ok": false,
+      "independent_verifier_ok": false
+    },
+    {
+      "case_id": "IP4V3-M01",
+      "domain": "marketing_roi",
+      "passed": false,
+      "actual_status": "answered",
+      "actual_reason": null,
+      "status_ok": true,
+      "reason_ok": true,
+      "metric_ok": true,
+      "dimension_ok": false,
+      "region_ok": true,
+      "date_window_ok": true,
+      "numeric_ok": false,
+      "independent_verifier_ok": true
+    }
+  ],
+  "confidence_interval_note": "此为按业务域分层的小型合成固定集；Wilson 与题目 bootstrap 区间仅描述本冻结集，不代表生产总体准确率。"
+}
