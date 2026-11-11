@@ -130,6 +130,16 @@ class MultiDomainTests(unittest.TestCase):
         plan = planner.plan("2026年10月批准退款款项的品类份额各是多少？")
         self.assertEqual(plan.metric_id, "approved_refund_amount_contribution")
 
+    def test_v12_x12_amount_ratio_retrieves_catalogued_amount_rate(self):
+        planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)
+        planner._complete = lambda _question, _candidates, _allowed: {
+            "clarify": False, "metric_id": "approved_refund_amount_rate", "region": None,
+            "dimension": None,
+        }
+        plan = planner.plan("求2028年1月1日—7日批准退款金额与实收金额的比值。")
+        self.assertEqual(plan.metric_id, "approved_refund_amount_rate")
+        self.assertEqual((plan.start_date, plan.end_date), ("2028-01-01", "2028-01-08"))
+
     def test_roi_region_request_clarifies_and_unapproved_sql_is_rejected(self):
         planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)
         planner._complete = lambda *_args: self.fail("unsupported marketing region reached model")

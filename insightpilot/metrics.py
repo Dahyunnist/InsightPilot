@@ -141,7 +141,7 @@ def retrieve_metrics(question: str) -> list[Metric]:
         "占比" in q and not any(term in q for term in ("订单占比", "订单比例", "订单率", "订单数"))
     ):
         scores["approved_refund_amount_contribution"] += 5
-    if any(term in q for term in ("金额率", "金额退款率", "实付", "实收金额", "销售额", "金额之比")) or ("金额" in q and "退款率" in q):
+    if any(term in q for term in ("金额率", "金额退款率", "实付", "实收金额", "销售额", "金额之比", "比值")) or ("金额" in q and "退款率" in q):
         scores["approved_refund_amount_rate"] += 4
     if any(term in q for term in ("订单率", "订单比例", "订单占比", "订单数", "多少单")):
         scores["approved_refund_order_rate"] += 4
@@ -150,7 +150,7 @@ def retrieve_metrics(question: str) -> list[Metric]:
     if any(term in q for term in ("退款日期", "退款发生日期", "实际退款日期")):
         scores["approved_refund_event_amount"] += 8
     if "批准退款金额" in q and not any(term in q for term in
-                                         ("退款率", "金额率", "占实付", "实付金额", "比例", "比率")) and not any(
+                                         ("退款率", "金额率", "占实付", "实付金额", "比例", "比率", "比值", "之比")) and not any(
                                              term in q for term in ("贡献", "占比")):
         scores["approved_refund_amount"] += 6
     if "退款率" in q or "退款比例" in q:
