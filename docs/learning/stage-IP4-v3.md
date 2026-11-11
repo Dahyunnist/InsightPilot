@@ -25,3 +25,11 @@ IP4 v3 定向测试和 v2 回归在 Python 3.12.15 容器 tmpfs 下通过；全�
 真实模型前账本累计峰价费用为 `$0.33817825`，`$5.00` 上限内剩余 `$4.66182175`。按 24 题 × 3 后端臂 × 每题最多 2 次请求、每请求输入 3,000 tokens、输出 1,024 tokens、DeepSeek Flash 峰价 `$0.30/$1.20` 每百万 tokens，最坏费用预留 `$0.3065472`，预留后全局余额 `$4.35527455`。prompt sizing 用生产 planner 的精确请求构造器和 stub 响应测量；18 题会到达 planner，最大 prompt 2,541 UTF-8 字节，锁为 2,800 字节。供应商余额只读预检返回可用，CNY 余额 ¥9.44；按 ¥7.50/USD 的保守换算，最坏费用约 ¥2.30。
 
 模型、旧别名路由说明、prompt 上限、调用上限、盲集/gold/manifest、planner/scorer/runner 与离线基线 SHA-256 已冻结在 `reports/ip4-v3-model-preregistration.json`。preflight 验证通过，发送 completion 请求数为 0。提交该锁后才运行一次真实模型评测；不修改题面、gold、planner prompt 或 scorer。
+
+## 单轮真实模型结果（2026-11-11）
+
+冻结提交后运行一次，共 72 个题目臂（24 题 × SQLite、PostgreSQL tenant-a、tenant-b），49 次 provider 请求，无缺失 usage、无模型错误。三臂严格评分均为 24/24；退款和营销 ROI 各 12/12；可答 16/16、guard 8/8；失败 0，false refusal 与 false accept 均为 0。题级实际计划、评分字段、阶段/失败归因、每次调用 usage/延迟均保存在 `reports/ip4-v3-model-blind-report.json`。
+
+配置名为 `deepseek-v4-flash`，响应返回 `deepseek-flash`。DeepSeek 官方文档说明旧别名路由到 DeepSeek-V4.1-Flash-1017，按 Flash 费率计费（[模型与价格](https://api-docs.deepseek.com/quick_start/pricing/)）。49 次请求共 30,644 input tokens、24,056 output tokens；峰价估算 `$0.0380604`，无 usage 缺失补充预留。累计账本估算费用 `$0.37623865`，`$5.00` 上限剩余 `$4.62376135`。请求延迟 p50/p95 为 3,157.617/4,912.039 ms；含数据库的题目臂耗时 p50/p95 为 2,636.082/5,284.265 ms。供应商余额查询前后分别 ¥9.44/¥9.43，接口显示精度为分；这不是供应商发票。
+
+结果报告、累计账本和本节逐题记录只代表当前合成 holdout、配置和一次评测。三后端同为 24/24 不证明总体泛化、客户准确率或生产能力；题集和评分器的 SHA-256 与冻结锁一致。
