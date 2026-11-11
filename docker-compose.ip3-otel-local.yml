@@ -1,0 +1,37 @@
+services:
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.138.0
+    pull_policy: never
+    profiles: [otel-acceptance]
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./config/otel-collector-ip3-local.yaml:/etc/otelcol-contrib/config.yaml:ro
+    networks: [ip3_internal]
+
+  api:
+    image: insightpilot-api-probe:latest
+    pull_policy: never
+    profiles: [otel-acceptance]
+    command: ["python", "/workspace/scripts/ip3_otel_probe_app.py"]
+    volumes:
+      - ./insightpilot:/workspace/insightpilot:ro
+      - ./data:/workspace/data:ro
+      - ./scripts/ip3_otel_probe_app.py:/workspace/scripts/ip3_otel_probe_app.py:ro
+      - ./.tmp-ip3-otel-packages:/opt/otel:ro
+    environment:
+      PYTHONPATH: /opt/otel:/workspace
+      LLM_API_KEY: ip3-otel-no-model
+      LLM_BASE_URL: http://127.0.0.1:9/v1
+      LLM_MODEL: ip3-otel-fixed-planner
+      INSIGHTPILOT_DATABASE_PATH: /tmp/insightpilot-ip3-otel/fixture.sqlite
+      INSIGHTPILOT_DATABASE_URL: ""
+      INSIGHTPILOT_API_TOKEN: ip3-otel-local-test-token
+      INSIGHTPILOT_API_SCOPES: refund:read
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://collector:4318
+      IP3_OTEL_DATA_DIR: /tmp/insightpilot-ip3-otel
+    networks: [ip3_internal]
+    depends_on: [collector]
+
+networks:
+  ip3_internal:
+    internal: true

@@ -77,4 +77,22 @@ PostgreSQL 回归在一次性 tmpfs PostgreSQL 16 容器中装入合成双租户
 
 `tests/test_ip3_tracing.py` 用注入式内存 span exporter 对真实 FastAPI 测成功和数据库身份读取失败：均生成 API 父 span 与 Agent 子 span；成功标记 OK，失败标记 ERROR 并带 `database_execution` / `db_execution` 分类。Fake provider 验证 endpoint、批处理器挂载和 shutdown；endpoint 缺失时确认无操作。Exporter endpoint 使用 `.invalid`，没有真实 Collector 网络请求。断言覆盖问题标记、租户标记、日期 SQL 参数与地区参数均不出现在 span。Python 3.12 离线容器、源码只读挂载、网络关闭，trace、IP-3 故障恢复和查询引擎定向测试 15/15 通过；无真实模型调用。
 
-这是可选 OTLP 导出配置与脱敏契约验收；未连真实 Collector，也未验证采样/保留策略、模型请求中断或生产导出链路。IP-3 仍部分完成。
+该步骤先验证可选 OTLP 导出配置与脱敏契约；当时未连真实 Collector。实际 Collector 联通见下节。模型请求中断、采样/保留策略和生产导出链路仍未验收。
+
+## 本机 OTel Collector 联通验收（2026-11-11）
+
+本机已有官方 `otel/opentelemetry-collector-contrib:0.138.0` 镜像。新增 `docker-compose.ip3-otel-local.yml` 的 `otel-acceptance` profile、Collector 最小 OTLP/HTTP receiver + batch + debug exporter 配置，以及 `scripts/ip3_otel_probe_app.py` / `scripts/verify_ip3_otel_collector.py`。profile 使用 Compose `internal: true` 网络，无 host ports；API 和 Collector 不连外网。脚本固定使用 dummy LLM 配置和固定 planner，不挂载 `.env`，只装合成退款库。
+
+可复现流程：将 `requirements-otel.txt` wheel 下载至仓库临时目录 `.tmp-ip3-otel-wheels`，再用 `--network none` 安装至 `.tmp-ip3-otel-packages`；运行验收脚本后删除两个目录。脚本只使用本机已有 Collector 镜像，镜像 tag 加 `pull_policy: never`；profile teardown 显式带 profile，检查 API/Collector 容器和内部网络均已清理。命令：
+
+```powershell
+New-Item -ItemType Directory -Force .tmp-ip3-otel-wheels, .tmp-ip3-otel-packages | Out-Null
+docker run --rm --network bridge -v "${PWD}/requirements-otel.txt:/requirements-otel.txt:ro" -v "${PWD}/.tmp-ip3-otel-wheels:/wheels" insightpilot-api-probe:latest python -m pip download --dest /wheels -r /requirements-otel.txt
+docker run --rm --network none -v "${PWD}:/workspace:ro" -v "${PWD}/.tmp-ip3-otel-wheels:/wheels:ro" -v "${PWD}/.tmp-ip3-otel-packages:/packages" insightpilot-api-probe:latest python -m pip install --no-index --find-links=/wheels --target=/packages -r /workspace/requirements-otel.txt
+.\.venv\Scripts\python.exe scripts\verify_ip3_otel_collector.py
+Remove-Item -Recurse -Force .tmp-ip3-otel-wheels, .tmp-ip3-otel-packages
+```
+
+实测 HTTP 分析 200 / `answered`，模型调用数 0。Collector 收到 1 条 trace、2 个 span：API root `insightpilot.api.analysis` 与 Agent child `insightpilot.agent.run`，同 trace ID，状态均为 answered。问题标记、测试 bearer token、租户标记、日期与地区参数均不在 Collector 输出。完整证据见 `reports/ip3-otel-collector.json`。临时 profile 及网络已移除；OpsPilot 容器 9 个，验收前后相同，未触碰。
+
+这是本机官方 Collector 单次联通验收，不代表生产 Collector 部署、采样/保留策略或持续负载。模型请求中断仍未验收；IP-3 仍部分完成。

@@ -1,0 +1,47 @@
+{
+  "created_at_utc": "2026-11-11T14:20:33.725168+00:00",
+  "status": "passed",
+  "profile": "otel-acceptance",
+  "collector_image": "otel/opentelemetry-collector-contrib:0.138.0",
+  "external_model_calls": 0,
+  "network": "isolated internal Compose network",
+  "compose_cleanup": true,
+  "opspilot_container_count_before": 9,
+  "analysis_http_status": 200,
+  "analysis_status": "answered",
+  "analysis_model_call_count": 0,
+  "collector": {
+    "received_span_count": 2,
+    "span_names": [
+      "insightpilot.agent.run",
+      "insightpilot.api.analysis"
+    ],
+    "span_links": [
+      {
+        "name": "insightpilot.agent.run",
+        "trace_id": "fd7d77f37052870d603aaceaa04a92b7",
+        "span_id": "3a61425a49bfbd89",
+        "parent_id": "0573c423078c3ff6",
+        "has_answered_status": true
+      },
+      {
+        "name": "insightpilot.api.analysis",
+        "trace_id": "fd7d77f37052870d603aaceaa04a92b7",
+        "span_id": "0573c423078c3ff6",
+        "parent_id": null,
+        "has_answered_status": true
+      }
+    ],
+    "one_trace_id": true,
+    "api_root_and_agent_child": true,
+    "answer_status_present": true,
+    "sensitive_values_absent": true
+  },
+  "compose_residual_resources": {
+    "containers": [],
+    "networks": []
+  },
+  "opspilot_container_count_after": 9,
+  "opspilot_containers_unchanged": true,
+  "elapsed_seconds": 6.668
+}
