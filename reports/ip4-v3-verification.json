@@ -1,0 +1,115 @@
+{
+  "report_id": "ip4-v3-verification-2026-11-11",
+  "suite_id": "insightpilot-ip4-independent-v3",
+  "dataset": {
+    "version": "insightpilot-multidomain-v1",
+    "fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+    "seed": "20261023",
+    "snapshot_at": "2027-03-01T00:00:00Z",
+    "synthetic_only": true,
+    "same_dataset_as_v2": true
+  },
+  "holdout": {
+    "case_count": 24,
+    "domain_counts": {
+      "refunds": 12,
+      "marketing_roi": 12
+    },
+    "answerable_count": 16,
+    "guard_count": 8,
+    "gold_source": "Compiled read-only SQLite SQL results; independently checked against Python refund source-row oracle and two marketing event-ledger oracles.",
+    "model_generated_gold": false,
+    "model_calls": 0,
+    "exact_normalized_prompt_overlap_count": 0,
+    "blind_sha256": "a68ea998603ca8c1609f65d2cabb901d4526657aa0a6d60fe87c95b31f082647",
+    "gold_sha256": "2c295634e27a5cad9762eb13b91dfcd2e28d92926d5f88c0da0c98c604e4fc15"
+  },
+  "container": {
+    "docker_version": "29.1.3",
+    "image": "insightpilot-api-probe:latest",
+    "image_id": "e42bdb34efa5",
+    "python_version": "3.12.15",
+    "network": "none",
+    "filesystem": "source copied to /tmp/project; tests and SQLite temp files on tmpfs",
+    "env_file_mounted": false,
+    "environment": {
+      "LLM_API_KEY": "offline-test-key",
+      "LLM_BASE_URL": "http://127.0.0.1:1/v1",
+      "LLM_MODEL": "offline-no-model"
+    },
+    "external_model_or_api_calls": 0,
+    "postgres_service": "not required by test suite",
+    "cleanup": "docker run --rm; no persistent volume"
+  },
+  "environment_notes": [
+    "An initial no-env container run could not import 5 test modules; each reported missing LLM_API_KEY, LLM_BASE_URL, and LLM_MODEL. It was rerun with shell-only dummy values, without mounting .env.",
+    "TestClient tests issue in-process HTTP requests only. Network mode none prevents external API access.",
+    "No test requires PostgreSQL; no Compose service or persistent data was started."
+  ],
+  "commands": {
+    "targeted_tests": "python -m unittest -v tests.test_ip4_v2_holdout tests.test_ip4_v3_holdout",
+    "full_suite": "python -m unittest discover -s tests -q",
+    "docker_invocation": "docker run --rm --network none --tmpfs /tmp:rw,exec,size=2g -e PYTHONDONTWRITEBYTECODE=1 -e LLM_API_KEY=offline-test-key -e LLM_BASE_URL=http://127.0.0.1:1/v1 -e LLM_MODEL=offline-no-model --mount \"type=bind,source=E:\\job\\insightpilot,target=/workspace\" insightpilot-api-probe:latest python -c \"import pathlib,shutil,subprocess,sys; src=pathlib.Path('/workspace'); dst=pathlib.Path('/tmp/project'); dst.mkdir(); names=('insightpilot','data','evals','reports','docs','tests','scripts'); [shutil.copytree(src/name,dst/name) for name in names]; [shutil.copy2(src/name,dst/name) for name in ('README.md','requirements.txt')]; sys.exit(subprocess.run([sys.executable,'-m','unittest','discover','-s','tests','-q'],cwd=dst).returncode)\""
+  },
+  "results": {
+    "targeted_tests": {
+      "passed": 2,
+      "total": 2,
+      "unittest_seconds": 5.759
+    },
+    "previous_sqlite_timeout_pair_on_tmpfs": {
+      "passed": 2,
+      "total": 2,
+      "unittest_seconds": 2.367
+    },
+    "full_suite": {
+      "passed": 117,
+      "total": 117,
+      "unittest_seconds": 16.935,
+      "wall_seconds_inside_container": 17.97
+    }
+  },
+  "host_comparison": {
+    "python_version": "3.14.5",
+    "platform": "Windows",
+    "readme_minimum": "Python 3.11+",
+    "test_count_at_time": 116,
+    "runnable_passed": 101,
+    "asyncio_harness_unavailable": 15,
+    "cause": "TestClient startup blocks in asyncio socket.socketpair initialization before request handling.",
+    "runnable_suite_seconds": 51.909,
+    "blocked_test_cases": [
+      "test_api_tenant_identity.ApiTenantIdentityTests.test_authenticated_tokens_route_concurrent_requests_without_header_override",
+      "test_s12_guards_recovery.S12GuardRecoveryTests.test_api_and_real_mcp_http_auth_failures_leave_no_sensitive_run",
+      "test_s12_guards_recovery.S12GuardRecoveryTests.test_run_state_survives_real_process_restart_and_api_reopen",
+      "test_s3_interfaces.S3InterfaceTests.test_api_analysis_get_run_and_structured_rejections",
+      "test_s3_interfaces.S3InterfaceTests.test_mcp_streamable_http_transport",
+      "test_s3_interfaces.S3InterfaceTests.test_mcp_tool_and_resources_use_shared_core",
+      "test_s6_runtime.S6RuntimeTests.test_api_enforces_bearer_and_scopes_and_persists_result",
+      "test_s6_runtime.S6RuntimeTests.test_api_idempotency_replays_result_and_rejects_changed_question",
+      "test_s6_runtime.S6RuntimeTests.test_api_rate_limit_returns_retry_after",
+      "test_s6_runtime.S6RuntimeTests.test_api_requires_marketing_scope_for_marketing_roi",
+      "test_s6_runtime.S6RuntimeTests.test_api_timeout_requests_cooperative_cancel_and_worker_recovers",
+      "test_s6_runtime.S6RuntimeTests.test_cancel_endpoint_marks_active_run",
+      "test_s6_runtime.S6RuntimeTests.test_mcp_scope_resolver_enforces_marketing_scope_from_tool_question",
+      "test_s6_runtime.S6RuntimeTests.test_shared_bearer_middleware_protects_mcp_http_surface",
+      "test_s7_enterprise_dataset.S7EnterpriseDatasetTests.test_concurrency_limit_and_live_cancel_survive_request_boundary"
+    ]
+  },
+  "mount_performance_attempt": {
+    "python_version": "3.12.15",
+    "test_count": 116,
+    "passed": 114,
+    "failed": 2,
+    "failures": [
+      "test_domain_validation_sets.DomainValidationSetTests.test_domain_sets_are_separate_and_python_gold_matches_sqlite_baseline: SQLite statement timeout",
+      "test_ip4_v2_holdout.IP4V2HoldoutTests.test_independent_manifest_gold_and_ambiguity_cases_are_reproducible: IP4V2-M1 failed during evaluation"
+    ],
+    "diagnosis": "Both failures disappeared when source and temporary SQLite files ran on container tmpfs, consistent with slow Windows bind-mounted SQLite I/O; no product code change was made for them."
+  },
+  "limitations": [
+    "v3 questions and gold are new, but v3 uses the same fixed synthetic dataset fingerprint and seed as v2.",
+    "24 cases provide contract coverage only; they do not estimate model quality, production accuracy, or population-level generalization.",
+    "Zero exact normalized prompt overlap does not prove semantic non-overlap."
+  ]
+}

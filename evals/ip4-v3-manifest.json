@@ -1,0 +1,20 @@
+{
+  "suite_id": "insightpilot-ip4-independent-v3",
+  "case_count": 24,
+  "domain_counts": {
+    "refunds": 12,
+    "marketing_roi": 12
+  },
+  "answerable_case_count": 16,
+  "guard_case_count": 8,
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+  "seed": "20261023",
+  "snapshot_at": "2027-03-01T00:00:00Z",
+  "blind_sha256": "a68ea998603ca8c1609f65d2cabb901d4526657aa0a6d60fe87c95b31f082647",
+  "gold_sha256": "2c295634e27a5cad9762eb13b91dfcd2e28d92926d5f88c0da0c98c604e4fc15",
+  "gold_method": "Compiled read-only SQLite SQL results, independently cross-checked against Python retail source-row and two marketing event-ledger oracles",
+  "exact_normalized_prompt_overlap_count": 0,
+  "synthetic_only": true,
+  "scope": "Expanded 24-case contract holdout; not a model or production accuracy estimate."
+}
