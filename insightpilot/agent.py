@@ -87,13 +87,11 @@ class InsightPilot:
     def analyze(self, question: str, *, run_id: str | None = None, cancel_event: Event | None = None,
                 authorized_region: str | None = None, tenant_id: str | None = None) -> dict:
         started = time.perf_counter()
-        if hasattr(self.planner, "last_call_usage"):
-            self.planner.last_call_usage = None
-            self.planner.last_call_count = 0
-            self.planner.last_calls = []
-            self.planner.last_call_latency_ms = None
-            self.planner.last_response_model = None
-            self.planner.last_call_created_at = None
+        for attribute, value in (("last_call_usage", None), ("last_call_count", 0),
+                                 ("last_calls", []), ("last_call_latency_ms", None),
+                                 ("last_response_model", None), ("last_call_created_at", None)):
+            if hasattr(self.planner, attribute):
+                setattr(self.planner, attribute, value)
         result = self._analyze(question, run_id=run_id, cancel_event=cancel_event,
                                authorized_region=authorized_region, tenant_id=tenant_id)
         result["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 3)
@@ -108,6 +106,8 @@ class InsightPilot:
         completed_through = {"answered": 6, "clarify": -1, "refused": -1, "failed": -1, "cancelled": -1}.get(status, -1)
         if status == "failed":
             completed_through = stages.index(terminal_stage) - 1 if terminal_stage in stages else -1
+            if result.get("planning_skipped"):
+                completed_through = stages.index("preflight")
         if status == "cancelled":
             completed_through = stages.index(terminal_stage) - 1 if terminal_stage in stages else -1
         if status == "refused":
@@ -134,6 +134,22 @@ class InsightPilot:
         denied = _preflight(question)
         if denied:
             return {"run_id": run_id, **denied}
+        trusted_tenant_id = tenant_id or self.tenant_id
+        try:
+            dataset_version, data_fingerprint = self.query_engine.read_data_identity(tenant_id=trusted_tenant_id)
+            if not isinstance(self.query_engine, SQLiteQueryEngine):
+                verifier_version, verifier_fingerprint = SQLiteQueryEngine(
+                    self.database_path).read_data_identity()
+                if (dataset_version, data_fingerprint) != (verifier_version, verifier_fingerprint):
+                    return {"run_id": run_id, "status": "failed", "stage": "dataset",
+                            "reason": "backend_dataset_mismatch", "planning_skipped": True,
+                            "message": "PostgreSQL 与独立 SQLite 复核数据指纹不一致。",
+                            "failure_detail": {"layer": "schema", "category": "data_identity_mismatch",
+                                               "backend": "postgresql", "tenant_context": "bound"}}
+        except QueryExecutionError as exc:
+            return {"run_id": run_id, "status": "failed", "stage": "dataset",
+                    "planning_skipped": True, "message": str(exc),
+                    "failure_detail": self._failure_detail(exc, stage="dataset", tenant_id=trusted_tenant_id)}
         try:
             plan = self.planner.plan(question)
         except NeedsClarification as exc:
@@ -153,24 +169,6 @@ class InsightPilot:
                 return {"run_id": run_id, "status": "refused", "reason": "region_scope_denied", "message": "请求地区超出授权范围。"}
             plan = type(plan)(plan.metric_id, plan.start_date, plan.end_date, authorized_region, plan.dimension, plan.periods)
         metric = METRICS[plan.metric_id]
-        trusted_tenant_id = tenant_id or self.tenant_id
-        try:
-            dataset_version, data_fingerprint = self.query_engine.read_data_identity(tenant_id=trusted_tenant_id)
-            if not isinstance(self.query_engine, SQLiteQueryEngine):
-                verifier_version, verifier_fingerprint = SQLiteQueryEngine(
-                    self.database_path).read_data_identity()
-                if (dataset_version, data_fingerprint) != (verifier_version, verifier_fingerprint):
-                    return {"run_id": run_id, "status": "failed", "stage": "dataset",
-                            "reason": "backend_dataset_mismatch",
-                            "message": "PostgreSQL 与独立 SQLite 复核数据指纹不一致。",
-                            "failure_detail": {"layer": "schema", "category": "data_identity_mismatch",
-                                               "backend": "postgresql", "tenant_context": "bound"}}
-        except QueryExecutionError as exc:
-            if metric.required_data_versions:
-                return {"run_id": run_id, "status": "failed", "stage": "dataset", "message": str(exc),
-                        "failure_detail": self._failure_detail(exc, stage="dataset", tenant_id=trusted_tenant_id)}
-            dataset_version = "unknown"
-            data_fingerprint = None
         if metric.required_data_versions and dataset_version not in metric.required_data_versions:
             return {"run_id": run_id, "status": "clarify", "stage": "dataset",
                     "message": "该指标需要企业扩展数据集；请配置 INSIGHTPILOT_DATABASE_PATH。",

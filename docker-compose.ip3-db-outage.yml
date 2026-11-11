@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    pull_policy: never
+    environment:
+      POSTGRES_DB: insightpilot_ip4
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ip3-db-outage-test-only
+    ports:
+      - "127.0.0.1:55436:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d insightpilot_ip4"]
+      interval: 1s
+      timeout: 2s
+      retries: 30
+
+  api:
+    image: insightpilot-api-probe:latest
+    pull_policy: never
+    command: ["python", "/workspace/scripts/ip3_postgres_probe_app.py"]
+    ports:
+      - "127.0.0.1:58082:8080"
+    volumes:
+      - ./insightpilot:/workspace/insightpilot:ro
+      - ./data/insightpilot-multidomain.sqlite:/workspace/data/insightpilot-multidomain.sqlite:ro
+      - ./scripts/ip3_postgres_probe_app.py:/workspace/scripts/ip3_postgres_probe_app.py:ro
+    environment:
+      PYTHONPATH: /workspace
+      LLM_API_KEY: ip3-db-outage-no-model
+      LLM_BASE_URL: http://127.0.0.1:9/v1
+      LLM_MODEL: ip3-db-outage-fixed-planner
+      INSIGHTPILOT_DATABASE_PATH: /workspace/data/insightpilot-multidomain.sqlite
+      INSIGHTPILOT_DATABASE_URL: ""
+      IP3_TEST_DSN: postgresql://insightpilot_ip3_app:ip3-app-test-only@postgres:5432/insightpilot_ip4
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      postgres:
+        condition: service_healthy

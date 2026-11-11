@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 from pathlib import Path
+from threading import Lock
 from typing import Any, Protocol, runtime_checkable
 
 from sqlglot import transpile
@@ -70,24 +71,48 @@ class PostgresQueryEngine:
         self._pool = pool
         self._owns_pool = pool is None
         self._dsn = dsn
+        self._pool_lock = Lock()
 
     def _connection_pool(self):
-        if self._pool is None:
-            try:
-                from psycopg_pool import ConnectionPool
-            except ImportError:
-                raise QueryExecutionError(
-                    "PostgreSQL support requires psycopg[binary,pool]."
-                ) from None
-            self._pool = ConnectionPool(
-                conninfo=self._dsn,
-                min_size=1,
-                max_size=8,
-                timeout=5,
-                kwargs={"autocommit": False},
-                open=True,
-            )
-        return self._pool
+        with self._pool_lock:
+            if self._pool is None:
+                try:
+                    from psycopg_pool import ConnectionPool
+                except ImportError:
+                    raise QueryExecutionError(
+                        "PostgreSQL support requires psycopg[binary,pool]."
+                    ) from None
+                self._pool = ConnectionPool(
+                    conninfo=self._dsn,
+                    min_size=1,
+                    max_size=8,
+                    timeout=5,
+                    kwargs={"autocommit": False},
+                    open=True,
+                )
+            return self._pool
+
+    def _reset_pool_after_connection_error(self, pool: Any, exc: Exception) -> None:
+        if not self._owns_pool or pool is None:
+            return
+        if getattr(exc, "sqlstate", None) == "57014":
+            return
+        try:
+            import psycopg
+            is_connection_error = isinstance(exc, (psycopg.OperationalError, psycopg.InterfaceError))
+        except ImportError:
+            return
+        if not is_connection_error:
+            return
+        with self._pool_lock:
+            if self._pool is not pool:
+                return
+            self._pool = None
+        try:
+            pool.close(timeout=0)
+        except Exception:
+            # Preserve the database failure; the next request will create a fresh pool.
+            pass
 
     def execute_readonly(self, query: CompiledQuery, *, tenant_id: str | None = None,
                          cancel_event: Any | None = None) -> tuple[list[dict[str, Any]], str]:
@@ -108,8 +133,9 @@ class PostgresQueryEngine:
         except (SQLPolicyError, IndexError, ValueError) as exc:
             raise QueryExecutionError(f"SQL 策略拒绝：{exc}", failure_code="sql_policy") from None
 
+        pool = self._connection_pool()
         try:
-            with self._connection_pool().connection() as connection:
+            with pool.connection() as connection:
                 with connection.transaction():
                     connection.execute("SET TRANSACTION READ ONLY")
                     connection.execute("SET LOCAL ROLE insightpilot_reader")
@@ -135,6 +161,7 @@ class PostgresQueryEngine:
         except QueryExecutionError:
             raise
         except Exception as exc:
+            self._reset_pool_after_connection_error(pool, exc)
             sqlstate = getattr(exc, "sqlstate", None)
             if sqlstate == "57014":
                 raise QueryTimeoutError("PostgreSQL 查询超过 statement_timeout 限制。") from None
@@ -155,8 +182,9 @@ class PostgresQueryEngine:
         if not effective_tenant or not effective_tenant.strip():
             raise QueryExecutionError("A trusted tenant_id is required for PostgreSQL RLS.",
                                       failure_code="tenant_scope_missing")
+        pool = self._connection_pool()
         try:
-            with self._connection_pool().connection() as connection:
+            with pool.connection() as connection:
                 with connection.transaction():
                     connection.execute("SET TRANSACTION READ ONLY")
                     connection.execute("SET LOCAL ROLE insightpilot_reader")
@@ -168,6 +196,7 @@ class PostgresQueryEngine:
         except QueryExecutionError:
             raise
         except Exception as exc:
+            self._reset_pool_after_connection_error(pool, exc)
             sqlstate = getattr(exc, "sqlstate", None)
             code = ("schema_error" if isinstance(sqlstate, str) and sqlstate.startswith(("42", "3F"))
                     else "database_execution")
@@ -175,6 +204,9 @@ class PostgresQueryEngine:
                                       failure_code=code) from None
 
     def close(self) -> None:
-        if self._pool is not None and self._owns_pool:
-            self._pool.close()
-            self._pool = None
+        with self._pool_lock:
+            pool = self._pool
+            if pool is not None and self._owns_pool:
+                self._pool = None
+        if pool is not None and self._owns_pool:
+            pool.close()

@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+import psycopg
 from insightpilot.planner import QueryPlan
 from insightpilot.query_engine import PostgresQueryEngine, QueryEngine, SQLiteQueryEngine
 from insightpilot.runner import QueryExecutionError, QueryTimeoutError
@@ -120,6 +121,36 @@ class QueryEngineTests(unittest.TestCase):
         pool = MagicMock()
         engine = PostgresQueryEngine("unused", pool=pool)
         engine.close()
+        pool.close.assert_not_called()
+
+    def test_owned_pool_is_discarded_after_connection_error(self):
+        pool = MagicMock()
+        engine = PostgresQueryEngine("unused")
+        engine._pool = pool
+
+        engine._reset_pool_after_connection_error(pool, psycopg.OperationalError("server connection lost"))
+
+        self.assertIsNone(engine._pool)
+        pool.close.assert_called_once_with(timeout=0)
+
+    def test_owned_pool_is_kept_after_non_connection_error(self):
+        pool = MagicMock()
+        engine = PostgresQueryEngine("unused")
+        engine._pool = pool
+
+        engine._reset_pool_after_connection_error(pool, ValueError("invalid local query"))
+
+        self.assertIs(engine._pool, pool)
+        pool.close.assert_not_called()
+
+    def test_owned_pool_is_kept_after_statement_timeout(self):
+        pool = MagicMock()
+        engine = PostgresQueryEngine("unused")
+        engine._pool = pool
+
+        engine._reset_pool_after_connection_error(pool, psycopg.errors.QueryCanceled("statement timeout"))
+
+        self.assertIs(engine._pool, pool)
         pool.close.assert_not_called()
 
     def test_sqlite_compatibility_adapter_rejects_unsupported_tenant_scope(self):

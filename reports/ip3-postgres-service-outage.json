@@ -1,0 +1,100 @@
+{
+  "created_at_utc": "2026-11-11T13:40:58.523997+00:00",
+  "status": "passed",
+  "scenario": "stop PostgreSQL service while API remains live; restore same container",
+  "synthetic_data_only": true,
+  "external_model_calls": 0,
+  "planner": "fixed local planner with invocation counter",
+  "expected": {
+    "baseline": "200 answered; planner calls 1",
+    "database_down": "502 failed at dataset; model calls 0; run persisted failed",
+    "same_key_replay": "502 same run_id with replay marker; planner count unchanged",
+    "recovery": "200 answered after PostgreSQL restart; planner calls 2"
+  },
+  "steps": {
+    "baseline": {
+      "http_status": 200,
+      "run_id": "f2fa4e51-0d10-491e-975d-c4cd7f2f615e",
+      "status": "answered",
+      "stage": null,
+      "reason": null,
+      "failure_layer": null,
+      "failure_category": null,
+      "model_call_count": 1,
+      "idempotency_replay": false,
+      "planner_total_calls": 1
+    },
+    "api_liveness_during_db_outage": {
+      "http_status": 200,
+      "status": "ok"
+    },
+    "database_unavailable": {
+      "http_status": 502,
+      "run_id": "55e53330-270c-4f14-adda-f4b09382aab2",
+      "status": "failed",
+      "stage": "dataset",
+      "reason": null,
+      "failure_layer": "db_execution",
+      "failure_category": "database_execution",
+      "model_call_count": 0,
+      "idempotency_replay": false,
+      "planner_total_calls": 1,
+      "run_store_http_status": 200,
+      "persisted_run_status": "failed",
+      "persisted_result_stage": "dataset",
+      "persisted_model_call_count": 0,
+      "planning_not_reached": true
+    },
+    "idempotent_replay_while_down": {
+      "http_status": 502,
+      "run_id": "55e53330-270c-4f14-adda-f4b09382aab2",
+      "status": "failed",
+      "stage": "dataset",
+      "reason": null,
+      "failure_layer": "db_execution",
+      "failure_category": "database_execution",
+      "model_call_count": 0,
+      "idempotency_replay": true,
+      "planner_total_calls": 1
+    },
+    "after_database_recovery": {
+      "http_status": 200,
+      "run_id": "8bbbc73d-dc46-4167-8167-b846132d395e",
+      "status": "answered",
+      "stage": null,
+      "reason": null,
+      "failure_layer": null,
+      "failure_category": null,
+      "model_call_count": 1,
+      "idempotency_replay": false,
+      "planner_total_calls": 2,
+      "direct_db_probe_http_status": 200,
+      "direct_db_probe": {
+        "status": "connected",
+        "database": "insightpilot_ip4",
+        "user": "insightpilot_ip3_app"
+      },
+      "pool_stats_http_status": 200,
+      "pool_stats_before_analysis": {
+        "pool_min": 1,
+        "pool_max": 8,
+        "pool_size": 1,
+        "pool_available": 0,
+        "requests_waiting": 0
+      },
+      "pool_stats_after_analysis": {
+        "connections_num": 1,
+        "connections_ms": 6,
+        "requests_num": 2,
+        "usage_ms": 15,
+        "pool_min": 1,
+        "pool_max": 8,
+        "pool_size": 1,
+        "pool_available": 1,
+        "requests_waiting": 0
+      }
+    }
+  },
+  "compose_cleanup": true,
+  "elapsed_seconds": 7.745
+}

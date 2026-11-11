@@ -15,8 +15,12 @@ class StubPlanner:
     def __init__(self, plan=None, error=None):
         self._plan = plan
         self._error = error
+        self.calls = 0
+        self.last_call_count = 0
 
     def plan(self, question):
+        self.calls += 1
+        self.last_call_count = 1
         if self._error:
             raise self._error
         return self._plan
@@ -77,13 +81,17 @@ class S1FlowTests(unittest.TestCase):
     def test_model_and_query_failures_return_explicit_states(self):
         model_error = InsightPilot(StubPlanner(error=PlanError("LLM request failed: TimeoutError")), self.db_path)
         self.assertEqual(model_error.analyze("问题")["stage"], "planning")
-        missing_data = InsightPilot(
-            StubPlanner(QueryPlan("approved_refund_amount_rate", "2026-10-05", "2026-10-12", "华东", None)),
-            Path(self.tempdir.name) / "missing.sqlite",
-        )
+        missing_planner = StubPlanner(QueryPlan(
+            "approved_refund_amount_rate", "2026-10-05", "2026-10-12", "华东", None))
+        missing_data = InsightPilot(missing_planner, Path(self.tempdir.name) / "missing.sqlite")
         result = missing_data.analyze("问题")
         self.assertEqual(result["status"], "failed")
-        self.assertEqual(result["stage"], "query")
+        self.assertEqual(result["stage"], "dataset")
+        self.assertTrue(result["planning_skipped"])
+        self.assertEqual(result["model_call_count"], 0)
+        self.assertEqual(missing_planner.calls, 0)
+        self.assertEqual(missing_planner.last_call_count, 0)
+        self.assertEqual(result["trajectory"][1]["outcome"], "not_reached")
 
     def test_model_plan_is_validated_against_retrieved_metric_and_dimensions(self):
         planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)

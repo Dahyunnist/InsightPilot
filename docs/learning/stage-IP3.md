@@ -60,3 +60,13 @@
 PostgreSQL 回归在一次性 tmpfs PostgreSQL 16 容器中装入合成双租户 fixture，由管理员定向 `pg_terminate_backend` 断开应用连接池会话。池丢弃坏连接并重新连库，后续只读查询成功；报告为 `reports/ip3-postgres-disconnect.json`。脚本不会自动重试业务查询。
 
 此轮没有在 PostgreSQL 整个服务停机期间经过 FastAPI 请求，因此 PostgreSQL 故障时 API `RunStore` 状态与幂等重放尚未端到端验证；也未测模型请求中断、OpenTelemetry、持续负载或生产恢复。仅验证 PostgreSQL 客户端会话被强制断开后的连接池恢复。没有使用项目 `.env`、客户数据或真实模型调用。
+
+## PostgreSQL 服务停机、恢复与连接池重建（2026-11-11）
+
+新增 `docker-compose.ip3-db-outage.yml`、`scripts/ip3_postgres_probe_app.py` 与 `scripts/verify_ip3_postgres_service_outage.py`。真实 HTTP API 使用固定规划器和合成退款数据；模型端点为不可达 dummy 地址，规划器计数器确认没有外部模型调用。PostgreSQL 16 使用隔离容器自身可写层；没有宿主机数据卷或 `.env`。数据库停机后对同一 PostgreSQL 容器执行 `start`，确保角色和 fixture 与原服务相同。
+
+首次端到端重启检查失败：pool 在服务重新启动后持续尝试旧连接，且发现 tmpfs 会在容器停启时清空数据库目录。`PostgresQueryEngine` 现仅对自有池发生 psycopg `OperationalError` / `InterfaceError` 时，在当前失败请求返回后废弃旧池；下一请求惰性创建新池，不重放失败 SQL。调用方注入的池不由引擎关闭；SQL statement timeout (`57014`) 不触发池重建。新增回归覆盖连接错误重建、非连接错误与 statement timeout 保留池。
+
+完整验收报告：`reports/ip3-postgres-service-outage.json`。步骤：基线查询 HTTP 200、planner 次数 1；`docker compose stop postgres` 后 API health 仍 200；查询以 HTTP 502 `failed` / `dataset` / `db_execution` / `database_execution` 持久化，规划器次数不变且模型调用数 0；同幂等键返回相同 `run_id` 和 replay 标记；`docker compose start postgres` 后直接连接探针成功，新分析 HTTP 200，planner 总次数 2，池可用连接由 0 回到 1。Compose `down --remove-orphans` 成功，无残留容器。定向 Python 3.12 回归 18/18 通过。
+
+该结果覆盖一次本机合成 PostgreSQL 服务停机和同容器恢复，不代表生产负载或 SLA。模型请求中断、OpenTelemetry 和持续负载仍未验收；IP-3 保持部分完成。未读取 `.env`，无客户数据及真实模型调用。
