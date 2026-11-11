@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 import threading
+import time
 import unittest
 from pathlib import Path
 
@@ -10,7 +11,7 @@ from fastapi.testclient import TestClient
 from data.seed import create_database
 from insightpilot.agent import InsightPilot
 from insightpilot.api import create_app
-from insightpilot.planner import QueryPlan
+from insightpilot.planner import PlanError, QueryPlan
 from insightpilot.query_engine import SQLiteQueryEngine
 from insightpilot.run_store import RunStore
 from insightpilot.runner import QueryExecutionError
@@ -53,6 +54,22 @@ class BlockingPlanner(FixedPlanner):
         if not self.release.wait(timeout=5):
             raise TimeoutError("test planner release timed out")
         return PLAN
+
+
+class SlowTimeoutPlanner:
+    def __init__(self):
+        self.calls = 0
+        self.last_call_count = 0
+        self.entered = threading.Event()
+        self.release = threading.Event()
+
+    def plan(self, _question):
+        self.calls += 1
+        self.last_call_count = 1
+        self.entered.set()
+        if not self.release.wait(timeout=5):
+            raise AssertionError("test did not release the fake model request")
+        raise PlanError("synthetic model request timed out")
 
 
 class IP3DatabaseRecoveryTests(unittest.TestCase):
@@ -126,6 +143,58 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
                 self.assertEqual(replay.json()["run_id"], run_id)
                 self.assertEqual(replay.headers.get("Idempotency-Replay"), "true")
                 self.assertEqual(planner.calls, 1)
+
+    def test_model_timeout_persists_failure_and_idempotent_retry_does_not_replan(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            database = create_database(root / "synthetic.sqlite")
+            planner = SlowTimeoutPlanner()
+            store = RunStore(root / "runs.sqlite")
+            app = create_app(InsightPilot(planner, database), run_store=store,
+                             api_token="local-test-token", api_scopes={"refund:read"},
+                             max_requests_per_minute=20, request_timeout_seconds=0.15)
+            headers = {"Authorization": "Bearer local-test-token", "Idempotency-Key": "slow-model-timeout-1"}
+            response_box = []
+            with TestClient(app) as client:
+                request_thread = threading.Thread(target=lambda: response_box.append(
+                    client.post("/analysis", json={"question": QUESTION}, headers=headers)))
+                request_thread.start()
+                try:
+                    self.assertTrue(planner.entered.wait(timeout=2), "fake model request did not start")
+                    request_thread.join(timeout=2)
+                    self.assertFalse(request_thread.is_alive(), "HTTP request did not time out")
+                    timeout_response = response_box[0]
+                    self.assertEqual(timeout_response.status_code, 504)
+                    run_id = timeout_response.json()["run_id"]
+                    self.assertEqual(store.get(run_id)["status"], "running")
+
+                    active_replay = client.post("/analysis", json={"question": QUESTION}, headers=headers)
+                    self.assertEqual(active_replay.status_code, 202)
+                    self.assertEqual(active_replay.json()["run_id"], run_id)
+                    self.assertEqual(active_replay.headers.get("Idempotency-Replay"), "true")
+                    self.assertEqual(planner.calls, 1)
+
+                    planner.release.set()
+                    deadline = time.monotonic() + 3
+                    while time.monotonic() < deadline and store.get(run_id)["status"] == "running":
+                        time.sleep(0.01)
+                    state = store.get(run_id)
+                    self.assertEqual(state["status"], "failed")
+                    self.assertEqual(state["result"]["status"], "failed")
+                    self.assertEqual(state["result"]["stage"], "planning")
+                    self.assertEqual(state["result"]["message"], "synthetic model request timed out")
+                    self.assertNotIn("plan", state["result"])
+                    self.assertNotIn("rows", state["result"])
+
+                    retry = client.post("/analysis", json={"question": QUESTION}, headers=headers)
+                    self.assertEqual(retry.status_code, 502)
+                    self.assertEqual(retry.json()["run_id"], run_id)
+                    self.assertEqual(retry.json()["status"], "failed")
+                    self.assertEqual(retry.headers.get("Idempotency-Replay"), "true")
+                    self.assertEqual(planner.calls, 1)
+                finally:
+                    planner.release.set()
+                    request_thread.join(timeout=2)
 
 
 if __name__ == "__main__":
