@@ -69,4 +69,12 @@ PostgreSQL 回归在一次性 tmpfs PostgreSQL 16 容器中装入合成双租户
 
 完整验收报告：`reports/ip3-postgres-service-outage.json`。步骤：基线查询 HTTP 200、planner 次数 1；`docker compose stop postgres` 后 API health 仍 200；查询以 HTTP 502 `failed` / `dataset` / `db_execution` / `database_execution` 持久化，规划器次数不变且模型调用数 0；同幂等键返回相同 `run_id` 和 replay 标记；`docker compose start postgres` 后直接连接探针成功，新分析 HTTP 200，planner 总次数 2，池可用连接由 0 回到 1。Compose `down --remove-orphans` 成功，无残留容器。定向 Python 3.12 回归 18/18 通过。
 
-该结果覆盖一次本机合成 PostgreSQL 服务停机和同容器恢复，不代表生产负载或 SLA。模型请求中断、OpenTelemetry 和持续负载仍未验收；IP-3 保持部分完成。未读取 `.env`，无客户数据及真实模型调用。
+该数据库验收覆盖一次本机合成 PostgreSQL 服务停机和同容器恢复，不代表生产负载或 SLA。当时模型请求中断、OpenTelemetry 和持续负载尚未验收；离线 trace 验收见下节。IP-3 保持部分完成。未读取 `.env`，无客户数据及真实模型调用。
+
+## OpenTelemetry 离线 trace 脱敏验收（2026-11-11）
+
+新增可选 tracing seam：API `analysis` span 包住 Agent `run` 子 span。`opentelemetry-api` 可用且外部安装/配置 provider 时接入该 provider；API 缺失时无操作，不增加必装依赖。span 只写 `run.id`、结果状态、失败阶段、固定错误分类与层级；不记录问题文本、异常文本、SQL、SQL 参数、tenant ID，也不自动记录 exception event。失败 status description 只用错误分类/阶段。Exporter 出错不会影响分析请求。
+
+`tests/test_ip3_tracing.py` 用注入式内存 span exporter 对真实 FastAPI 测成功和数据库身份读取失败：均生成 API 父 span 与 Agent 子 span；成功标记 OK，失败标记 ERROR 并带 `database_execution` / `db_execution` 分类。断言覆盖问题标记、租户标记、日期 SQL 参数与地区参数均不出现在 span。Python 3.12 离线容器、源码只读挂载、网络关闭，定向测试 2/2 通过；无真实模型调用。
+
+这是可插拔 span 生成和脱敏契约验收，不包含 OTLP/Collector 配置、采样/保留策略或生产导出链路验证。IP-3 仍部分完成。

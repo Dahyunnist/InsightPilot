@@ -24,6 +24,7 @@ from .metrics import required_access_scopes
 from .planner import OpenAICompatiblePlanner
 from .query_engine import PostgresQueryEngine
 from .run_store import IdempotencyConflict, RunStore
+from .tracing import finish_analysis_span, get_tracer, set_span_attribute, start_span
 
 
 class AnalysisRequest(BaseModel):
@@ -34,7 +35,7 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
                api_scopes: set[str] | None = None, authorized_region: str | None = None,
                api_tenant_tokens: dict[str, str] | None = None,
                max_concurrent: int = 8, max_requests_per_minute: int = 120,
-               request_timeout_seconds: float = 125) -> FastAPI:
+               request_timeout_seconds: float = 125, tracer=None) -> FastAPI:
     if max_concurrent < 1 or max_requests_per_minute < 1 or request_timeout_seconds <= 0:
         raise ValueError("Concurrency, rate limit, and request timeout must be positive")
     app = FastAPI(title="InsightPilot", version="0.4.0", description="Read-only, evidence-backed refund analysis")
@@ -55,6 +56,8 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
         raise ValueError("PostgreSQL API requires a server-side authenticated token-to-tenant mapping")
     app.state.core = core
     app.state.run_store = store
+    analysis_tracer = tracer if tracer is not None else (
+        getattr(core, "tracer", None) or get_tracer("insightpilot.api"))
 
     def require_scope(authorization: str | None, scope: str | set[str], *, any_scope: bool = False) -> str | None:
         required = {scope} if isinstance(scope, str) else scope
@@ -189,8 +192,15 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
 
         def execute_run() -> dict:
             try:
-                result = core.analyze(request.question, run_id=run_id, cancel_event=cancel_event,
-                                      authorized_region=authorized_region, tenant_id=principal_id)
+                if analysis_tracer is None:
+                    result = core.analyze(request.question, run_id=run_id, cancel_event=cancel_event,
+                                          authorized_region=authorized_region, tenant_id=principal_id)
+                else:
+                    with start_span(analysis_tracer, "insightpilot.api.analysis") as span:
+                        set_span_attribute(span, "insightpilot.run.id", run_id)
+                        result = core.analyze(request.question, run_id=run_id, cancel_event=cancel_event,
+                                              authorized_region=authorized_region, tenant_id=principal_id)
+                        finish_analysis_span(span, result)
             except Exception:
                 result = {"run_id": run_id, "status": "failed", "stage": "internal",
                           "reason": "internal_error"}

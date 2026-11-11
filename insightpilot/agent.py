@@ -15,6 +15,7 @@ from .planner import NeedsClarification, OpenAICompatiblePlanner, PlanError
 from .query_engine import QueryEngine, SQLiteQueryEngine
 from .runner import QueryCancelledError, QueryExecutionError
 from .sql import compile_query
+from .tracing import finish_analysis_span, get_tracer, set_span_attribute, start_span
 from .verification import verify_result
 
 
@@ -50,11 +51,13 @@ def _preflight(question: str) -> dict | None:
 
 class InsightPilot:
     def __init__(self, planner: OpenAICompatiblePlanner, database_path: Path, *,
-                 query_engine: QueryEngine | None = None, tenant_id: str | None = None):
+                 query_engine: QueryEngine | None = None, tenant_id: str | None = None,
+                 tracer=None):
         self.planner = planner
         self.database_path = database_path
         self.query_engine = query_engine or SQLiteQueryEngine(database_path)
         self.tenant_id = tenant_id or getattr(self.query_engine, "tenant_id", None)
+        self.tracer = tracer if tracer is not None else get_tracer("insightpilot.agent")
 
     def _failure_detail(self, exc: Exception, *, stage: str, sql: str | None = None,
                         parameter_count: int | None = None, tenant_id: str | None = None) -> dict:
@@ -86,6 +89,22 @@ class InsightPilot:
 
     def analyze(self, question: str, *, run_id: str | None = None, cancel_event: Event | None = None,
                 authorized_region: str | None = None, tenant_id: str | None = None) -> dict:
+        if self.tracer is None:
+            return self._analyze_with_metadata(question, run_id=run_id, cancel_event=cancel_event,
+                                               authorized_region=authorized_region, tenant_id=tenant_id)
+        with start_span(self.tracer, "insightpilot.agent.run") as span:
+            if run_id:
+                set_span_attribute(span, "insightpilot.run.id", run_id)
+            result = self._analyze_with_metadata(question, run_id=run_id, cancel_event=cancel_event,
+                                                 authorized_region=authorized_region, tenant_id=tenant_id)
+            set_span_attribute(span, "insightpilot.run.id", str(result.get("run_id", run_id or "")))
+            finish_analysis_span(span, result)
+            return result
+
+    def _analyze_with_metadata(self, question: str, *, run_id: str | None = None,
+                               cancel_event: Event | None = None,
+                               authorized_region: str | None = None,
+                               tenant_id: str | None = None) -> dict:
         started = time.perf_counter()
         for attribute, value in (("last_call_usage", None), ("last_call_count", 0),
                                  ("last_calls", []), ("last_call_latency_ms", None),
