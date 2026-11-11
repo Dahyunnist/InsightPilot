@@ -18,6 +18,8 @@ from .sql import compile_query
 from .tracing import finish_analysis_span, get_tracer, set_span_attribute, start_span
 from .verification import verify_result
 
+_DEFAULT_TRACER = object()
+
 
 def _visualization(plan, rows: list[dict]) -> dict | None:
     if plan.dimension is None or not rows:
@@ -52,12 +54,12 @@ def _preflight(question: str) -> dict | None:
 class InsightPilot:
     def __init__(self, planner: OpenAICompatiblePlanner, database_path: Path, *,
                  query_engine: QueryEngine | None = None, tenant_id: str | None = None,
-                 tracer=None):
+                 tracer=_DEFAULT_TRACER):
         self.planner = planner
         self.database_path = database_path
         self.query_engine = query_engine or SQLiteQueryEngine(database_path)
         self.tenant_id = tenant_id or getattr(self.query_engine, "tenant_id", None)
-        self.tracer = tracer if tracer is not None else get_tracer("insightpilot.agent")
+        self.tracer = get_tracer("insightpilot.agent") if tracer is _DEFAULT_TRACER else tracer
 
     def _failure_detail(self, exc: Exception, *, stage: str, sql: str | None = None,
                         parameter_count: int | None = None, tenant_id: str | None = None) -> dict:

@@ -4,9 +4,45 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+import os
 import sys
 from typing import Any
 from contextlib import contextmanager
+
+
+def configure_otlp_tracing(endpoint: str | None = None, *, provider_factory=None,
+                           exporter_factory=None, batch_processor_factory=None,
+                           resource_factory=None):
+    """Build an optional OTLP/HTTP batch pipeline; no endpoint means no tracing."""
+    endpoint = endpoint if endpoint is not None else os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+    if not endpoint:
+        return None, None
+
+    if any(factory is None for factory in
+           (provider_factory, exporter_factory, batch_processor_factory, resource_factory)):
+        try:
+            from opentelemetry.sdk.resources import Resource
+            from opentelemetry.sdk.trace import TracerProvider
+            from opentelemetry.sdk.trace.export import BatchSpanProcessor
+            from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        except ImportError as exc:
+            raise RuntimeError(
+                "OTEL_EXPORTER_OTLP_ENDPOINT is set; install optional dependencies from requirements-otel.txt"
+            ) from exc
+        provider_factory = provider_factory or TracerProvider
+        exporter_factory = exporter_factory or OTLPSpanExporter
+        batch_processor_factory = batch_processor_factory or BatchSpanProcessor
+        resource_factory = resource_factory or Resource.create
+
+    trace_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
+    if not trace_endpoint:
+        base = endpoint.rstrip("/")
+        trace_endpoint = base if base.endswith("/v1/traces") else f"{base}/v1/traces"
+    exporter = exporter_factory(endpoint=trace_endpoint)
+    processor = batch_processor_factory(exporter)
+    provider = provider_factory(resource=resource_factory({"service.name": "insightpilot"}))
+    provider.add_span_processor(processor)
+    return provider.get_tracer("insightpilot"), provider.shutdown
 
 
 def get_tracer(name: str):

@@ -73,8 +73,8 @@ PostgreSQL 回归在一次性 tmpfs PostgreSQL 16 容器中装入合成双租户
 
 ## OpenTelemetry 离线 trace 脱敏验收（2026-11-11）
 
-新增可选 tracing seam：API `analysis` span 包住 Agent `run` 子 span。`opentelemetry-api` 可用且外部安装/配置 provider 时接入该 provider；API 缺失时无操作，不增加必装依赖。span 只写 `run.id`、结果状态、失败阶段、固定错误分类与层级；不记录问题文本、异常文本、SQL、SQL 参数、tenant ID，也不自动记录 exception event。失败 status description 只用错误分类/阶段。Exporter 出错不会影响分析请求。
+新增可选 tracing seam：设置 `OTEL_EXPORTER_OTLP_ENDPOINT` 时，API 启动 OTLP/HTTP exporter 和 `BatchSpanProcessor`，API `analysis` span 包住 Agent `run` 子 span；关闭时执行 provider shutdown/flush。`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` 可覆盖 traces URL；否则从 endpoint 添加 `/v1/traces`。未设置 endpoint 时 API tracing 无操作。SDK 与 exporter 不加入默认依赖，需额外安装 `requirements-otel.txt`。span 只写 `run.id`、结果状态、失败阶段、固定错误分类与层级；不记录问题文本、异常文本、SQL、SQL 参数、tenant ID，也不自动记录 exception event。失败 status description 只用错误分类/阶段。Exporter 出错不会影响分析请求。
 
-`tests/test_ip3_tracing.py` 用注入式内存 span exporter 对真实 FastAPI 测成功和数据库身份读取失败：均生成 API 父 span 与 Agent 子 span；成功标记 OK，失败标记 ERROR 并带 `database_execution` / `db_execution` 分类。断言覆盖问题标记、租户标记、日期 SQL 参数与地区参数均不出现在 span。Python 3.12 离线容器、源码只读挂载、网络关闭，定向测试 2/2 通过；无真实模型调用。
+`tests/test_ip3_tracing.py` 用注入式内存 span exporter 对真实 FastAPI 测成功和数据库身份读取失败：均生成 API 父 span 与 Agent 子 span；成功标记 OK，失败标记 ERROR 并带 `database_execution` / `db_execution` 分类。Fake provider 验证 endpoint、批处理器挂载和 shutdown；endpoint 缺失时确认无操作。Exporter endpoint 使用 `.invalid`，没有真实 Collector 网络请求。断言覆盖问题标记、租户标记、日期 SQL 参数与地区参数均不出现在 span。Python 3.12 离线容器、源码只读挂载、网络关闭，trace、IP-3 故障恢复和查询引擎定向测试 15/15 通过；无真实模型调用。
 
-这是可插拔 span 生成和脱敏契约验收，不包含 OTLP/Collector 配置、采样/保留策略或生产导出链路验证。IP-3 仍部分完成。
+这是可选 OTLP 导出配置与脱敏契约验收；未连真实 Collector，也未验证采样/保留策略、模型请求中断或生产导出链路。IP-3 仍部分完成。
