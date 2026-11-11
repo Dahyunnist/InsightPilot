@@ -111,6 +111,25 @@ class MultiDomainTests(unittest.TestCase):
         with self.assertRaises(NeedsClarification):
             planner.plan("2026-10-01 至 2026-10-31 退款率是多少？")
 
+    def test_v12_x01_order_share_retrieves_order_rate_not_amount_contribution(self):
+        planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)
+        planner._complete = lambda _question, candidates, _allowed: {
+            "clarify": False, "metric_id": "approved_refund_order_rate", "region": None,
+            "dimension": "category",
+        }
+        plan = planner.plan("看2026年10月各产品类别中，至少领过批准退款的付款订单占比。")
+        self.assertEqual(plan, QueryPlan("approved_refund_order_rate", "2026-10-01", "2026-11-01",
+                                         None, "category", (("2026-10-01", "2026-11-01"),)))
+
+    def test_amount_share_still_retrieves_contribution_metric(self):
+        planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)
+        planner._complete = lambda _question, _candidates, _allowed: {
+            "clarify": False, "metric_id": "approved_refund_amount_contribution", "region": None,
+            "dimension": "category",
+        }
+        plan = planner.plan("2026年10月批准退款款项的品类份额各是多少？")
+        self.assertEqual(plan.metric_id, "approved_refund_amount_contribution")
+
     def test_roi_region_request_clarifies_and_unapproved_sql_is_rejected(self):
         planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)
         planner._complete = lambda *_args: self.fail("unsupported marketing region reached model")
