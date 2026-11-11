@@ -137,6 +137,8 @@ class IP4V13HoldoutTests(unittest.TestCase):
         self.assertFalse(lock["old_ip4_touched"])
         self.assertFalse(lock["v12_score_reused"])
         self.assertEqual(lock["max_api_calls"], 44)
+        self.assertEqual(lock["execution_attempts_per_case"], 1)
+        self.assertEqual(lock["planned_max_api_calls"], 22)
         self.assertEqual(lock["input_tokens_per_request"], 3_000)
         self.assertEqual(lock["max_prompt_bytes_per_call"], MAX_PROMPT_BYTES_PER_CALL)
         self.assertLessEqual(lock["worst_case_reserve_usd"], lock["global_remaining_before_usd"])
@@ -149,6 +151,10 @@ class IP4V13HoldoutTests(unittest.TestCase):
                          hashlib.sha256((ROOT / "scripts/run_ip4_v13_model_blind.py").read_bytes()).hexdigest())
         self.assertEqual(lock["artifacts"]["scorer_sha256"],
                          hashlib.sha256((ROOT / "insightpilot/enterprise_evaluate.py").read_bytes()).hexdigest())
+        self.assertEqual(lock["artifacts"]["agent_runtime_sha256"],
+                         hashlib.sha256((ROOT / "insightpilot/agent.py").read_bytes()).hexdigest())
+        self.assertEqual(lock["artifacts"]["requirements_sha256"],
+                         hashlib.sha256((ROOT / "requirements.txt").read_bytes()).hexdigest())
 
 
 if __name__ == "__main__":

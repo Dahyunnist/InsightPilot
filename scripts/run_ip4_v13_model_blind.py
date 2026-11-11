@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import argparse
 import json
+import platform
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,6 +20,7 @@ sys.path.insert(0, str(ROOT))
 from insightpilot.agent import InsightPilot
 from insightpilot.config import load_settings
 from insightpilot.enterprise_evaluate import BudgetedPlanner, EvaluationBudget, _compare
+from insightpilot.planner import PlanError
 from insightpilot.runner import read_data_identity
 
 
@@ -45,7 +49,34 @@ def check_provider_balance(api_key: str, origin: str, requirement: dict) -> dict
             "currency": currency, "available": available, "required": requirement["required"]}
 
 
+class CapturingBudgetedPlanner(BudgetedPlanner):
+    """Retain each parsed structured response for the frozen evaluation report."""
+
+    def __init__(self, settings, budget):
+        super().__init__(settings, budget)
+        self.raw_structured_outputs = []
+
+    def _complete(self, question: str, candidates: list[str], allowed_metric_ids: list[str]) -> dict:
+        if self.last_call_count >= 1:
+            raise PlanError("v13 limit: one model request per question")
+        result = super()._complete(question, candidates, allowed_metric_ids)
+        self.raw_structured_outputs.append(result)
+        return result
+
+
+def git_text(*args: str) -> str:
+    return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
+
+
+def is_ancestor(commit: str, ref: str) -> bool:
+    return subprocess.run(["git", "merge-base", "--is-ancestor", commit, ref], cwd=ROOT,
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dry-run", action="store_true", help="verify all gates and send no model requests")
+    args = parser.parse_args()
     lock_path = ROOT / "reports/ip4-v13-model-preregistration.json"
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
     blind_path, gold_path = ROOT / "evals/ip4-v13-blind.jsonl", ROOT / "evals/ip4-v13-gold.jsonl"
@@ -69,9 +100,25 @@ def main() -> None:
         "dataset_builder_sha256": ROOT / "data/multidomain_seed.py",
         "test_sha256": ROOT / "tests/test_ip4_v13_holdout.py",
         "preregistration_script_sha256": ROOT / "scripts/preregister_ip4_v13_model.py",
+        "agent_runtime_sha256": ROOT / "insightpilot/agent.py",
+        "metric_runtime_sha256": ROOT / "insightpilot/metrics.py",
+        "query_runtime_sha256": ROOT / "insightpilot/query_engine.py",
+        "sql_runtime_sha256": ROOT / "insightpilot/sql.py",
+        "sql_policy_runtime_sha256": ROOT / "insightpilot/sql_policy.py",
+        "verification_runtime_sha256": ROOT / "insightpilot/verification.py",
+        "config_runtime_sha256": ROOT / "insightpilot/config.py",
+        "requirements_sha256": ROOT / "requirements.txt",
     }
     if any(sha(path) != lock["artifacts"][key] for key, path in expected_hashes.items()):
         raise SystemExit("registered scorer, planner, runner, builder, or baseline changed; no request sent")
+    if (platform.python_version() != lock["python_version"] or
+            platform.python_implementation() != lock["python_implementation"]):
+        raise SystemExit("Python runtime differs from preregistration; no request sent")
+    current_commit, remote_commit = git_text("rev-parse", "HEAD"), git_text("rev-parse", "origin/master")
+    freeze_commit = lock["freeze_commit_sha"]
+    if (not is_ancestor(freeze_commit, current_commit) or
+            not is_ancestor(freeze_commit, remote_commit)):
+        raise SystemExit("registered freeze commit is not present locally and on origin/master; no request sent")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
     if baseline.get("model_calls") != 0 or baseline.get("data_fingerprint") != lock["data_fingerprint"]:
@@ -94,22 +141,58 @@ def main() -> None:
         json.loads(line) for line in gold_path.read_text(encoding="utf-8").splitlines() if line.strip())}
     if len(cases) != lock["case_count"] or set(gold) != {case["case_id"] for case in cases}:
         raise SystemExit("v13 case/gold IDs differ from lock; no request sent")
+    if (lock.get("execution_attempts_per_case") != 1 or
+            lock.get("planned_max_api_calls") != len(cases) or
+            lock["planned_max_api_calls"] > lock["max_api_calls"]):
+        raise SystemExit("v13 execution count differs from one-call-per-case plan; no request sent")
+    report_path = ROOT / "reports/ip4-v13-model-blind-report.json"
+    if report_path.exists():
+        raise SystemExit("v13 model report already exists; refusing to overwrite or rerun the frozen set")
+
+    ledger_path = ROOT / "reports/model-experiment-cost-ledger.json"
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    if ledger["cap_usd"] != lock["global_cap_usd"]:
+        raise SystemExit("Global model cost cap changed; no request sent")
+    reservation = ledger.get("ip4_v13_reservation", {})
+    if (reservation.get("status") != "reserved" or
+            reservation.get("preregistration_sha256") != sha(lock_path) or
+            reservation.get("worst_case_reserve_usd") != lock["worst_case_reserve_usd"]):
+        raise SystemExit("v13 cost reservation is missing or differs from lock; no request sent")
 
     budget = EvaluationBudget(cap_usd=lock["worst_case_reserve_usd"],
-                              max_calls=lock["max_api_calls"],
+                              max_calls=lock["planned_max_api_calls"],
                               prompt_tokens=lock["input_tokens_per_request"],
                               completion_tokens=lock["output_tokens_per_request"])
+    if args.dry_run:
+        print(json.dumps({
+            "status": "dry_preflight_passed", "model_requests_sent": 0,
+            "freeze_commit_sha": freeze_commit, "current_commit_sha": current_commit,
+            "origin_master_sha": remote_commit, "model": settings.model,
+            "case_count": len(cases), "answerable_case_count": lock["answerable_case_count"],
+            "guard_case_count": lock["guard_case_count"],
+            "max_actual_model_calls": lock["planned_max_api_calls"],
+            "reserved_worst_case_usd": lock["worst_case_reserve_usd"],
+            "reserved_worst_case_cny": lock["worst_case_reserve_cny"],
+            "provider_balance_preflight": balance,
+            "blind_sha256": lock["artifacts"]["blind_sha256"],
+            "gold_sha256": lock["artifacts"]["gold_sha256"],
+            "scorer_sha256": lock["artifacts"]["scorer_sha256"],
+            "runner_sha256": lock["artifacts"]["model_runner_sha256"],
+        }, ensure_ascii=False, indent=2))
+        return
+
     outputs = []
     for case in cases:
         attempts = []
-        for attempt_no in range(1, lock["max_attempts_per_case"] + 1):
-            planner = BudgetedPlanner(settings, budget)
+        for attempt_no in range(1, lock["execution_attempts_per_case"] + 1):
+            planner = CapturingBudgetedPlanner(settings, budget)
             planner.max_prompt_bytes_per_call = lock["max_prompt_bytes_per_call"]
             result = InsightPilot(planner, database, tracer=None).analyze(case["question"])
             score = _compare(case, gold[case["case_id"]], result)
             calls = list(planner.last_calls)
             attempts.append({"attempt": attempt_no, "score": {**score, "actual_status": result.get("status")},
-                             "result": result, "provider_calls": calls})
+                             "result": result, "raw_structured_outputs": planner.raw_structured_outputs,
+                             "provider_calls": calls})
             if score["passed"] or not calls or result.get("stage") != "planning":
                 break
         outputs.append({"case_id": case["case_id"], "question": case["question"],
@@ -136,6 +219,30 @@ def main() -> None:
                         for attempt in row["attempts"] for call in attempt["provider_calls"] if call["usage"])
     completion_tokens = sum(call["usage"].get("completion_tokens", 0) for row in outputs
                             for attempt in row["attempts"] for call in attempt["provider_calls"] if call["usage"])
+    per_call_reserve = budget.per_call_usd
+    for output in outputs:
+        for attempt in output["attempts"]:
+            calls = attempt["provider_calls"]
+            attempt["peak_list_price_estimate_usd"] = round(sum(
+                (call["usage"].get("prompt_tokens", lock["input_tokens_per_request"]) *
+                 lock["pricing"]["input_peak_usd_per_million"] / 1_000_000 +
+                 call["usage"].get("completion_tokens", lock["output_tokens_per_request"]) *
+                 lock["pricing"]["output_peak_usd_per_million"] / 1_000_000)
+                if isinstance(call.get("usage"), dict) else per_call_reserve
+                for call in calls), 8)
+            attempt["model_call_count"] = len(calls)
+    wrong_clarifications = [score["case_id"] for score in final_scores
+                            if score["case_id"] in answerable and score.get("actual_status") == "clarify"]
+    wrong_refusals = [score["case_id"] for score in final_scores
+                      if score["case_id"] in answerable and score.get("actual_status") == "refused"]
+    numeric_errors = [score["case_id"] for score in final_scores
+                      if score["case_id"] in answerable and score.get("actual_status") == "answered"
+                      and score.get("numeric_ok") is False]
+    guard_wrong_responses = [score["case_id"] for score in final_scores
+                             if score["case_id"] not in answerable and not score.get("passed")]
+    unauthorized_accepts = [score["case_id"] for score in final_scores
+                            if gold[score["case_id"]].get("expected_status") == "refused"
+                            and score.get("actual_status") == "answered"]
     report = {
         "created_at_utc": datetime.now(timezone.utc).isoformat(), "status": "completed",
         "suite_id": lock["suite_id"], "model": settings.model,
@@ -144,6 +251,7 @@ def main() -> None:
         "scorer_sha256": lock["artifacts"]["scorer_sha256"], "old_ip4_touched": False,
         "model_calls": len([call for row in outputs for attempt in row["attempts"]
                              for call in attempt["provider_calls"]]),
+        "agent_cases_run": len(outputs), "planned_max_api_calls": lock["planned_max_api_calls"],
         "reserved_calls_used": budget.calls, "model_calls_are_question_only": True,
         "prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens,
         "passed": sum(score["passed"] for score in final_scores), "total": len(final_scores),
@@ -157,6 +265,9 @@ def main() -> None:
                             if score["case_id"] in answerable and score.get("actual_status") != "answered"],
         "false_accepts": [score["case_id"] for score in final_scores
                            if score["case_id"] not in answerable and score.get("actual_status") == "answered"],
+        "wrong_clarifications": wrong_clarifications, "wrong_refusals": wrong_refusals,
+        "numeric_errors": numeric_errors, "guard_wrong_responses": guard_wrong_responses,
+        "unauthorized_accepts": unauthorized_accepts,
         "usage_missing_calls": sum(call["usage"] is None for row in outputs
                                     for attempt in row["attempts"] for call in attempt["provider_calls"]),
         "peak_list_price_estimate_usd": estimate,

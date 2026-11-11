@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import platform
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -132,17 +134,29 @@ def main() -> None:
         "dataset_builder_sha256": sha(ROOT / "data/multidomain_seed.py"),
         "test_sha256": sha(ROOT / "tests/test_ip4_v13_holdout.py"),
         "preregistration_script_sha256": sha(ROOT / "scripts/preregister_ip4_v13_model.py"),
+        "agent_runtime_sha256": sha(ROOT / "insightpilot/agent.py"),
+        "metric_runtime_sha256": sha(ROOT / "insightpilot/metrics.py"),
+        "query_runtime_sha256": sha(ROOT / "insightpilot/query_engine.py"),
+        "sql_runtime_sha256": sha(ROOT / "insightpilot/sql.py"),
+        "sql_policy_runtime_sha256": sha(ROOT / "insightpilot/sql_policy.py"),
+        "verification_runtime_sha256": sha(ROOT / "insightpilot/verification.py"),
+        "config_runtime_sha256": sha(ROOT / "insightpilot/config.py"),
+        "requirements_sha256": sha(ROOT / "requirements.txt"),
         "cost_ledger_sha256_before_reservation": sha(ledger_path),
     }
     lock = {
         "suite_id": manifest["suite_id"], "status": "frozen_pre_model",
         "preregistered_at_utc": stamp, "model_calls": 0,
+        "freeze_commit_sha": subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+        "python_version": platform.python_version(), "python_implementation": platform.python_implementation(),
         "model": settings.model, "base_url_origin": origin,
         "data_version": manifest["data_version"], "data_fingerprint": manifest["data_fingerprint"],
         "retail_seed": manifest["retail_seed"], "marketing_seed": manifest["marketing_seed"],
         "case_count": len(CASES), "answerable_case_count": manifest["answerable_case_count"],
         "guard_case_count": manifest["guard_case_count"], "max_attempts_per_case": MAX_ATTEMPTS_PER_CASE,
-        "max_api_calls": max_calls, "input_tokens_per_request": INPUT_TOKENS_PER_CALL,
+        "max_api_calls": max_calls, "execution_attempts_per_case": 1,
+        "planned_max_api_calls": len(CASES), "input_tokens_per_request": INPUT_TOKENS_PER_CALL,
         "max_prompt_bytes_per_call": MAX_PROMPT_BYTES_PER_CALL,
         "output_tokens_per_request": OUTPUT_TOKENS_PER_CALL,
         "temperature": 0, "single_backend_arm": "SQLite",

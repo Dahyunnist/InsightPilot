@@ -1,8 +1,11 @@
 {
   "suite_id": "insightpilot-ip4-independent-v13",
   "status": "frozen_pre_model",
-  "preregistered_at_utc": "2026-11-11T15:16:49.786354+00:00",
+  "preregistered_at_utc": "2026-11-11T15:27:33.764407+00:00",
   "model_calls": 0,
+  "freeze_commit_sha": "b7fc95e60730feac3b52a3d6213a74395c2d667e",
+  "python_version": "3.14.5",
+  "python_implementation": "CPython",
   "model": "deepseek-v4-flash",
   "base_url_origin": "https://api.deepseek.com",
   "data_version": "insightpilot-multidomain-v1",
@@ -14,6 +17,8 @@
   "guard_case_count": 8,
   "max_attempts_per_case": 2,
   "max_api_calls": 44,
+  "execution_attempts_per_case": 1,
+  "planned_max_api_calls": 22,
   "input_tokens_per_request": 3000,
   "max_prompt_bytes_per_call": 2800,
   "output_tokens_per_request": 1024,
@@ -34,20 +39,20 @@
   "global_remaining_after_reserve_usd": 4.53009415,
   "max_reserve_cny_limit": 5.0,
   "provider_balance_snapshot": {
-    "checked_at_utc": "2026-11-11T15:16:49.786306+00:00",
+    "checked_at_utc": "2026-11-11T15:27:33.764359+00:00",
     "is_available": true,
     "balances": [
-      {
-        "currency": "USD",
-        "total_balance": "0.00",
-        "granted_balance": "0.00",
-        "topped_up_balance": "0.00"
-      },
       {
         "currency": "CNY",
         "total_balance": "9.33",
         "granted_balance": "0.00",
         "topped_up_balance": "9.33"
+      },
+      {
+        "currency": "USD",
+        "total_balance": "0.00",
+        "granted_balance": "0.00",
+        "topped_up_balance": "0.00"
       }
     ]
   },
@@ -64,16 +69,24 @@
     "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
     "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
     "manifest_sha256": "c7b7875dcf01380fc6f9da32c7ad8593f9f19f5ca5fc38f32a3521236e349932",
-    "gold_seal_sha256": "5ca64042a9c8aa1bb937bca355584eb3123f3b56b73ce6bfa5994673ef681534",
+    "gold_seal_sha256": "964b3b356a298e7ba5fb837c12a2e267d850d4ee475d8b53b89fc6b56df09bf3",
     "scorer_sha256": "0bdfeb6afe819305aecb8248e007f7b45370471a32cec1a46f620f82cb0000c4",
     "planner_sha256": "ad2d874a87de5b16db1251c308a2ccdfbf7b5b08105f1b8f116a56676995d76d",
-    "model_runner_sha256": "6d53acb0d15db74676d4e53a2e7fcd098e108fc72607df8774e0a564179de679",
+    "model_runner_sha256": "ab63f932cf7faa148386d9b7cd49323131d8d06ea16689784ac1c751eb7b18f8",
     "rule_baseline_sha256": "b0c751f97264fb55b5183251dc34f9fc1847217f8efed08d9c6447fc01169bb5",
     "rule_verifier_sha256": "18fad6138fa448fba87ee0101dcc9ebd4378372b3fa301dc9be8537020fd3442",
     "holdout_builder_sha256": "633c6630733abfa788d95ec1b38a525cfec77ff71b32d8fc762d77acc0404096",
     "dataset_builder_sha256": "9c2dcad7e1ef3c6cbf25ffd4efde773ad3dba5286d9855587aee00840ac9113d",
-    "test_sha256": "9acdfeed8696d0a0632dc1a3d252baaa9593d622f4a243de36029436bcbc9c1f",
-    "preregistration_script_sha256": "bdd47df39ff03ba0eec0d766f36a74670b8aef80dddfe20d61670e4217087d3c",
-    "cost_ledger_sha256_before_reservation": "11a518378da7432de66e94035a26753602a0c0241013796bba12471f58dba1c1"
+    "test_sha256": "08d58f79e50dd5d80c4eb5fbd836b6e2d8e2a16a14924202239cf95386c2dc06",
+    "preregistration_script_sha256": "70a1139c2712565db7f478ddf59f4f919efb2a610e2603102306184e40ccad20",
+    "agent_runtime_sha256": "1c4578a58aae55533d331f967691a39357143b7d209a0a533c3d92e63cedd206",
+    "metric_runtime_sha256": "3ed44cbcabced53c5fd334e34a3997f1d985a7b3aa1623ac9e39f1d4e7cd4299",
+    "query_runtime_sha256": "e6a2a36bf7a8281a06b2a936b93d62c1160b4d7231026d83266e39bdb84ff31a",
+    "sql_runtime_sha256": "337d6cee0936aa3d2ad936449e7f5b9a54548508bfcbdf97b1c17a1120b18eab",
+    "sql_policy_runtime_sha256": "993d5e00579ede1caa2ad78a787edce232c0323d7c6ff949933167914880015f",
+    "verification_runtime_sha256": "b906c6009eec37bc17b9f9d82749dbf4474b8d7ce03592049b4fe107297c3ab3",
+    "config_runtime_sha256": "c90fa2149a82e01e7d846f245f7b1a197030583bec9a701ef7c901c75286c1e6",
+    "requirements_sha256": "a44d6c437927b2d5cc162e1580cdf72ef8a3d72391ca121c577868494e7f168b",
+    "cost_ledger_sha256_before_reservation": "93a2076c851fc8f0e976929db6541d9b41b3448bdf6f86bb0a70311f210857a1"
   }
 }

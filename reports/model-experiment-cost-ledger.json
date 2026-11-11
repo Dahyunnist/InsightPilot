@@ -464,7 +464,7 @@
     "global_remaining_after_reserve_usd": 4.53009415,
     "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
     "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
-    "preregistration_sha256": "cd5f00f9513fd150375c705f7583d8731f0674491d19c10c60fd2075acfc9647",
+    "preregistration_sha256": "3b95b8b4cca74f1c93799d1916cf991933d79c539b4912c152863e5fbce05346",
     "model_calls": 0
   }
 }

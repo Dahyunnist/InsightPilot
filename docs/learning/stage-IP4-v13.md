@@ -12,7 +12,7 @@ v13 已构建、独立复核并预登记，**真实模型评测未运行**。不
 - 退款 gold 用独立 Python 源行 oracle，并与只读 SQL 交叉核对。营销 gold 用独立 Python 事件账本与第二 Python oracle，再与 SQL 交叉核对。
 - 跨月/跨年题 7 道。营销 cohort 中含 57 笔已记录退款撤销；涉及重复 business event 的营销题 6 道。4 道营销题含 27 个 `NULL` ROI 组；另有 498 个无 campaign attribution 订单，作为“未归因”组参与 gold。5 道澄清 guard 覆盖退款口径、多指标、缺日期、地区费用不可分摊、未定义毛 ROI。
 
-冻结文件：`evals/ip4-v13-blind.jsonl`、`evals/ip4-v13-gold.jsonl`、`evals/ip4-v13-manifest.json`。blind SHA-256：`c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66`；gold SHA-256：`f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2`；manifest SHA-256：`c7b7875dcf01380fc6f9da32c7ad8593f9f19f5ca5fc38f32a3521236e349932`。gold seal SHA-256：`5ca64042a9c8aa1bb937bca355584eb3123f3b56b73ce6bfa5994673ef681534`。
+冻结文件：`evals/ip4-v13-blind.jsonl`、`evals/ip4-v13-gold.jsonl`、`evals/ip4-v13-manifest.json`。blind SHA-256：`c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66`；gold SHA-256：`f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2`；manifest SHA-256：`c7b7875dcf01380fc6f9da32c7ad8593f9f19f5ca5fc38f32a3521236e349932`。gold seal SHA-256：`964b3b356a298e7ba5fb837c12a2e267d850d4ee475d8b53b89fc6b56df09bf3`。
 
 ## 离线验证
 
@@ -24,8 +24,8 @@ RulePlanner 基线为 15/22：可答 8/14、guard 7/8。四个错误拒答是 R0
 
 ## 费用预登记
 
-`reports/ip4-v13-gold-seal.json` 与 `reports/ip4-v13-model-preregistration.json` 锁定题集、gold、manifest、scorer、planner、runner、baseline 与构建器 SHA。预登记状态 `frozen_pre_model`，模型调用数 0。锁文件 SHA-256：`cd5f00f9513fd150375c705f7583d8731f0674491d19c10c60fd2075acfc9647`；scorer SHA-256：`0bdfeb6afe819305aecb8248e007f7b45370471a32cec1a46f620f82cb0000c4`。模型每题最多 2 次，共 44 次；单请求输入上限 3000 tokens、输出上限 1024 tokens。
+`reports/ip4-v13-gold-seal.json` 与 `reports/ip4-v13-model-preregistration.json` 锁定题集、gold、manifest、scorer、planner、runner、baseline、构建器及运行时代码 SHA。预登记状态 `frozen_pre_model`，模型调用数 0。锁文件 SHA-256：`3b95b8b4cca74f1c93799d1916cf991933d79c539b4912c152863e5fbce05346`；scorer SHA-256：`0bdfeb6afe819305aecb8248e007f7b45370471a32cec1a46f620f82cb0000c4`。执行计划为每题一次，共最多 22 次；单请求输入上限 3000 tokens、输出上限 1024 tokens。费用仍按最多 44 次锁定，覆盖重试上界。
 
 按 DeepSeek Flash 峰价未缓存输入 `$0.30/百万 tokens`、输出 `$1.20/百万 tokens`，完整最坏预留 `$0.0936672`，保守按 ¥7.50/USD 换算为 ¥0.702504。官方价表：[DeepSeek API 定价](https://api-docs.deepseek.com/quick_start/pricing/)。内部 `$5` cap 评测前余 `$4.62376135`，预留后余 `$4.53009415`。本轮只读余额检查为 ¥9.33；足以覆盖预留。费用账本已登记 pending reserve，没有记作实际花费。
 
-当前交付停在冻结与预登记；按本阶段要求未发真实模型请求。后续运行前，`scripts/run_ip4_v13_model_blind.py` 会重新检查余额、题集与代码哈希、数据库指纹和待用预留。若任一检查失败，不发送请求。真实评测须保留所有失败，不改 v13 gold 或评分器。
+本阶段已完成执行器与零调用预检：模型、冻结题集、gold、运行时代码、Python 运行时、冻结提交祖先、数据库指纹、余额和待用预留均通过检查，预检模型调用数为 0。定向执行器测试 5/5 通过。下一阶段每题最多发送一次请求；保留全部原始结构化输出、usage、延迟和失败，不改 v13 gold 或评分器。若运行前任一锁检查失败，则不发送请求。
