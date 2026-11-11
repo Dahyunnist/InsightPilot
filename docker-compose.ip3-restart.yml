@@ -1,0 +1,25 @@
+services:
+  api-probe:
+    image: insightpilot-api-probe:latest
+    pull_policy: never
+    command: ["python", "/workspace/scripts/ip3_probe_app.py"]
+    ports:
+      - "127.0.0.1:58081:8080"
+    volumes:
+      - ./insightpilot:/workspace/insightpilot:ro
+      - ./data:/workspace/data:ro
+      - ./scripts:/workspace/scripts:ro
+    environment:
+      PYTHONPATH: /workspace
+      LLM_API_KEY: ip3-restart-no-model
+      LLM_BASE_URL: http://127.0.0.1:9/v1
+      LLM_MODEL: ip3-fixed-planner-no-model
+      INSIGHTPILOT_DATABASE_URL: ""
+      INSIGHTPILOT_DATABASE_PATH: /tmp/insightpilot-default.sqlite
+      IP3_PLANNER_DELAY_MS: "4000"
+      IP3_DATA_DIR: /tmp/insightpilot-ip3
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"]
+      interval: 1s
+      timeout: 3s
+      retries: 30

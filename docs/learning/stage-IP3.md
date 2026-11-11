@@ -38,3 +38,17 @@
 ```
 
 本次仅覆盖合成 SQLite 与固定规划器的一次 Compose 验收。结果不代表真实业务数据、模型能力、生产表现或一般性能提升。Docker 不可用时可运行 `scripts/smoke_local.py` 验证本机健康检查与只读查询；该冒烟不替代容器测量。
+
+## Compose 强制进程终止与恢复（2026-11-11）
+
+路线 IP-3 还要求主动终止运行中的服务进程。本轮新增 `docker-compose.ip3-restart.yml` 与 `scripts/verify_ip3_process_restart.py`，复用本机 `insightpilot-api-probe:latest`（Python 3.12.15，image ID 前缀 `e42bdb34efa5`），未构建或拉取镜像。环境只挂载源码目录，不挂载 `.env`；规划器固定等待 4 秒，数据为合成 SQLite，无模型或外部 API 调用。请求经 localhost 真实 HTTP 端口映射进入 FastAPI。
+
+运行命令：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\verify_ip3_process_restart.py
+```
+
+结果：运行中的幂等请求先以 202 重放并取得同一 `run_id`；对 API 容器发送 SIGKILL 后，客户端收到 `RemoteDisconnected`。Compose 启回同一个容器 ID，`RunStore` 恢复后 `/runs/{id}` 返回 `interrupted` 且无结果；同一幂等键重试返回 409 `result_unavailable`，没有重复执行。验收用时 6.688 秒；容器和专用网络清理成功。完整报告见 `reports/ip3-process-restart-acceptance.json`。
+
+该验收只覆盖固定规划器、合成 SQLite 和一次强制进程终止；不证明 PostgreSQL 场景、模型请求中断、OpenTelemetry、持续负载或生产恢复能力。IP-3 仍部分完成。

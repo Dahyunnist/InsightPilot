@@ -1,0 +1,40 @@
+{
+  "suite_id": "insightpilot-ip3-forced-process-restart",
+  "image": "insightpilot-api-probe:latest",
+  "image_id": "sha256:e42bdb34efa5cf51b518d12459d285f333ea6f39ac582c3f4fc02355afa46820",
+  "python_runtime": "3.12.15",
+  "synthetic_only": true,
+  "model_calls": 0,
+  "external_api_calls": 0,
+  "transport": "FastAPI HTTP through localhost port mapping",
+  "network": "local Compose bridge; fixed planner makes no external calls",
+  "termination_signal": "SIGKILL",
+  "persistent_volumes": 0,
+  "pending_replay": {
+    "http_status": 202,
+    "run_id": "89fd03c3-fdc2-498f-87ba-098df977c647",
+    "replay_header": "true"
+  },
+  "container_id_preserved": true,
+  "container_id_before": "7b3a77b16e8ba07373f84a41ff46b04c6dc4d07b6d2c7039d57b482806f0a42b",
+  "container_id_after": "7b3a77b16e8ba07373f84a41ff46b04c6dc4d07b6d2c7039d57b482806f0a42b",
+  "inflight_request_after_kill": {
+    "transport_error": "RemoteDisconnected"
+  },
+  "recovered_run": {
+    "http_status": 200,
+    "status": "interrupted",
+    "result_present": false
+  },
+  "idempotent_retry": {
+    "http_status": 409,
+    "status": "interrupted",
+    "reason": "result_unavailable",
+    "replay_header": "true"
+  },
+  "passed": true,
+  "compose_cleanup": true,
+  "cleanup_error": null,
+  "duration_seconds": 6.688,
+  "output_path": "reports\\ip3-process-restart-acceptance.json"
+}
