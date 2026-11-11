@@ -17,3 +17,11 @@ v3 共 24 题：退款 12 题、营销 ROI 12 题；16 道可答题和 8 道 gua
 `tests/test_ip4_v3_holdout.py` 检查 24 题规模、域分布、guard/answer 状态、重复构建稳定性和 manifest 哈希；固定 RulePlanner 另核对 guard 标签。构建时 SQL 与独立 Python oracle 已逐题交叉核对。RulePlanner 基线为 19/24（严格准确率 79.17%），可答题 11/16，4 道拒绝题 4/4；5 个失败 ID 为 R03、R05、R06、R08、M01，详情见 `reports/ip4-v3-rule-baseline.json`。未运行模型，不报告模型分数；24 题和单一合成 seed 仍不足以估计生产准确率或总体泛化。v3 使用与 v2 相同的合成数据 fingerprint 和 seed；独立性指新问题和独立 gold 计算，不是独立抽样数据集。精确文本检查不排除语义相似。
 
 IP4 v3 定向测试和 v2 回归在 Python 3.12.15 容器 tmpfs 下通过；全部测试 117/117 通过。环境、命令、耗时、宿主 Python 3.14 对照和失败尝试见 `reports/ip4-v3-verification.json`。容器网络关闭，未传 `.env`，只设置 dummy 环境变量；未调用真实模型或外部 API。
+
+## 双后端离线基线与模型预注册（2026-11-11）
+
+`scripts/evaluate_ip4_v3_all_backends.py` 使用同一 v3 blind/gold 和原有 `ip4_evaluate.compare`，在 SQLite、PostgreSQL tenant-a、tenant-b 各跑 24 题。三臂均为 19/24；退款 8/12、营销 ROI 11/12，失败均为 R03、R05、R06、R08、M01。RulePlanner 0 模型调用。完整逐题轨迹见 `reports/ip4-v3-offline-all-backends.json`。
+
+真实模型前账本累计峰价费用为 `$0.33817825`，`$5.00` 上限内剩余 `$4.66182175`。按 24 题 × 3 后端臂 × 每题最多 2 次请求、每请求输入 3,000 tokens、输出 1,024 tokens、DeepSeek Flash 峰价 `$0.30/$1.20` 每百万 tokens，最坏费用预留 `$0.3065472`，预留后全局余额 `$4.35527455`。prompt sizing 用生产 planner 的精确请求构造器和 stub 响应测量；18 题会到达 planner，最大 prompt 2,541 UTF-8 字节，锁为 2,800 字节。供应商余额只读预检返回可用，CNY 余额 ¥9.44；按 ¥7.50/USD 的保守换算，最坏费用约 ¥2.30。
+
+模型、旧别名路由说明、prompt 上限、调用上限、盲集/gold/manifest、planner/scorer/runner 与离线基线 SHA-256 已冻结在 `reports/ip4-v3-model-preregistration.json`。preflight 验证通过，发送 completion 请求数为 0。提交该锁后才运行一次真实模型评测；不修改题面、gold、planner prompt 或 scorer。
