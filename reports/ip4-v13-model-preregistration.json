@@ -1,0 +1,79 @@
+{
+  "suite_id": "insightpilot-ip4-independent-v13",
+  "status": "frozen_pre_model",
+  "preregistered_at_utc": "2026-11-11T15:16:49.786354+00:00",
+  "model_calls": 0,
+  "model": "deepseek-v4-flash",
+  "base_url_origin": "https://api.deepseek.com",
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
+  "retail_seed": 20261111,
+  "marketing_seed": 20261112,
+  "case_count": 22,
+  "answerable_case_count": 14,
+  "guard_case_count": 8,
+  "max_attempts_per_case": 2,
+  "max_api_calls": 44,
+  "input_tokens_per_request": 3000,
+  "max_prompt_bytes_per_call": 2800,
+  "output_tokens_per_request": 1024,
+  "temperature": 0,
+  "single_backend_arm": "SQLite",
+  "agent_input_contract": "Each model request receives one blind question only; scorer loads gold after analysis.",
+  "pricing": {
+    "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "basis": "DeepSeek Flash peak uncached input and peak output rates",
+    "input_peak_usd_per_million": 0.3,
+    "output_peak_usd_per_million": 1.2
+  },
+  "per_call_peak_usd": 0.0021288,
+  "worst_case_reserve_usd": 0.0936672,
+  "worst_case_reserve_cny": 0.702504,
+  "global_cap_usd": 5.0,
+  "global_remaining_before_usd": 4.62376135,
+  "global_remaining_after_reserve_usd": 4.53009415,
+  "max_reserve_cny_limit": 5.0,
+  "provider_balance_snapshot": {
+    "checked_at_utc": "2026-11-11T15:16:49.786306+00:00",
+    "is_available": true,
+    "balances": [
+      {
+        "currency": "USD",
+        "total_balance": "0.00",
+        "granted_balance": "0.00",
+        "topped_up_balance": "0.00"
+      },
+      {
+        "currency": "CNY",
+        "total_balance": "9.33",
+        "granted_balance": "0.00",
+        "topped_up_balance": "9.33"
+      }
+    ]
+  },
+  "provider_balance_reserve_check": {
+    "currency": "CNY",
+    "available": 9.33,
+    "required": 0.702504,
+    "sufficient": true,
+    "conservative_cny_per_usd": 7.5
+  },
+  "old_ip4_touched": false,
+  "v12_score_reused": false,
+  "artifacts": {
+    "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+    "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+    "manifest_sha256": "c7b7875dcf01380fc6f9da32c7ad8593f9f19f5ca5fc38f32a3521236e349932",
+    "gold_seal_sha256": "5ca64042a9c8aa1bb937bca355584eb3123f3b56b73ce6bfa5994673ef681534",
+    "scorer_sha256": "0bdfeb6afe819305aecb8248e007f7b45370471a32cec1a46f620f82cb0000c4",
+    "planner_sha256": "ad2d874a87de5b16db1251c308a2ccdfbf7b5b08105f1b8f116a56676995d76d",
+    "model_runner_sha256": "6d53acb0d15db74676d4e53a2e7fcd098e108fc72607df8774e0a564179de679",
+    "rule_baseline_sha256": "b0c751f97264fb55b5183251dc34f9fc1847217f8efed08d9c6447fc01169bb5",
+    "rule_verifier_sha256": "18fad6138fa448fba87ee0101dcc9ebd4378372b3fa301dc9be8537020fd3442",
+    "holdout_builder_sha256": "633c6630733abfa788d95ec1b38a525cfec77ff71b32d8fc762d77acc0404096",
+    "dataset_builder_sha256": "9c2dcad7e1ef3c6cbf25ffd4efde773ad3dba5286d9855587aee00840ac9113d",
+    "test_sha256": "9acdfeed8696d0a0632dc1a3d252baaa9593d622f4a243de36029436bcbc9c1f",
+    "preregistration_script_sha256": "bdd47df39ff03ba0eec0d766f36a74670b8aef80dddfe20d61670e4217087d3c",
+    "cost_ledger_sha256_before_reservation": "11a518378da7432de66e94035a26753602a0c0241013796bba12471f58dba1c1"
+  }
+}

@@ -39,9 +39,10 @@ def _iso(value: datetime) -> str:
 
 
 def create_multidomain_database(path: str | Path, *, seed: int = SEED,
+                                retail_seed: int = RETAIL_SEED,
                                 order_count: int = 50_000) -> Path:
     path = Path(path)
-    base = create_enterprise_database(path, order_count=order_count, seed=RETAIL_SEED)
+    base = create_enterprise_database(path, order_count=order_count, seed=retail_seed)
     rng = random.Random(seed)
     conn = sqlite3.connect(base)
     try:
@@ -106,6 +107,7 @@ def create_multidomain_database(path: str | Path, *, seed: int = SEED,
         conn.execute("UPDATE data_meta SET value=? WHERE key='data_version'", (DATA_VERSION,))
         conn.execute("UPDATE data_meta SET value=? WHERE key='seed'", (str(seed),))
         conn.execute("UPDATE data_meta SET value=? WHERE key='data_fingerprint'", (fingerprint,))
+        conn.execute("INSERT OR REPLACE INTO data_meta(key,value) VALUES ('retail_seed',?)", (str(retail_seed),))
         conn.execute("INSERT OR REPLACE INTO data_meta(key,value) VALUES ('marketing_spend_event_count',?)",
                      (str(len(spend_rows)),))
         conn.execute("INSERT OR REPLACE INTO data_meta(key,value) VALUES ('refund_reversal_count',?)",
@@ -119,9 +121,11 @@ def create_multidomain_database(path: str | Path, *, seed: int = SEED,
 def quality_report(path: str | Path) -> dict:
     conn = sqlite3.connect(path)
     try:
+        meta = dict(conn.execute("SELECT key,value FROM data_meta"))
         return {
-            "data_version": conn.execute("SELECT value FROM data_meta WHERE key='data_version'").fetchone()[0],
-            "data_fingerprint": conn.execute("SELECT value FROM data_meta WHERE key='data_fingerprint'").fetchone()[0],
+            "data_version": meta.get("data_version"),
+            "data_fingerprint": meta.get("data_fingerprint"),
+            "retail_seed": meta.get("retail_seed"),
             "spend_event_rows": conn.execute("SELECT COUNT(*) FROM campaign_spend_events").fetchone()[0],
             "duplicate_business_events": conn.execute("""SELECT COUNT(*) FROM (
                 SELECT business_event_id FROM campaign_spend_events GROUP BY business_event_id HAVING COUNT(*)>1
@@ -144,8 +148,10 @@ def main() -> None:
     parser.add_argument("--output", default="data/insightpilot-multidomain.sqlite")
     parser.add_argument("--orders", type=int, default=50_000)
     parser.add_argument("--seed", type=int, default=SEED)
+    parser.add_argument("--retail-seed", type=int, default=RETAIL_SEED)
     args = parser.parse_args()
-    output = create_multidomain_database(args.output, seed=args.seed, order_count=args.orders)
+    output = create_multidomain_database(args.output, seed=args.seed, retail_seed=args.retail_seed,
+                                         order_count=args.orders)
     print(json.dumps({"database": str(output), **quality_report(output)}, ensure_ascii=False, indent=2))
 
 

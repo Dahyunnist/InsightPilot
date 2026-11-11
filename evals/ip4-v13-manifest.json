@@ -1,0 +1,70 @@
+{
+  "suite_id": "insightpilot-ip4-independent-v13",
+  "status": "frozen_pre_model",
+  "case_count": 22,
+  "domain_counts": {
+    "refunds": 12,
+    "marketing_roi": 10
+  },
+  "answerable_case_count": 14,
+  "guard_case_count": 8,
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
+  "marketing_seed": 20261112,
+  "retail_seed": 20261111,
+  "snapshot_at": "2027-03-01T00:00:00Z",
+  "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+  "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+  "gold_method": "Refund gold uses an independent Python source-row oracle cross-checked against compiled read-only SQL; marketing gold uses two independent Python event-ledger oracles cross-checked against SQL.",
+  "exact_normalized_prompt_overlap_count": 0,
+  "synthetic_only": true,
+  "quality_profile": {
+    "data_version": "insightpilot-multidomain-v1",
+    "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
+    "retail_seed": "20261111",
+    "spend_event_rows": 273,
+    "duplicate_business_events": 31,
+    "late_spend_rows_over_1d": 258,
+    "refund_reversal_rows": 203,
+    "reversals_exceeding_approved_refund": 0
+  },
+  "edge_coverage": {
+    "cross_month_or_year_case_ids": [
+      "IP4V13-R02",
+      "IP4V13-R04",
+      "IP4V13-R07",
+      "IP4V13-M01",
+      "IP4V13-M02",
+      "IP4V13-M03",
+      "IP4V13-M05"
+    ],
+    "refund_reversals_in_dataset": 203,
+    "duplicate_business_event_groups_in_dataset": 31,
+    "refund_reversals_for_marketing_cohorts": 57,
+    "duplicate_business_event_case_ids": [
+      "IP4V13-M01",
+      "IP4V13-M02",
+      "IP4V13-M03",
+      "IP4V13-M04",
+      "IP4V13-M05",
+      "IP4V13-M06"
+    ],
+    "orders_without_campaign_attribution": 498,
+    "null_roi_case_ids": [
+      "IP4V13-M01",
+      "IP4V13-M03",
+      "IP4V13-M04",
+      "IP4V13-M06"
+    ],
+    "null_roi_row_count": 27,
+    "ambiguity_guard_case_ids": [
+      "IP4V13-R09",
+      "IP4V13-R10",
+      "IP4V13-M07",
+      "IP4V13-M08",
+      "IP4V13-M09"
+    ]
+  },
+  "scope": "Single newly seeded synthetic multidomain holdout. New prompts and independent gold; no customer or production accuracy claim.",
+  "old_ip4_touched": false
+}
