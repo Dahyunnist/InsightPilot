@@ -1,0 +1,20 @@
+{
+  "suite_id": "insightpilot-ip4-independent-v2",
+  "case_count": 4,
+  "domains": {
+    "refunds": 2,
+    "marketing_roi": 2
+  },
+  "answerable_case_count": 2,
+  "guard_case_count": 2,
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+  "seed": "20261023",
+  "snapshot_at": "2027-03-01T00:00:00Z",
+  "blind_sha256": "d91e72d37911067f582805792c7ba99465c4059baf161c0927ba92f918cc7973",
+  "gold_sha256": "bdf69d62a4a006859b829801f539557bedc0ff195f6f7e977891b075bdfdc58f",
+  "synthetic_only": true,
+  "gold_method": "independent Python retail row ledger and marketing event ledger, cross-checked against compiled read-only SQLite SQL",
+  "exact_normalized_prompt_overlap_count": 0,
+  "scope": "Small development holdout for contract regression; not a model or production accuracy estimate."
+}
