@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "backend": "postgresql",
+  "tenant": "tenant-a",
+  "forced_backend_termination": true,
+  "disconnect_error_class": "AdminShutdown",
+  "pool_reconnected": true,
+  "recovered_query_row_count": 1,
+  "automatic_query_retry": false
+}

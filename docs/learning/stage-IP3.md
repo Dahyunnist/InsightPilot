@@ -52,3 +52,11 @@
 结果：运行中的幂等请求先以 202 重放并取得同一 `run_id`；对 API 容器发送 SIGKILL 后，客户端收到 `RemoteDisconnected`。Compose 启回同一个容器 ID，`RunStore` 恢复后 `/runs/{id}` 返回 `interrupted` 且无结果；同一幂等键重试返回 409 `result_unavailable`，没有重复执行。验收用时 6.688 秒；容器和专用网络清理成功。完整报告见 `reports/ip3-process-restart-acceptance.json`。
 
 该验收只覆盖固定规划器、合成 SQLite 和一次强制进程终止；不证明 PostgreSQL 场景、模型请求中断、OpenTelemetry、持续负载或生产恢复能力。IP-3 仍部分完成。
+
+## SQLite 故障注入与 PostgreSQL 连接池恢复（2026-11-11）
+
+新增 `tests/test_ip3_database_recovery.py` 与 `scripts/verify_ip3_postgres_disconnect.py`。SQLite 回归用合成数据库、固定规划器和一次性故障注入器：首次查询阶段断连返回并持久化 `failed`；规划调用数为 1，证明无自动重试；相同幂等键重放原失败且不再规划；同键换问题返回 409；新键重试成功。另一项并发 API 回归在固定规划器执行期间请求取消，验证结果和持久运行状态均为 `cancelled`、`cancel_requested=true`，幂等重放不重复执行。Python 3.12 容器定向测试 2/2 通过。
+
+PostgreSQL 回归在一次性 tmpfs PostgreSQL 16 容器中装入合成双租户 fixture，由管理员定向 `pg_terminate_backend` 断开应用连接池会话。池丢弃坏连接并重新连库，后续只读查询成功；报告为 `reports/ip3-postgres-disconnect.json`。脚本不会自动重试业务查询。
+
+此轮没有在 PostgreSQL 整个服务停机期间经过 FastAPI 请求，因此 PostgreSQL 故障时 API `RunStore` 状态与幂等重放尚未端到端验证；也未测模型请求中断、OpenTelemetry、持续负载或生产恢复。仅验证 PostgreSQL 客户端会话被强制断开后的连接池恢复。没有使用项目 `.env`、客户数据或真实模型调用。
