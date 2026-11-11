@@ -14,4 +14,4 @@
 
 `tests/test_ip4_v2_holdout.py` 验证可重复重建、blind 不含 gold、负例要求澄清、gold 重建稳定，并用 `RulePlanner` 跑完整集。模型调用 0，费用 0。小样本只作语义/回归检查；IP-4 仍部分完成，模型盲测与更广独立集未完成。
 
-验证记录：Python 3.14.5 下，`python -m compileall -q data insightpilot tests` 通过；`python -m unittest tests.test_ip4_v2_holdout -v` 通过（1 项）。相关 IP-4 v1 与 IP-2 回归也通过（11 项）。全套测试未完成：Windows Python 3.14 在 `test_authenticated_tokens_route_concurrent_requests_without_header_override` 进入 `TestClient` 时，阻塞于 asyncio 事件循环 `socket.socketpair()` 初始化，尚未进入请求处理。该阻塞在临时目录创建后出现；仓库当前 README 声明 Python 3.11+，未设置上限。本轮不把它记作产品回归，也不宣称全套通过。
+验证记录：仓库声明 Python 3.11+，机器仅有 Python 3.14.5，故未能在 3.11/3.12 验证。`python -m compileall -q data insightpilot tests` 通过；v2 定向测试通过。完整发现 116 项；在当前解释器下运行所有不依赖 `TestClient`/`asyncio.run()` 的测试，101/101 通过。另 15 项集成测试未运行，因为 Windows Python 3.14 在 `test_authenticated_tokens_route_concurrent_requests_without_header_override` 启动 `TestClient` 时，阻塞于 asyncio 的 `socket.socketpair()` 初始化，尚未进入请求处理。测试临时目录夹具已指向仓库 `.venv/test-tmp`；路径与清理已验证，使用该夹具的两个非 HTTP API 测试通过。未把阻塞记作产品回归，也不宣称全套通过。
