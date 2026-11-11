@@ -66,10 +66,12 @@ class SlowTimeoutPlanner:
     def plan(self, _question):
         self.calls += 1
         self.last_call_count = 1
-        self.entered.set()
-        if not self.release.wait(timeout=5):
-            raise AssertionError("test did not release the fake model request")
-        raise PlanError("synthetic model request timed out")
+        if self.calls == 1:
+            self.entered.set()
+            if not self.release.wait(timeout=5):
+                raise AssertionError("test did not release the fake model request")
+            raise PlanError("synthetic model request timed out")
+        return PLAN
 
 
 class IP3DatabaseRecoveryTests(unittest.TestCase):
@@ -192,6 +194,19 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
                     self.assertEqual(retry.json()["status"], "failed")
                     self.assertEqual(retry.headers.get("Idempotency-Replay"), "true")
                     self.assertEqual(planner.calls, 1)
+
+                    recovered = client.post("/analysis", json={"question": QUESTION}, headers={
+                        "Authorization": "Bearer local-test-token",
+                        "Idempotency-Key": "slow-model-timeout-recovered-1",
+                    })
+                    self.assertEqual(recovered.status_code, 200)
+                    self.assertEqual(recovered.json()["status"], "answered")
+                    self.assertEqual(planner.calls, 2)
+                    recovered_state = client.get(
+                        f"/runs/{recovered.json()['run_id']}",
+                        headers={"Authorization": "Bearer local-test-token"},
+                    ).json()
+                    self.assertEqual(recovered_state["status"], "answered")
                 finally:
                     planner.release.set()
                     request_thread.join(timeout=2)

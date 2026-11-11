@@ -99,6 +99,6 @@ Remove-Item -Recurse -Force .tmp-ip3-otel-wheels, .tmp-ip3-otel-packages
 
 ## 慢规划器超时与失败重放（2026-11-11）
 
-新增 `test_model_timeout_persists_failure_and_idempotent_retry_does_not_replan`。可控 fake planner 进入等待后，API 请求超时返回 504；同键重放仍为运行中 202，没有启动第二次规划。释放 fake planner 后，它返回合成 `PlanError`；RunStore 持久化 `failed` / `planning`，结果不含 plan 或 rows。终态同键重试返回同一 `run_id` 的 502 已存失败，planner 调用数仍为 1。测试没有真实模型调用，也没有伪答案。
+新增 `test_model_timeout_persists_failure_and_idempotent_retry_does_not_replan`。可控 fake planner 进入等待后，API 请求超时返回 504；同键重放仍为运行中 202，没有启动第二次规划。释放 fake planner 后，它返回合成 `PlanError`；RunStore 持久化 `failed` / `planning`，结果不含 plan 或 rows。终态同键重试返回同一 `run_id` 的 502 已存失败，planner 调用数仍为 1。新幂等键发起后续请求则成功并持久化 `answered`，planner 调用数增至 2。测试没有真实模型调用，也没有伪答案。
 
 同文件既有取消回归验证显式取消持久化 `cancelled`、同键重放不重复规划；进程重启验收 `reports/ip3-process-restart-acceptance.json` 验证遗留 `running` 变为 `interrupted`，同键重试返回 `result_unavailable` 而不重执行。Python 3.12 禁网容器中，IP-3 数据库恢复、S6 运行边界、S12 恢复回归共 23/23 通过。假 planner 只覆盖 API/RunStore 中断语义，不模拟供应商 SDK 的底层网络取消。IP-3 仍部分完成。
