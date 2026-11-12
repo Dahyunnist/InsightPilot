@@ -188,9 +188,14 @@ class InsightPilot:
         if authorized_region is not None:
             if plan.region is not None and plan.region != authorized_region:
                 return {"run_id": run_id, "status": "refused", "reason": "region_scope_denied", "message": "请求地区超出授权范围。"}
-            plan = type(plan)(plan.metric_id, plan.start_date, plan.end_date, authorized_region, plan.dimension, plan.periods)
+            plan = type(plan)(plan.metric_id, plan.start_date, plan.end_date, authorized_region,
+                              plan.dimension, plan.periods, plan.metric_version)
         try:
             metric = get_metric(plan.metric_id, plan.metric_version)
+            if metric.definition_version != METRICS[plan.metric_id].definition_version:
+                return {"run_id": run_id, "status": "failed", "stage": "planning",
+                        "reason": "metric_version_not_executable",
+                        "message": f"SQL is not registered for {plan.metric_id}@{metric.definition_version}"}
         except KeyError as exc:
             return {"run_id": run_id, "status": "failed", "stage": "planning", "reason": "unknown_metric_version",
                     "message": str(exc)}

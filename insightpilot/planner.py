@@ -249,4 +249,5 @@ class OpenAICompatiblePlanner:
                 dimension = None
         elif region is not None:
             raise PlanError("LLM selected a region not stated by the user")
-        return QueryPlan(metric_id, start.isoformat(), end.isoformat(), region, dimension, source_periods)
+        return QueryPlan(metric_id, start.isoformat(), end.isoformat(), region, dimension, source_periods,
+                         METRICS[metric_id].definition_version)

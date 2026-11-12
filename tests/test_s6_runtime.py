@@ -2,6 +2,7 @@ import tempfile
 import threading
 import time
 import unittest
+from dataclasses import replace
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -14,7 +15,7 @@ from data.seed import create_database
 from insightpilot.agent import InsightPilot
 from insightpilot.api import create_app
 from insightpilot.auth import BearerScopeMiddleware
-from insightpilot.metrics import required_access_scopes
+from insightpilot.metrics import METRICS, METRIC_VERSIONS, register_metric_version, required_access_scopes
 from insightpilot.planner import QueryPlan
 from insightpilot.run_store import RunStore
 from insightpilot.runner import QueryCancelledError, execute_readonly
@@ -34,6 +35,12 @@ class MarketingPlanner:
     def plan(self, _question):
         self.called = True
         return QueryPlan("marketing_net_roi", "2026-10-01", "2026-11-01", None, "campaign")
+
+
+class HistoricalRefundPlanner:
+    def plan(self, _question):
+        return QueryPlan("approved_refund_amount_rate", "2026-10-05", "2026-10-12", None, None,
+                         metric_version="0.9.1")
 
 
 class S6RuntimeTests(unittest.TestCase):
@@ -161,6 +168,19 @@ class S6RuntimeTests(unittest.TestCase):
         result = self.core.analyze("退款分析", authorized_region="华南")
         self.assertEqual(result["status"], "refused")
         self.assertEqual(result["reason"], "region_scope_denied")
+
+    def test_authorized_region_preserves_historical_metric_version_and_fails_closed(self):
+        current = METRICS["approved_refund_amount_rate"]
+        version_key = (current.metric_id, "0.9.1")
+        register_metric_version(replace(current, definition_version=version_key[1],
+                                        formula="historical synthetic formula"))
+        try:
+            core = InsightPilot(HistoricalRefundPlanner(), self.database)
+            result = core.analyze("退款分析", authorized_region="华南")
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(result["reason"], "metric_version_not_executable")
+        finally:
+            METRIC_VERSIONS.pop(version_key, None)
 
     def test_pre_cancelled_query_stops_before_database_access(self):
         event = Event()
