@@ -110,9 +110,6 @@ METRICS = {
     ),
 }
 
-# Append-only version index. Existing catalog entries seed the initial versions.
-METRIC_VERSIONS = {(metric.metric_id, metric.definition_version): metric for metric in METRICS.values()}
-
 
 def register_metric_version(metric: Metric) -> None:
     key = (metric.metric_id, metric.definition_version)
@@ -136,6 +133,9 @@ for _key in ("approved_refund_order_rate", "approved_refund_amount_rate",
              "approved_refund_amount_contribution", "approved_refund_amount"):
     METRICS[_key] = replace(METRICS[_key], valid_dimensions=_COHORT_DIMS)
 
+
+# Append-only version index. Existing catalog entries seed the initial versions.
+METRIC_VERSIONS = {(metric.metric_id, metric.definition_version): metric for metric in METRICS.values()}
 
 def retrieve_metrics(question: str) -> list[Metric]:
     """Rank metrics by explicit business-language cues; never pick vague refund rate."""
