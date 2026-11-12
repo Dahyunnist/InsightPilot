@@ -1,0 +1,18 @@
+{
+  "manifest_version": 1,
+  "run_date": "2026-11-12",
+  "evidence_source": "user-provided terminal output",
+  "container_healthy": true,
+  "cleanup_completed": true,
+  "planner": "synthetic fixed planner",
+  "database": "SQLite synthetic fixture",
+  "model_calls": 0,
+  "postgresql_or_rls_covered": false,
+  "results": [
+    {"concurrency": 1, "requests": 1, "http_200": 1, "http_429": 0, "http_503": 0, "p95_ms": 194.475, "p95_includes_rejections": false},
+    {"concurrency": 5, "requests": 5, "http_200": 5, "http_429": 0, "http_503": 0, "p95_ms": 210.985, "p95_includes_rejections": false},
+    {"concurrency": 20, "requests": 20, "http_200": 8, "http_429": 12, "http_503": 0, "p95_ms": 225.932, "p95_includes_rejections": true}
+  ],
+  "idempotency": {"first_status": 200, "replay_status": 200, "same_run_id": true, "replay_header": true, "conflict_status": 409},
+  "interpretation": "At concurrency 20, 8/20 requests succeeded and 12 were rate-limited; p95 includes rejected requests. Not a PostgreSQL, RLS, LLM, or production-load result."
+}

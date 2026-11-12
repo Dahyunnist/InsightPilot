@@ -16,7 +16,7 @@
 
 ## Compose 容器复验
 
-`docker-compose.ip3.yml` 和 `Dockerfile.ip3` 只装载合成数据与固定规划器。首次尝试因 Docker Hub 认证网络超时中断。2026-10-24 用户在本机拉取基础镜像后完成一次 Compose 构建与容器验收；容器 Healthy，之后容器和网络均已清理。该结果只证明固定合成夹具通过一次容器验收。
+`docker-compose.ip3.yml` 和 `Dockerfile.ip3` 只装载合成数据与固定规划器。2026-11-12 用户提供本机 Compose 成功运行结果：容器 healthy 后清理；并发 1 为 1/1 HTTP 200，p95 194.475ms；并发 5 为 5/5 HTTP 200，p95 210.985ms；并发 20 为 8/20 HTTP 200、12 个 429、0 个 503，p95 225.932ms（包含被拒绝请求）。幂等首请求与重放均 200、run_id 相同、重放头为 true；同 key 不同问题返回 409。使用 synthetic planner 与 SQLite，0 模型调用；不覆盖 PostgreSQL/RLS 或生产负载。证据见 `reports/ip3-docker-smoke-20261112.json`。
 
 本机 Compose 验收结果：
 
