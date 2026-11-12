@@ -1,0 +1,18 @@
+{
+  "manifest_version": 1,
+  "suite_id": "insightpilot-ip4-independent-v13",
+  "status": "attempt_incomplete_unknown",
+  "model_id": "deepseek-v4-flash",
+  "dataset_manifest_sha256": "c7b7875dcf01380fc6f9da32c7ad8593f9f19f5ca5fc38f32a3521236e349932",
+  "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+  "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+  "split": "frozen_pre_model",
+  "scorer_sha256": "0bdfeb6afe819305aecb8248e007f7b45370471a32cec1a46f620f82cb0000c4",
+  "runtime": {"python": "3.14.5", "implementation": "CPython"},
+  "budget": {"planned_max_api_calls": 22, "worst_case_reserve_usd": 0.0936672},
+  "gold_source": "reports/ip4-v13-model-preregistration.json",
+  "cost_usd": null,
+  "model_request_outcome": "unknown_after_IncompleteRead",
+  "completed_at_utc": null,
+  "sensitive_payloads_recorded": false
+}
