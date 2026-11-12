@@ -4,10 +4,72 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from datetime import datetime, timezone
+import json
 import os
 import sys
+import uuid
+from pathlib import Path
 from typing import Any
 from contextlib import contextmanager
+
+
+_JSONL_EVENTS = frozenset({"analysis.started", "analysis.completed", "analysis.failed"})
+_TRACE_STAGES = frozenset({"preflight", "planning", "dataset", "compilation", "query",
+                           "verification", "answer", "unknown"})
+_TRACE_STATUSES = frozenset({"answered", "clarify", "refused", "failed", "cancelled", "error"})
+_TRACE_FAILURES = frozenset({"data_identity_mismatch", "database_execution", "independent_reconciliation",
+                             "invalid_region", "invalid_region_filter", "plan_compilation_error",
+                             "query_execution", "result_limit", "sql_policy", "statement_timeout",
+                             "tenant_scope_missing", "unknown_metric_version", "unspecified"})
+
+
+def _trace_ids(run_id: str | None) -> tuple[str | None, str | None]:
+    trace_id = run_id.replace("-", "") if run_id else None
+    span_id = None
+    try:
+        from opentelemetry import trace
+
+        context = trace.get_current_span().get_span_context()
+        if context.is_valid:
+            trace_id = f"{context.trace_id:032x}"
+            span_id = f"{context.span_id:016x}"
+    except (ImportError, AttributeError, TypeError, ValueError):
+        pass
+    return trace_id, span_id
+
+
+def write_jsonl_trace(event: str, *, run_id: str, stage: str | None = None,
+                      status: str | None = None, failure_category: str | None = None) -> bool:
+    """Append fixed-schema trace metadata; never serialize prompts, SQL, or results."""
+    path = os.environ.get("INSIGHTPILOT_TRACE_JSONL")
+    if not path or event not in _JSONL_EVENTS:
+        return False
+    try:
+        normalized_run_id = str(uuid.UUID(run_id))
+    except (ValueError, TypeError, AttributeError):
+        normalized_run_id = None
+
+    trace_id, span_id = _trace_ids(normalized_run_id)
+    record = {
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "event": event,
+        "run_id": normalized_run_id,
+        "trace_id": trace_id,
+        "span_id": span_id,
+        "stage": stage if stage in _TRACE_STAGES else None,
+        "status": status if status in _TRACE_STATUSES else None,
+        "failure_category": failure_category if failure_category in _TRACE_FAILURES else (
+            "other" if failure_category else None),
+    }
+    try:
+        target = Path(path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(record, ensure_ascii=False, separators=(",", ":")) + "\n")
+    except OSError:
+        return False
+    return True
 
 
 def configure_otlp_tracing(endpoint: str | None = None, *, provider_factory=None,

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import contextvars
+import json
 import os
 import tempfile
 import unittest
 from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
+from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
@@ -17,7 +19,7 @@ from insightpilot.planner import QueryPlan
 from insightpilot.query_engine import SQLiteQueryEngine
 from insightpilot.run_store import RunStore
 from insightpilot.runner import QueryExecutionError
-from insightpilot.tracing import configure_otlp_tracing
+from insightpilot.tracing import configure_otlp_tracing, write_jsonl_trace
 
 
 class MemorySpan:
@@ -164,16 +166,68 @@ class IP3TracingTests(unittest.TestCase):
                                        headers={"Authorization": "Bearer test-bearer"})
 
             self.assertEqual(response.status_code, 200)
-            self.assertEqual([span.name for span in exporter.spans],
-                             ["insightpilot.agent.run", "insightpilot.api.analysis"])
-            agent_span, api_span = exporter.spans
+            names = {span.name for span in exporter.spans}
+            self.assertEqual(names, {
+                "insightpilot.agent.planning", "insightpilot.agent.sql_compile",
+                "insightpilot.agent.query", "insightpilot.agent.verification",
+                "insightpilot.agent.run", "insightpilot.api.analysis",
+            })
+            agent_span = next(span for span in exporter.spans if span.name == "insightpilot.agent.run")
+            api_span = next(span for span in exporter.spans if span.name == "insightpilot.api.analysis")
             self.assertIs(agent_span.parent, api_span)
+            for span in exporter.spans:
+                if span.name.startswith("insightpilot.agent.") and span is not agent_span:
+                    self.assertIs(span.parent, agent_span)
             self.assertEqual(agent_span.status, "OK")
             self.assertEqual(api_span.status, "OK")
             self.assertEqual(agent_span.attributes["insightpilot.run.status"], "answered")
             self.assertEqual(api_span.attributes["insightpilot.run.id"], response.json()["run_id"])
             self.assert_safe_export(exporter, question)
             self.assertTrue(state["provider"].shutdown_called)
+
+    def test_jsonl_trace_is_opt_in_and_contains_only_fixed_metadata(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "trace.jsonl"
+            run_id = str(uuid4())
+            question = "marker-question-sensitive"
+            with patch.dict(os.environ, {"INSIGHTPILOT_TRACE_JSONL": str(path)}):
+                written = write_jsonl_trace("analysis.completed", run_id=run_id, stage="query",
+                                            status="answered", failure_category=question)
+            self.assertTrue(written)
+            record = json.loads(path.read_text(encoding="utf-8").strip())
+            self.assertEqual(record["run_id"], run_id)
+            self.assertEqual(record["stage"], "query")
+            self.assertEqual(record["status"], "answered")
+            self.assertEqual(record["failure_category"], "other")
+            self.assertNotIn(question, path.read_text(encoding="utf-8"))
+            self.assertEqual(set(record), {"timestamp_utc", "event", "run_id", "trace_id", "span_id",
+                                           "stage", "status", "failure_category"})
+            self.assertEqual(record["trace_id"], run_id.replace("-", ""))
+            self.assertIsNone(record["span_id"])
+
+    def test_jsonl_trace_io_failure_does_not_raise(self):
+        with tempfile.TemporaryDirectory() as temp:
+            blocked_parent = Path(temp) / "file-not-directory"
+            blocked_parent.write_text("x", encoding="utf-8")
+            with patch.dict(os.environ, {"INSIGHTPILOT_TRACE_JSONL": str(blocked_parent / "trace.jsonl")}):
+                self.assertFalse(write_jsonl_trace("analysis.started", run_id=str(uuid4())))
+
+    def test_agent_uses_jsonl_fallback_when_otel_is_disabled(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            database = create_database(root / "synthetic.sqlite")
+            path = root / "trace.jsonl"
+            question = "marker-question-sensitive"
+            core = InsightPilot(FixedPlanner(), database, tracer=None)
+            with patch.dict(os.environ, {"INSIGHTPILOT_TRACE_JSONL": str(path)}):
+                result = core.analyze(question)
+            records = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+            self.assertEqual([record["event"] for record in records],
+                             ["analysis.started", "analysis.completed"])
+            self.assertEqual(records[0]["run_id"], result["run_id"])
+            serialized = path.read_text(encoding="utf-8")
+            for sensitive in (question, "华东", "SELECT", "tenant-sensitive-marker"):
+                self.assertNotIn(sensitive, serialized)
 
     def test_database_failure_records_classification_without_sensitive_data(self):
         with tempfile.TemporaryDirectory() as temp:

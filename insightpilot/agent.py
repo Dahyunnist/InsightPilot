@@ -15,7 +15,7 @@ from .planner import NeedsClarification, OpenAICompatiblePlanner, PlanError
 from .query_engine import QueryEngine, SQLiteQueryEngine
 from .runner import QueryCancelledError, QueryExecutionError
 from .sql import compile_query
-from .tracing import finish_analysis_span, get_tracer, set_span_attribute, start_span
+from .tracing import finish_analysis_span, get_tracer, set_span_attribute, start_span, write_jsonl_trace
 from .verification import verify_result
 
 _DEFAULT_TRACER = object()
@@ -91,17 +91,28 @@ class InsightPilot:
 
     def analyze(self, question: str, *, run_id: str | None = None, cancel_event: Event | None = None,
                 authorized_region: str | None = None, tenant_id: str | None = None) -> dict:
-        if self.tracer is None:
-            return self._analyze_with_metadata(question, run_id=run_id, cancel_event=cancel_event,
-                                               authorized_region=authorized_region, tenant_id=tenant_id)
-        with start_span(self.tracer, "insightpilot.agent.run") as span:
-            if run_id:
-                set_span_attribute(span, "insightpilot.run.id", run_id)
-            result = self._analyze_with_metadata(question, run_id=run_id, cancel_event=cancel_event,
-                                                 authorized_region=authorized_region, tenant_id=tenant_id)
-            set_span_attribute(span, "insightpilot.run.id", str(result.get("run_id", run_id or "")))
-            finish_analysis_span(span, result)
-            return result
+        run_id = run_id or str(uuid.uuid4())
+        write_jsonl_trace("analysis.started", run_id=run_id, stage="preflight")
+        try:
+            if self.tracer is None:
+                result = self._analyze_with_metadata(question, run_id=run_id, cancel_event=cancel_event,
+                                                     authorized_region=authorized_region, tenant_id=tenant_id)
+            else:
+                with start_span(self.tracer, "insightpilot.agent.run") as span:
+                    set_span_attribute(span, "insightpilot.run.id", run_id)
+                    result = self._analyze_with_metadata(question, run_id=run_id, cancel_event=cancel_event,
+                                                         authorized_region=authorized_region, tenant_id=tenant_id)
+                    set_span_attribute(span, "insightpilot.run.id", str(result.get("run_id", run_id)))
+                    finish_analysis_span(span, result)
+        except Exception as exc:
+            write_jsonl_trace("analysis.failed", run_id=run_id, stage="unknown", status="error",
+                              failure_category=type(exc).__name__)
+            raise
+        failure = result.get("failure_detail") or {}
+        write_jsonl_trace("analysis.completed", run_id=run_id,
+                          stage=result.get("stage") or "answer", status=result.get("status"),
+                          failure_category=failure.get("category"))
+        return result
 
     def _analyze_with_metadata(self, question: str, *, run_id: str | None = None,
                                cancel_event: Event | None = None,
@@ -172,7 +183,8 @@ class InsightPilot:
                     "planning_skipped": True, "message": str(exc),
                     "failure_detail": self._failure_detail(exc, stage="dataset", tenant_id=trusted_tenant_id)}
         try:
-            plan = self.planner.plan(question)
+            with start_span(self.tracer, "insightpilot.agent.planning"):
+                plan = self.planner.plan(question)
         except NeedsClarification as exc:
             return {"run_id": run_id, "status": "clarify", "message": str(exc), "choices": exc.choices}
         except PlanError as exc:
@@ -204,14 +216,16 @@ class InsightPilot:
                     "message": "该指标需要企业扩展数据集；请配置 INSIGHTPILOT_DATABASE_PATH。",
                     "required_data_versions": list(metric.required_data_versions), "actual_data_version": dataset_version}
         try:
-            compiled = compile_query(plan)
+            with start_span(self.tracer, "insightpilot.agent.sql_compile"):
+                compiled = compile_query(plan)
         except ValueError as exc:
             return {"run_id": run_id, "status": "failed", "stage": "compilation", "message": str(exc),
                     "failure_detail": {"layer": "sql_compile", "category": "plan_compilation_error",
                                        "exception_class": type(exc).__name__, "metric_id": metric.metric_id}}
         try:
-            rows, _backend = self.query_engine.execute_readonly(
-                compiled, tenant_id=trusted_tenant_id, cancel_event=cancel_event)
+            with start_span(self.tracer, "insightpilot.agent.query"):
+                rows, _backend = self.query_engine.execute_readonly(
+                    compiled, tenant_id=trusted_tenant_id, cancel_event=cancel_event)
         except QueryCancelledError as exc:
             return {"run_id": run_id, "status": "cancelled", "stage": "query", "message": str(exc)}
         except QueryExecutionError as exc:
@@ -220,7 +234,8 @@ class InsightPilot:
                                                            parameter_count=len(compiled.params),
                                                            tenant_id=trusted_tenant_id)}
         try:
-            verification = verify_result(plan, rows, self.database_path, cancel_event)
+            with start_span(self.tracer, "insightpilot.agent.verification"):
+                verification = verify_result(plan, rows, self.database_path, cancel_event)
         except QueryCancelledError as exc:
             return {"run_id": run_id, "status": "cancelled", "stage": "verification", "message": str(exc)}
         except QueryExecutionError as exc:
