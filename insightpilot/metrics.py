@@ -110,6 +110,27 @@ METRICS = {
     ),
 }
 
+# Append-only version index. Existing catalog entries seed the initial versions.
+METRIC_VERSIONS = {(metric.metric_id, metric.definition_version): metric for metric in METRICS.values()}
+
+
+def register_metric_version(metric: Metric) -> None:
+    key = (metric.metric_id, metric.definition_version)
+    if key in METRIC_VERSIONS:
+        raise ValueError(f"metric version already registered: {key[0]}@{key[1]}")
+    METRIC_VERSIONS[key] = metric
+
+
+def get_metric(metric_id: str, version: str | None = None) -> Metric:
+    current = METRICS.get(metric_id)
+    if current is None:
+        raise KeyError(f"unknown metric: {metric_id}")
+    selected = version if version is not None else current.definition_version
+    try:
+        return METRIC_VERSIONS[(metric_id, selected)]
+    except KeyError as exc:
+        raise KeyError(f"unknown metric version: {metric_id}@{selected}") from exc
+
 _COHORT_DIMS = ("category", "channel", "region", "month_utc")
 for _key in ("approved_refund_order_rate", "approved_refund_amount_rate",
              "approved_refund_amount_contribution", "approved_refund_amount"):

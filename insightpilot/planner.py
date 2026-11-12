@@ -26,6 +26,7 @@ class QueryPlan:
     region: str | None
     dimension: str | None
     periods: tuple[tuple[str, str], ...] = ()
+    metric_version: str | None = None
 
 
 class PlanError(ValueError):

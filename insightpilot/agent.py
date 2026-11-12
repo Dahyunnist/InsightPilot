@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from threading import Event
 
-from .metrics import METRICS, REGION_VALUES
+from .metrics import METRICS, REGION_VALUES, get_metric
 from .planner import NeedsClarification, OpenAICompatiblePlanner, PlanError
 from .query_engine import QueryEngine, SQLiteQueryEngine
 from .runner import QueryCancelledError, QueryExecutionError
@@ -189,7 +189,11 @@ class InsightPilot:
             if plan.region is not None and plan.region != authorized_region:
                 return {"run_id": run_id, "status": "refused", "reason": "region_scope_denied", "message": "请求地区超出授权范围。"}
             plan = type(plan)(plan.metric_id, plan.start_date, plan.end_date, authorized_region, plan.dimension, plan.periods)
-        metric = METRICS[plan.metric_id]
+        try:
+            metric = get_metric(plan.metric_id, plan.metric_version)
+        except KeyError as exc:
+            return {"run_id": run_id, "status": "failed", "stage": "planning", "reason": "unknown_metric_version",
+                    "message": str(exc)}
         if metric.required_data_versions and dataset_version not in metric.required_data_versions:
             return {"run_id": run_id, "status": "clarify", "stage": "dataset",
                     "message": "该指标需要企业扩展数据集；请配置 INSIGHTPILOT_DATABASE_PATH。",
