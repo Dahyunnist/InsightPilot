@@ -14,9 +14,7 @@ $started = $false
 try {
     Push-Location $root
     if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { throw 'Docker CLI is required.' }
-    if (-not $env:INSIGHTPILOT_IP4_ADMIN_PASSWORD) {
-        [Environment]::SetEnvironmentVariable($envName, ([guid]::NewGuid().ToString('N')), 'Process')
-    }
+    if (-not $env:INSIGHTPILOT_IP4_ADMIN_PASSWORD) { $env:INSIGHTPILOT_IP4_ADMIN_PASSWORD = [guid]::NewGuid().ToString('N') }
     & docker compose -f $compose config --quiet
     if ($LASTEXITCODE -ne 0) { throw 'Compose configuration is invalid.' }
     $rendered = @(& docker compose -f $compose config)
@@ -58,6 +56,12 @@ try {
             Write-Warning 'Could not stop the test PostgreSQL service; original result is preserved.'
         }
     }
-    foreach ($name in $envNames) { [Environment]::SetEnvironmentVariable($name, $oldValues[$name], 'Process') }
+    foreach ($name in $envNames) {
+        if ($null -eq $oldValues[$name]) {
+            Remove-Item -LiteralPath "Env:$name" -ErrorAction SilentlyContinue
+        } else {
+            [Environment]::SetEnvironmentVariable($name, $oldValues[$name], 'Process')
+        }
+    }
     if ((Get-Location).Path -eq $root) { Pop-Location }
 }
