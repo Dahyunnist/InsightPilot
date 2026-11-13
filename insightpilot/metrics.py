@@ -108,6 +108,27 @@ METRICS = {
         timezone="UTC",
         freshness="使用 data_meta.snapshot_at；晚于快照入库的退款撤销或费用修订不计入",
     ),
+    "inventory_turnover": Metric(
+        "inventory_turnover", "库存周转率",
+        "期间销售成本 / 期间可用库存日账面金额均值；各自然日先汇总库存，再对有效日取均值",
+        "Asia/Shanghai 本地日期；库存按每日快照，销售成本按发生时间",
+        "仅合成库存 fixture 的已记录销售成本",
+        definition_version="1.0.0", effective_from="2026-11-01",
+        grain="商品类别 × Asia/Shanghai 自然日",
+        source_tables=("inventory_daily_snapshots", "inventory_cogs_events"),
+        lineage=("inventory_daily_snapshots.category", "inventory_daily_snapshots.local_date",
+                 "inventory_daily_snapshots.snapshot_at",
+                 "inventory_daily_snapshots.inventory_value_cents", "inventory_cogs_events.sold_at",
+                 "inventory_cogs_events.cogs_cents"),
+        valid_dimensions=("inventory_category",), access_scopes=("inventory:read",),
+        definition_source="docs/product-contract.md#库存周转率ip-2-离线切片",
+        example_question="2026-11-01 至 2026-11-03 库存周转率按商品类别是多少？",
+        required_data_versions=("insightpilot-inventory-v1",), business_domain="库存分析",
+        numerator_definition="本地日期区间左闭右开内已记录销售成本之和",
+        denominator_definition="区间内每个本地日先汇总有效库存快照，再对有效日均值；NULL 日不计，零值计入",
+        timezone="Asia/Shanghai",
+        freshness="只使用所选本地日期区间内记录的合成日快照；不代表实时库存",
+    ),
 }
 
 
@@ -143,6 +164,8 @@ def retrieve_metrics(question: str) -> list[Metric]:
     scores = {key: 0 for key in METRICS}
     if any(term in q for term in ("roi", "投资回报率", "广告回报率")):
         scores["marketing_net_roi"] = 20
+    if any(term in q for term in ("库存周转率", "库存周转", "存货周转率", "存货周转")):
+        scores["inventory_turnover"] = 20
     if any(term in q for term in ("按下单日期", "按订单创建日期", "订单创建日期按日")) and "退款订单数" in q:
         scores["approved_refund_cohort_summary"] = 10
     if any(term in q for term in ("campaign", "活动归因", "营销活动", "投放活动", "广告活动")):
@@ -194,7 +217,8 @@ def catalog_document() -> dict:
     return {
         "catalog_version": "insightpilot-semantic-catalog-v2",
         "data_contract_version": "insightpilot-s0-v1",
-        "data_contract_versions": ["insightpilot-s0-v1", "insightpilot-enterprise-v1", "insightpilot-multidomain-v1"],
+        "data_contract_versions": ["insightpilot-s0-v1", "insightpilot-enterprise-v1", "insightpilot-multidomain-v1",
+                                    "insightpilot-inventory-v1"],
         "metrics": [
             {
                 **asdict(METRICS[key]),
@@ -215,6 +239,7 @@ def catalog_document() -> dict:
                        "values": list(REGION_VALUES)},
             "month_utc": {"source": "orders.ordered_at", "grain": "UTC month", "sensitivity": "internal"},
             "campaign": {"source": "campaigns.campaign_name", "grain": "weighted attribution", "sensitivity": "internal"},
+            "inventory_category": {"source": "inventory_daily_snapshots.category", "grain": "product category", "sensitivity": "internal"},
         },
         "excluded_definitions": {
             "refund_event_rate": "未有冻结公式、分母或生效版本；禁止自动替换成订单率/金额率。"

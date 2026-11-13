@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, time, timezone
+from zoneinfo import ZoneInfo
 
 from .planner import QueryPlan
 
@@ -23,6 +25,48 @@ DIMENSIONS = {
 
 
 def compile_query(plan: QueryPlan) -> CompiledQuery:
+    if plan.metric_id == "inventory_turnover":
+        if (plan.dimension not in (None, "inventory_category") or plan.region is not None
+                or len(plan.periods) > 1
+                or plan.periods and plan.periods[0] != (plan.start_date, plan.end_date)):
+            raise ValueError("Inventory turnover supports one local date range and optional category grouping")
+        local_tz = ZoneInfo("Asia/Shanghai")
+        start_local = datetime.combine(datetime.fromisoformat(plan.start_date).date(), time.min, tzinfo=local_tz)
+        end_local = datetime.combine(datetime.fromisoformat(plan.end_date).date(), time.min, tzinfo=local_tz)
+        start_utc = start_local.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        end_utc = end_local.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        dim = plan.dimension == "inventory_category"
+        inventory_select = "i.category AS group_value, " if dim else "'全部' AS group_value, "
+        cogs_group = "e.category" if dim else "group_value"
+        cogs_select = "e.category AS group_value, " if dim else "'全部' AS group_value, "
+        daily_group = "group_value, local_day" if dim else "local_day"
+        sql = f"""WITH daily_inventory AS (
+    SELECT {inventory_select}i.local_date AS local_day,
+           SUM(i.inventory_value_cents) AS inventory_value_cents
+    FROM inventory_daily_snapshots i
+    WHERE i.snapshot_at >= ? AND i.snapshot_at < ?
+    GROUP BY {daily_group}
+), average_inventory AS (
+    SELECT group_value, AVG(inventory_value_cents) AS denominator_cents
+    FROM daily_inventory GROUP BY group_value
+), period_cogs AS (
+    SELECT {cogs_select}SUM(e.cogs_cents) AS numerator_cents
+    FROM inventory_cogs_events e
+    WHERE e.sold_at >= ? AND e.sold_at < ?
+    GROUP BY {cogs_group}
+), groups AS (
+    SELECT group_value FROM average_inventory
+    UNION SELECT group_value FROM period_cogs
+)
+SELECT g.group_value, COALESCE(c.numerator_cents, 0) AS numerator_cents,
+       a.denominator_cents,
+       1.0 * COALESCE(c.numerator_cents, 0) / NULLIF(a.denominator_cents, 0) AS value
+FROM groups g
+LEFT JOIN average_inventory a ON a.group_value = g.group_value
+LEFT JOIN period_cogs c ON c.group_value = g.group_value
+ORDER BY g.group_value LIMIT 100"""
+        return CompiledQuery(sql, (start_utc, end_utc, start_utc, end_utc))
+
     if plan.metric_id == "marketing_net_roi":
         if plan.dimension not in (None, "campaign") or plan.region is not None:
             raise ValueError("Marketing net ROI only supports campaign grouping")

@@ -206,6 +206,16 @@ class OpenAICompatiblePlanner:
             raise NeedsClarification("结束日期必须晚于开始日期。")
         use_metric_retrieval = getattr(self, "use_metric_retrieval", True)
         candidates = retrieve_metrics(q) if use_metric_retrieval else []
+        if any(metric.metric_id == "inventory_turnover" for metric in candidates):
+            if (len(candidates) > 1 or any(term in q for term in
+                                           ("退款率", "退款订单", "批准退款", "退款金额", "营销", "投资回报率", "广告回报率"))):
+                raise NeedsClarification("库存周转率不能与其他指标合并；请单独查询一个指标。")
+            if len(source_periods) > 1:
+                raise NeedsClarification("库存周转率暂不支持多个期间对比；请只提供一个本地日期区间。")
+            unsupported_inventory_slices = ("地区", "渠道", "供应商", "仓库")
+            if (any(term in q for term in unsupported_inventory_slices)
+                    or any(region in q for region in REGION_VALUES)):
+                raise NeedsClarification("库存周转率目前只支持整体或按商品类别分组，不支持所选切片。")
         if candidates and candidates[0].metric_id == "marketing_net_roi" and any(
             region in q for region in REGION_VALUES
         ):
@@ -213,7 +223,7 @@ class OpenAICompatiblePlanner:
         if "退款率" in q and not any(term in q for term in ("订单率", "订单数", "金额", "实付")):
             raise NeedsClarification("请选退款订单率或退款金额率。", ["approved_refund_order_rate", "approved_refund_amount_rate"])
         if use_metric_retrieval and not candidates:
-            raise NeedsClarification("未识别到 S1 支持的退款率或退款金额贡献指标。")
+            raise NeedsClarification("未识别到当前目录支持的指标；请明确业务指标与口径。")
         if candidates and all(any(period[0] < metric.effective_from for period in source_periods)
                               for metric in candidates):
             versions = ", ".join(sorted({metric.effective_from for metric in candidates}))
@@ -235,7 +245,7 @@ class OpenAICompatiblePlanner:
             raise NeedsClarification(f"指标定义自 {METRICS[metric_id].effective_from} 起生效；请提供该日期之后的时间窗。")
         start, end = (date.fromisoformat(value) for value in source_periods[0])
         dimension = result.get("dimension")
-        if dimension not in (None, "category", "channel", "region", "month_utc", "refund_day_utc", "refund_status", "campaign"):
+        if dimension not in (None, "category", "channel", "region", "month_utc", "refund_day_utc", "refund_status", "campaign", "inventory_category"):
             raise PlanError("LLM selected a dimension outside the allowed set")
         if dimension is not None and dimension not in METRICS[metric_id].valid_dimensions:
             raise PlanError("LLM selected a dimension outside the metric's semantic contract")

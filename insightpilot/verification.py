@@ -7,6 +7,7 @@ from threading import Event
 
 from .planner import QueryPlan
 from .marketing_oracle import calculate_marketing_net_roi
+from .inventory_oracle import calculate_inventory_turnover
 from .runner import execute_readonly
 from .sql import CompiledQuery
 
@@ -191,6 +192,25 @@ def verify_result(plan: QueryPlan, rows: list[dict], database_path, cancel_event
     # psycopg returns PostgreSQL NUMERIC as Decimal; SQLite returns int/float.
     rows = [{key: float(value) if isinstance(value, Decimal) else value for key, value in row.items()}
             for row in rows]
+    if plan.metric_id == "inventory_turnover":
+        if cancel_event is not None and cancel_event.is_set():
+            from .runner import QueryCancelledError
+
+            raise QueryCancelledError("分析已取消。")
+        control_rows = calculate_inventory_turnover(plan, database_path)
+        actual = {row.get("group_value"): row for row in rows}
+        expected = {row.get("group_value"): row for row in control_rows}
+        groups_match = actual.keys() == expected.keys()
+        values_match = groups_match and all(
+            all(actual[key].get(field) == expected[key].get(field)
+                if actual[key].get(field) is None or expected[key].get(field) is None
+                else abs(actual[key][field] - expected[key][field]) <= 1e-9
+                for field in ("numerator_cents", "denominator_cents", "value"))
+            for key in actual
+        )
+        checks = {"groups_match": groups_match, "inventory_and_turnover_match": values_match}
+        return {"passed": all(checks.values()), "method": "independent_python_inventory_ledger",
+                "checks": checks, "control": control_rows}
     if plan.metric_id == "marketing_net_roi":
         if cancel_event is not None and cancel_event.is_set():
             from .runner import QueryCancelledError

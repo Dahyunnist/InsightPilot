@@ -7,11 +7,13 @@ from sqlglot import exp
 
 
 ALLOWED_TABLES = {"orders", "refunds", "products", "campaign_attributions", "campaigns",
-                  "refund_reversals", "campaign_spend_events", "data_meta"}
+                  "refund_reversals", "campaign_spend_events", "data_meta",
+                  "inventory_daily_snapshots", "inventory_cogs_events"}
 ALLOWED_CTES = {"eligible_orders", "approved_refunds", "base", "periods", "attributed_refunds",
                 "campaign_totals", "grouped", "refund_by_order", "valid_refunds",
                 "refund_reversals_by_refund", "net_refunds", "touch_revenue", "spend_ranked",
-                "valid_spend", "spend_totals", "campaign_keys", "combined"}
+                "valid_spend", "spend_totals", "campaign_keys", "combined", "daily_inventory",
+                "average_inventory", "period_cogs", "groups"}
 ALLOWED_COLUMNS = {
     "order_id", "paid_amount_cents", "product_id", "category", "channel", "region",
     "ordered_at", "status", "amount_cents", "refund_cents", "group_value",
@@ -23,8 +25,9 @@ ALLOWED_COLUMNS = {
     "event_id", "business_event_id", "revision", "spend_cents", "event_status",
     "refund_id", "reversal_id", "reversed_at", "snapshot_at", "key", "value",
     "net_revenue_cents", "reversed_cents", "revision_rank", "spent_at",
+    "local_date", "inventory_value_cents", "sold_at", "cogs_cents", "local_day",
 }
-ALLOWED_FUNCTIONS = {"COUNT", "SUM", "COALESCE", "NULLIF", "SUBSTR", "SUBSTRING", "ABS", "ROUND",
+ALLOWED_FUNCTIONS = {"COUNT", "SUM", "AVG", "COALESCE", "NULLIF", "SUBSTR", "SUBSTRING", "ABS", "ROUND",
                      "DATETIME", "CASE", "IF", "ROWNUMBER", "ROW_NUMBER"}
 MAX_SQL_CHARS = 20_000
 MAX_AST_NODES = 500

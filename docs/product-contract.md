@@ -19,7 +19,7 @@
 
 ## 指标字典与口径
 
-所有区间均为 UTC 左闭右开 `[start, end)`；“上周”必须先绑定明确日期和时区。地区和维度来自订单。除特别说明外，取消订单不进入分母。
+退款指标区间均为 UTC 左闭右开 `[start, end)`；“上周”必须先绑定明确日期和时区。退款指标的地区和维度来自订单。除特别说明外，取消订单不进入分母。
 
 | 指标 ID | 公式/时间归属 | 退款状态与边界 |
 |---|---|---|
@@ -29,6 +29,13 @@
 | `approved_refund_amount` | 批准退款金额之和 | 按查询明示的订单 cohort 或退款事件时间过滤 |
 | `approved_refund_amount_contribution` | 分组批准退款金额 / 同切片全部批准退款金额 | 分母为零时返回 null/不可计算 |
 | `approved_refund_campaign_attribution` | campaign touch 归因权重 × 订单批准退款金额；缺少 touch 的退款放入“未归因” | 仅 enterprise v1 扩展数据集；campaign 多触点权重和为 1 |
+| `inventory_turnover` | 期间销售成本 / 本地日均库存账面金额；Asia/Shanghai 本地日期 | 仅 `insightpilot-inventory-v1` 合成 fixture；零或缺失分母返回 NULL |
+
+### 库存周转率（IP-2 离线切片）
+
+`inventory_turnover@1.0.0` 自 `2026-11-01` 生效，仅适用于 `insightpilot-inventory-v1` 合成数据。定义为所选 Asia/Shanghai 本地日期区间内销售成本之和，除以区间内有有效快照的本地日库存账面金额均值；每天先汇总品类库存，再对有效日取均值。快照写入时须按 Asia/Shanghai 生成唯一的 `local_date`，同时保留 UTC `snapshot_at`；区间按本地午夜左闭右开换算成 UTC 查询边界。NULL 快照日不进入均值，零库存日进入均值；分母为零或不存在时结果为 NULL，不伪造零周转率。仅支持按商品类别切片，不提供地区、渠道、实时性或第二数据库后端验收承诺。
+
+Fixture 使用 `inventory_daily_snapshots(category, local_date, snapshot_at, inventory_value_cents)` 与 `inventory_cogs_events(category, sold_at, cogs_cents)`。每天每品类只允许一条快照；销售成本来自合成发生事件。Fixture 不声明真实库存系统的数据完整性或生产 freshness。
 
 语义目录版本为 `insightpilot-semantic-catalog-v2`。每个已支持指标同时发布 `definition_version`、分子/分母、时区、freshness、grain、源表、字段 lineage、合法维度、访问 scope、契约来源和示例问法。规划只注入候选指标定义。MCP 目录资源与 CLI/API 使用相同对象。`refund_event_rate` 仍禁用，直到产品负责人冻结公式、时间归属、分母与生效版本。
 
