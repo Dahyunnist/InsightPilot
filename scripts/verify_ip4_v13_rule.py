@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -12,6 +15,7 @@ sys.path.insert(0, str(ROOT))
 from insightpilot.agent import InsightPilot
 from insightpilot.enterprise_evaluate import _compare
 from insightpilot.rule_baseline import RulePlanner
+from insightpilot.run_manifest import validate_run_manifest
 
 
 def main() -> None:
@@ -45,6 +49,24 @@ def main() -> None:
         "cases": rows,
     }
     output = ROOT / "reports/ip4-v13-rule-baseline.json"
+    report_bytes = json.dumps(report, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    now = datetime.now(timezone.utc).isoformat()
+    manifest = {
+        "schema_version": 1, "project": "InsightPilot", "git_sha": git_sha,
+        "dataset_id": manifest["suite_id"], "dataset_sha256": hashlib.sha256(blind_path.read_bytes()).hexdigest(),
+        "split": "frozen_synthetic", "model_id": "none", "prompt_sha": None,
+        "tool_schema_sha": None, "runtime_digest": None, "max_steps": 1, "max_tokens": None,
+        "scorer_sha": hashlib.sha256((ROOT / "insightpilot/enterprise_evaluate.py").read_bytes()).hexdigest(),
+        "gold_source": "independent", "cost_usd_estimate": 0.0, "run_id": hashlib.sha256(report_bytes).hexdigest()[:32],
+        "trace_id": hashlib.sha256((git_sha + now).encode()).hexdigest()[:32], "started_at": now,
+        "ended_at": now, "status": "completed", "evaluation_id": "ip4-v13-rule-baseline",
+        "domain": "refunds+marketing_roi", "truth_sha256": hashlib.sha256(gold_path.read_bytes()).hexdigest(),
+        "result_fingerprint_sha256": hashlib.sha256(report_bytes).hexdigest(),
+    }
+    validate_run_manifest(manifest)
+    (ROOT / "reports/ip4-v13-rule-baseline-manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({key: value for key, value in report.items() if key != "cases"},
                      ensure_ascii=False, indent=2))
