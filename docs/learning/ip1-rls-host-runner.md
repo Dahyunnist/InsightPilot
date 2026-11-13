@@ -6,4 +6,4 @@
 
 ## 宿主操作与清理
 
-默认运行 `.\scripts\run_ip1_rls.ps1` 只做 dry-run：校验 Compose 并确认目标绑定 `127.0.0.1:55432`，不启动服务。真实执行须显式传入 `-Execute -ConfirmDatabaseCreation`。脚本拒绝非本机端口映射；测试数据位于容器 tmpfs。完成后 `finally` 只停止 `postgres`，不删除卷、不运行 `down -v`。验收证据应包含退出码、两租户隔离、无 tenant 拒绝、只读 DDL/DML 拒绝、statement timeout 与连接池恢复结果；不要粘贴密码或连接串。
+默认运行 `Set-Location E:\job\insightpilot; .\scripts\run_ip1_rls.ps1` 只做 dry-run。真实执行须显式传入 `-Execute -ConfirmDatabaseCreation`。Runner 先拒绝同名容器，再设置进程级临时凭据；创建合成库后先运行 `prepare_ip4_postgres.py`，再运行 RLS verifier。finally 只停止本次目标服务，不删除卷。即使 up 返回失败，也会尝试 stop；stop 失败只输出通用警告，不覆盖原错误。静态测试核顺序、环境变量恢复路径与清理边界；未运行 Docker 宿主集成。验收证据需含两租户隔离、无 tenant 拒绝、DDL/DML 拒绝、超时与池恢复；不要粘贴密码或 DSN。

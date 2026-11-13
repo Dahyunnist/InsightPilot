@@ -27,6 +27,13 @@ class IP1RlsRunnerTests(unittest.TestCase):
         self.assertIn("FORCE ROW LEVEL SECURITY", sql)
         self.assertIn("CURRENT_SETTING('APP.TENANT_ID'", sql)
         self.assertIn("INSIGHTPILOT_READER", sql)
+        self.assertLess(script.index("$started = $true"), script.index("docker compose -f $compose up -d postgres"))
+        self.assertLess(script.index("scripts\\prepare_ip4_postgres.py"), script.index("scripts\\verify_ip4_postgres.py"))
+        self.assertIn("Could not stop the test PostgreSQL service; original result is preserved.", script)
+        for name in ("INSIGHTPILOT_IP4_ADMIN_PASSWORD", "INSIGHTPILOT_IP4_ADMIN_DSN",
+                     "INSIGHTPILOT_IP4_APP_ROLE", "INSIGHTPILOT_IP4_APP_PASSWORD",
+                     "INSIGHTPILOT_IP4_APP_DSN"):
+            self.assertIn(name, script)
 
 
 if __name__ == "__main__":
