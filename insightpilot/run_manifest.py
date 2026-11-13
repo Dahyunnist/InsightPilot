@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import re
+import json
 from datetime import datetime
+from pathlib import Path
 
 REQUIRED = ("schema_version", "project", "git_sha", "dataset_id", "dataset_sha256", "split",
             "model_id", "prompt_sha", "tool_schema_sha", "runtime_digest", "max_steps", "max_tokens",
@@ -32,3 +34,11 @@ def validate_run_manifest(value: dict) -> None:
     start, end = datetime.fromisoformat(value["started_at"]), datetime.fromisoformat(value["ended_at"])
     if start.tzinfo is None or end.tzinfo is None or end < start:
         raise ValueError("invalid manifest time range")
+
+
+def write_validated_reports(manifest: dict, reports: dict[Path, object]) -> None:
+    """Validate first; create no report files when manifest is invalid."""
+    validate_run_manifest(manifest)
+    for path, payload in reports.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

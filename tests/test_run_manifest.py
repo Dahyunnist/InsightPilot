@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime, timezone
 
-from insightpilot.run_manifest import validate_run_manifest
+from insightpilot.run_manifest import validate_run_manifest, write_validated_reports
 
 
 class RunManifestTests(unittest.TestCase):
@@ -31,6 +31,17 @@ class RunManifestTests(unittest.TestCase):
         del manifest["truth_sha256"]
         with self.assertRaises(ValueError):
             validate_run_manifest(manifest)
+
+    def test_invalid_manifest_writes_no_report(self):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as temp:
+            target = Path(temp) / "report.json"
+            invalid = self.valid()
+            invalid["cost_usd_estimate"] = None
+            with self.assertRaises(ValueError):
+                write_validated_reports(invalid, {target: {"result": "synthetic"}})
+            self.assertFalse(target.exists())
 
 
 if __name__ == "__main__":

@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 from insightpilot.agent import InsightPilot
 from insightpilot.enterprise_evaluate import _compare
 from insightpilot.rule_baseline import RulePlanner
-from insightpilot.run_manifest import validate_run_manifest
+from insightpilot.run_manifest import write_validated_reports
 
 
 def main() -> None:
@@ -64,10 +64,10 @@ def main() -> None:
         "domain": "refunds+marketing_roi", "truth_sha256": hashlib.sha256(gold_path.read_bytes()).hexdigest(),
         "result_fingerprint_sha256": hashlib.sha256(report_bytes).hexdigest(),
     }
-    validate_run_manifest(manifest)
-    (ROOT / "reports/ip4-v13-rule-baseline-manifest.json").write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    write_validated_reports(manifest, {
+        ROOT / "reports/ip4-v13-rule-baseline-manifest.json": manifest,
+        output: report,
+    })
     print(json.dumps({key: value for key, value in report.items() if key != "cases"},
                      ensure_ascii=False, indent=2))
 
