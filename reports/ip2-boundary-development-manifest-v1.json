@@ -1,0 +1,68 @@
+{
+  "suite_id": "ip2-cross-domain-boundary-development-v1",
+  "status": "frozen_development",
+  "evaluation_role": "development_only",
+  "is_blind": false,
+  "model_calls": 0,
+  "synthetic_only": true,
+  "sources": {
+    "refunds": {
+      "suite_id": "insightpilot-s0-fixed-development-cases",
+      "evaluation_role": "development_only",
+      "case_ids": [
+        "A02",
+        "N01",
+        "N02",
+        "N08",
+        "N11",
+        "N12"
+      ],
+      "cases_path": "evals/cases.jsonl",
+      "cases_sha256": "a4f4c8b2129130c8dac5af890b04a593ac342fc50f34663ae3b40395e0a592b0",
+      "boundaries": [
+        "multiple partial refunds",
+        "UTC half-open periods",
+        "NULL zero denominator",
+        "order cohort vs refund time",
+        "ambiguous refund-rate clarification"
+      ],
+      "gold_basis": "fixed hand-calculated contract rows; SQL semantics asserted by regression suite"
+    },
+    "marketing_roi": {
+      "suite_id": "marketing-roi-v1",
+      "evaluation_role": "development_only",
+      "is_blind": false,
+      "manifest_sha256": "517dbf8fae4b6790a38fed938a2971db7b70a22a8a094caa777d5b25004cad32",
+      "data_fingerprint": "7205a30cb9a6559654b70d8cb93491120f1b572c5d06af4e90f940e68d864580",
+      "dev_questions_sha256": "fc734f9d6ca1abc1714f64f6d91c3bfe1eea279ad9bdf0fc096e33be9d44704b",
+      "dev_gold_sha256": "286a6929427c7400d88ac0613d9d7619aa79e85c4238cce810dd275a6f809b2a",
+      "gold_basis": "independent Python ledger aggregation, cross-checked against a second Python oracle and compiled SQL execution",
+      "boundaries": [
+        "duplicate business events",
+        "revision and void",
+        "UTC month edge",
+        "refund reversal snapshot",
+        "NULL ROI when spend is zero"
+      ]
+    },
+    "inventory_turnover": {
+      "suite_id": "ip2-inventory-turnover-dev-v1",
+      "evaluation_role": "development_only",
+      "is_blind": false,
+      "manifest_sha256": "6054ba8498d4c38f2c1d249829b430ad1379c42288a507dd6dd7041e13ddcccf",
+      "questions_sha256": "0103046cd36655aba863506e0619063474bff517a81bc06491b20fe708d6a018",
+      "gold_sha256": "9c0210d0495f68d9774c43d7cb00fe21eecee33abdfdd2df413217c06a0375d2",
+      "data_fingerprint": "4ec11a55a1acfa7269760bcdeb0f09c9a6c691aed497cae28396cc4129cf2e3d",
+      "gold_basis": "independent Python inventory ledger; each case cross-checked against compiled read-only SQL",
+      "boundaries": [
+        "Asia/Shanghai local dates",
+        "NULL snapshot",
+        "daily inventory aggregation before average",
+        "inclusive local-day range",
+        "left-closed right-open",
+        "local midnight maps to UTC 16:00",
+        "zero denominator"
+      ]
+    }
+  }
+}

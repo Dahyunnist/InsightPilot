@@ -4,9 +4,11 @@ import unittest
 from pathlib import Path
 
 from data.inventory_fixture import create_inventory_fixture
+from data.seed import create_database
 from insightpilot.agent import InsightPilot
 from insightpilot.metrics import METRICS, catalog_document, required_access_scopes, retrieve_metrics
 from insightpilot.planner import NeedsClarification, OpenAICompatiblePlanner
+from insightpilot.planner import QueryPlan
 
 
 class IP2InventoryTurnoverTests(unittest.TestCase):
@@ -134,6 +136,28 @@ class IP2InventoryTurnoverTests(unittest.TestCase):
             ).fetchone()[0], 3)
         finally:
             connection.close()
+
+    def test_each_metric_refuses_an_incompatible_data_contract(self):
+        class FixedPlan:
+            def __init__(self, plan):
+                self.plan_value = plan
+
+            def plan(self, _question):
+                return self.plan_value
+
+        refund_plan = QueryPlan("approved_refund_amount_rate", "2026-11-01", "2026-11-04", None, None)
+        result = InsightPilot(FixedPlan(refund_plan), self.database, tracer=None).analyze(
+            "2026-11-01 至 2026-11-03 批准退款金额率是多少？")
+        self.assertEqual(("clarify", "dataset"), (result["status"], result["stage"]))
+        self.assertEqual(["insightpilot-s0-v1", "insightpilot-enterprise-v1", "insightpilot-multidomain-v1"],
+                         result["required_data_versions"])
+
+        base_database = create_database(Path(self.tempdir.name) / "base.sqlite")
+        inventory_plan = QueryPlan("inventory_turnover", "2026-11-01", "2026-11-04", None, None)
+        result = InsightPilot(FixedPlan(inventory_plan), base_database, tracer=None).analyze(
+            "2026-11-01 至 2026-11-03 库存周转率是多少？")
+        self.assertEqual(("clarify", "dataset"), (result["status"], result["stage"]))
+        self.assertEqual(["insightpilot-inventory-v1"], result["required_data_versions"])
 
 
 if __name__ == "__main__":

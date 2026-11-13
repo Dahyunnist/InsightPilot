@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import sqlite3
+import hashlib
+import json
 from pathlib import Path
 
-from .seed import create_database
+from . import seed as base_seed
 
 
 DATA_VERSION = "insightpilot-inventory-v1"
@@ -50,13 +52,40 @@ COGS_EVENTS = [
 
 
 def create_inventory_fixture(path: str | Path) -> Path:
-    path = create_database(path)
+    path = base_seed.create_database(path)
     connection = sqlite3.connect(path)
     try:
+        metadata = dict(connection.execute(
+            "SELECT key,value FROM data_meta WHERE key IN ('data_version','data_fingerprint')"
+        ))
+        base_version = metadata["data_version"]
+        base_fingerprint = metadata.get("data_fingerprint")
+        if base_fingerprint is None:
+            base_rows = {
+                "products": connection.execute("SELECT * FROM products ORDER BY product_id").fetchall(),
+                "orders": connection.execute("SELECT * FROM orders ORDER BY order_id").fetchall(),
+                "refunds": connection.execute("SELECT * FROM refunds ORDER BY refund_id").fetchall(),
+            }
+            base_fingerprint = hashlib.sha256(json.dumps(
+                {"schema": base_seed.SCHEMA, "data_version": base_version, "rows": base_rows},
+                ensure_ascii=False, sort_keys=True, separators=(",", ":")
+            ).encode("utf-8")).hexdigest()
         connection.executescript(SCHEMA)
         connection.executemany("INSERT INTO inventory_daily_snapshots VALUES (?, ?, ?, ?, ?)", SNAPSHOTS)
         connection.executemany("INSERT INTO inventory_cogs_events VALUES (?, ?, ?, ?)", COGS_EVENTS)
+        additive_sha = hashlib.sha256(json.dumps(
+            {"schema": SCHEMA, "snapshots": SNAPSHOTS, "cogs_events": COGS_EVENTS},
+            ensure_ascii=False, separators=(",", ":")
+        ).encode("utf-8")).hexdigest()
+        fingerprint = hashlib.sha256(
+            f"{base_version}:{base_fingerprint}:{DATA_VERSION}:{additive_sha}".encode("utf-8")
+        ).hexdigest()
         connection.execute("UPDATE data_meta SET value=? WHERE key='data_version'", (DATA_VERSION,))
+        connection.execute("INSERT OR REPLACE INTO data_meta(key,value) VALUES ('data_fingerprint',?)", (fingerprint,))
+        connection.execute("INSERT OR REPLACE INTO data_meta(key,value) VALUES ('inventory_snapshot_count',?)",
+                           (str(len(SNAPSHOTS)),))
+        connection.execute("INSERT OR REPLACE INTO data_meta(key,value) VALUES ('inventory_cogs_event_count',?)",
+                           (str(len(COGS_EVENTS)),))
         connection.commit()
     finally:
         connection.close()

@@ -28,6 +28,7 @@ def calculate_inventory_turnover(plan: QueryPlan, database_path: Path) -> list[d
     grouped = plan.dimension == "inventory_category"
     inventory_by_day: dict[tuple[str, str], int] = defaultdict(int)
     known_inventory_days: set[tuple[str, str]] = set()
+    observed_inventory_groups: set[str] = set()
     cogs_by_group: dict[str, int] = defaultdict(int)
 
     uri = "file:" + quote(database_path.resolve().as_posix(), safe="/:\\") + "?mode=ro"
@@ -38,10 +39,13 @@ def calculate_inventory_turnover(plan: QueryPlan, database_path: Path) -> list[d
         ):
             timestamp = _parse_utc(stamp)
             if not start <= timestamp < end or cents is None:
+                if start <= timestamp < end:
+                    observed_inventory_groups.add(category if grouped else "全部")
                 continue
             if timestamp.astimezone(_LOCAL_TZ).date().isoformat() != local_day:
                 raise ValueError("inventory local_date does not match Asia/Shanghai timestamp")
             group = category if grouped else "全部"
+            observed_inventory_groups.add(group)
             key = (group, local_day)
             inventory_by_day[key] += cents
             known_inventory_days.add(key)
@@ -59,7 +63,7 @@ def calculate_inventory_turnover(plan: QueryPlan, database_path: Path) -> list[d
     daily_values: dict[str, list[int]] = defaultdict(list)
     for group, local_day in known_inventory_days:
         daily_values[group].append(inventory_by_day[(group, local_day)])
-    groups = set(daily_values) | set(cogs_by_group)
+    groups = set(daily_values) | set(cogs_by_group) | observed_inventory_groups
     results = []
     for group in sorted(groups):
         daily = daily_values.get(group, [])

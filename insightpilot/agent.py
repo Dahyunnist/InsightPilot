@@ -213,7 +213,7 @@ class InsightPilot:
                     "message": str(exc)}
         if metric.required_data_versions and dataset_version not in metric.required_data_versions:
             return {"run_id": run_id, "status": "clarify", "stage": "dataset",
-                    "message": "该指标需要企业扩展数据集；请配置 INSIGHTPILOT_DATABASE_PATH。",
+                    "message": "当前数据契约不支持该指标；请切换到目录所列的数据版本。",
                     "required_data_versions": list(metric.required_data_versions), "actual_data_version": dataset_version}
         try:
             with start_span(self.tracer, "insightpilot.agent.sql_compile"):

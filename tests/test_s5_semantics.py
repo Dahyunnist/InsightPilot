@@ -9,7 +9,7 @@ from insightpilot.planner import OpenAICompatiblePlanner, PlanError
 class S5SemanticTests(unittest.TestCase):
     def test_catalog_has_version_lineage_grain_dimensions_and_sources(self):
         catalog = catalog_document()
-        self.assertEqual(catalog["catalog_version"], "insightpilot-semantic-catalog-v2")
+        self.assertEqual(catalog["catalog_version"], "insightpilot-semantic-catalog-v3")
         amount = next(metric for metric in catalog["metrics"] if metric["metric_id"] == "approved_refund_amount_rate")
         self.assertEqual(amount["definition_version"], "1.0.0")
         self.assertIn("refunds.amount_cents", amount["lineage"])

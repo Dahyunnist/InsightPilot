@@ -1,5 +1,7 @@
 # IP-2：指标目录 v2 与第二业务域
 
+后续目录字段审计、v3 版本和跨域开发边界见 [IP-2 指标目录与开发边界审计](stage-IP2-catalog-audit-2026-11-13.md)。
+
 ## 2026-11-13 库存周转离线切片
 
 新增 `inventory_turnover@1.0.0`，自 `2026-11-01` 生效，仅绑定 `insightpilot-inventory-v1` 合成 fixture。口径、时区与 NULL/零分母处理见 [产品契约](../product-contract.md#库存周转率ip-2-离线切片)。编译器只接收已验证的 `QueryPlan`，生成参数化只读 SQL；模型接口仍只返回结构化计划。独立 Python 账本按原始 fixture 行计算并与 SQL 结果复核。

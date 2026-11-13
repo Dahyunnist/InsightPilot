@@ -1,0 +1,345 @@
+{
+  "report_version": 1,
+  "status": "passed",
+  "catalog_version": "insightpilot-semantic-catalog-v3",
+  "catalog_sha256": "ca43d03244ed025771ec0c52bbc9249bdbb187143e566733b81a4dba83ba9924",
+  "known_data_versions": [
+    "insightpilot-enterprise-v1",
+    "insightpilot-inventory-v1",
+    "insightpilot-multidomain-v1",
+    "insightpilot-s0-v1"
+  ],
+  "metric_count": 11,
+  "errors": [],
+  "ambiguous_refund_rate_probe": {
+    "status": "clarified",
+    "choices": [
+      "approved_refund_order_rate",
+      "approved_refund_amount_rate"
+    ],
+    "model_calls": 0
+  },
+  "model_calls": 0,
+  "metrics": [
+    {
+      "metric_id": "approved_refund_amount",
+      "definition_version": "1.0.0",
+      "effective_from": "2026-10-01",
+      "business_domain": "退款分析",
+      "definition_source": "docs/product-contract.md#指标字典与口径",
+      "source_tables": [
+        "orders",
+        "refunds",
+        "products"
+      ],
+      "lineage": [
+        "orders.order_id",
+        "orders.status",
+        "orders.ordered_at",
+        "orders.region",
+        "orders.channel",
+        "products.category",
+        "refunds.order_id",
+        "refunds.refunded_at",
+        "refunds.amount_cents",
+        "refunds.status"
+      ],
+      "timezone": "UTC",
+      "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
+      "required_data_versions": [
+        "insightpilot-s0-v1",
+        "insightpilot-enterprise-v1",
+        "insightpilot-multidomain-v1"
+      ]
+    },
+    {
+      "metric_id": "approved_refund_amount_contribution",
+      "definition_version": "1.0.0",
+      "effective_from": "2026-10-01",
+      "business_domain": "退款分析",
+      "definition_source": "docs/product-contract.md#指标字典与口径",
+      "source_tables": [
+        "orders",
+        "refunds",
+        "products"
+      ],
+      "lineage": [
+        "orders.order_id",
+        "orders.status",
+        "orders.ordered_at",
+        "orders.region",
+        "orders.channel",
+        "products.category",
+        "refunds.order_id",
+        "refunds.amount_cents",
+        "refunds.status"
+      ],
+      "timezone": "UTC",
+      "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
+      "required_data_versions": [
+        "insightpilot-s0-v1",
+        "insightpilot-enterprise-v1",
+        "insightpilot-multidomain-v1"
+      ]
+    },
+    {
+      "metric_id": "approved_refund_amount_rate",
+      "definition_version": "1.0.0",
+      "effective_from": "2026-10-01",
+      "business_domain": "退款分析",
+      "definition_source": "docs/product-contract.md#指标字典与口径",
+      "source_tables": [
+        "orders",
+        "refunds",
+        "products"
+      ],
+      "lineage": [
+        "orders.order_id",
+        "orders.status",
+        "orders.ordered_at",
+        "orders.paid_amount_cents",
+        "orders.region",
+        "orders.channel",
+        "products.category",
+        "refunds.order_id",
+        "refunds.amount_cents",
+        "refunds.status"
+      ],
+      "timezone": "UTC",
+      "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
+      "required_data_versions": [
+        "insightpilot-s0-v1",
+        "insightpilot-enterprise-v1",
+        "insightpilot-multidomain-v1"
+      ]
+    },
+    {
+      "metric_id": "approved_refund_campaign_attribution",
+      "definition_version": "1.0.0",
+      "effective_from": "2026-10-01",
+      "business_domain": "退款分析",
+      "definition_source": "docs/product-contract.md#多触点活动归因",
+      "source_tables": [
+        "orders",
+        "refunds",
+        "campaign_attributions",
+        "campaigns"
+      ],
+      "lineage": [
+        "orders.order_id",
+        "refunds.amount_cents",
+        "refunds.status",
+        "refunds.refunded_at",
+        "refunds.recorded_at",
+        "data_meta.snapshot_at",
+        "campaign_attributions.weight",
+        "campaigns.campaign_name"
+      ],
+      "timezone": "UTC",
+      "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
+      "required_data_versions": [
+        "insightpilot-enterprise-v1",
+        "insightpilot-multidomain-v1"
+      ]
+    },
+    {
+      "metric_id": "approved_refund_cohort_summary",
+      "definition_version": "1.0.0",
+      "effective_from": "2026-10-01",
+      "business_domain": "退款分析",
+      "definition_source": "docs/product-contract.md#指标字典与口径",
+      "source_tables": [
+        "orders",
+        "refunds"
+      ],
+      "lineage": [
+        "orders.order_id",
+        "orders.status",
+        "orders.ordered_at",
+        "orders.region",
+        "orders.paid_amount_cents",
+        "refunds.order_id",
+        "refunds.amount_cents",
+        "refunds.status"
+      ],
+      "timezone": "UTC",
+      "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
+      "required_data_versions": [
+        "insightpilot-s0-v1",
+        "insightpilot-enterprise-v1",
+        "insightpilot-multidomain-v1"
+      ]
+    },
+    {
+      "metric_id": "approved_refund_event_amount",
+      "definition_version": "1.0.0",
+      "effective_from": "2026-10-01",
+      "business_domain": "退款分析",
+      "definition_source": "docs/product-contract.md#指标字典与口径",
+      "source_tables": [
+        "orders",
+        "refunds"
+      ],
+      "lineage": [
+        "orders.order_id",
+        "orders.status",
+        "orders.region",
+        "refunds.order_id",
+        "refunds.refunded_at",
+        "refunds.amount_cents",
+        "refunds.status"
+      ],
+      "timezone": "UTC",
+      "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
+      "required_data_versions": [
+        "insightpilot-s0-v1",
+        "insightpilot-enterprise-v1",
+        "insightpilot-multidomain-v1"
+      ]
+    },
+    {
+      "metric_id": "approved_refund_order_counts",
+      "definition_version": "1.0.0",
+      "effective_from": "2026-10-01",
+      "business_domain": "退款分析",
+      "definition_source": "docs/product-contract.md#指标字典与口径",
+      "source_tables": [
+        "orders",
+        "refunds"
+      ],
+      "lineage": [
+        "orders.order_id",
+        "orders.status",
+        "orders.ordered_at",
+        "orders.region",
+        "refunds.order_id",
+        "refunds.status"
+      ],
+      "timezone": "UTC",
+      "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
+      "required_data_versions": [
+        "insightpilot-s0-v1",
+        "insightpilot-enterprise-v1",
+        "insightpilot-multidomain-v1"
+      ]
+    },
+    {
+      "metric_id": "approved_refund_order_rate",
+      "definition_version": "1.0.0",
+      "effective_from": "2026-10-01",
+      "business_domain": "退款分析",
+      "definition_source": "docs/product-contract.md#指标字典与口径",
+      "source_tables": [
+        "orders",
+        "refunds",
+        "products"
+      ],
+      "lineage": [
+        "orders.order_id",
+        "orders.status",
+        "orders.ordered_at",
+        "orders.region",
+        "orders.channel",
+        "products.category",
+        "refunds.order_id",
+        "refunds.status"
+      ],
+      "timezone": "UTC",
+      "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
+      "required_data_versions": [
+        "insightpilot-s0-v1",
+        "insightpilot-enterprise-v1",
+        "insightpilot-multidomain-v1"
+      ]
+    },
+    {
+      "metric_id": "inventory_turnover",
+      "definition_version": "1.0.0",
+      "effective_from": "2026-11-01",
+      "business_domain": "库存分析",
+      "definition_source": "docs/product-contract.md#库存周转率ip-2-离线切片",
+      "source_tables": [
+        "inventory_daily_snapshots",
+        "inventory_cogs_events"
+      ],
+      "lineage": [
+        "inventory_daily_snapshots.category",
+        "inventory_daily_snapshots.local_date",
+        "inventory_daily_snapshots.snapshot_at",
+        "inventory_daily_snapshots.inventory_value_cents",
+        "inventory_cogs_events.sold_at",
+        "inventory_cogs_events.cogs_cents"
+      ],
+      "timezone": "Asia/Shanghai",
+      "freshness": "只使用所选本地日期区间内记录的合成日快照；不代表实时库存",
+      "required_data_versions": [
+        "insightpilot-inventory-v1"
+      ]
+    },
+    {
+      "metric_id": "marketing_net_roi",
+      "definition_version": "1.0.0",
+      "effective_from": "2026-01-01",
+      "business_domain": "营销 ROI",
+      "definition_source": "docs/product-contract.md#营销净投资回报率",
+      "source_tables": [
+        "orders",
+        "refunds",
+        "refund_reversals",
+        "campaign_attributions",
+        "campaigns",
+        "campaign_spend_events",
+        "data_meta"
+      ],
+      "lineage": [
+        "orders.paid_amount_cents",
+        "refunds.amount_cents",
+        "refunds.status",
+        "refunds.refunded_at",
+        "refunds.recorded_at",
+        "refund_reversals.amount_cents",
+        "refund_reversals.recorded_at",
+        "campaign_attributions.weight",
+        "campaign_spend_events.spend_cents",
+        "campaign_spend_events.business_event_id",
+        "campaign_spend_events.revision",
+        "campaign_spend_events.recorded_at",
+        "campaign_spend_events.event_status",
+        "data_meta.snapshot_at"
+      ],
+      "timezone": "UTC",
+      "freshness": "使用 data_meta.snapshot_at；晚于快照入库的退款撤销或费用修订不计入",
+      "required_data_versions": [
+        "insightpilot-multidomain-v1"
+      ]
+    },
+    {
+      "metric_id": "refund_amount_by_status",
+      "definition_version": "1.0.0",
+      "effective_from": "2026-10-01",
+      "business_domain": "退款分析",
+      "definition_source": "docs/product-contract.md#指标字典与口径",
+      "source_tables": [
+        "orders",
+        "refunds"
+      ],
+      "lineage": [
+        "orders.order_id",
+        "orders.status",
+        "orders.region",
+        "refunds.order_id",
+        "refunds.refunded_at",
+        "refunds.amount_cents",
+        "refunds.status"
+      ],
+      "timezone": "UTC",
+      "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
+      "required_data_versions": [
+        "insightpilot-s0-v1",
+        "insightpilot-enterprise-v1",
+        "insightpilot-multidomain-v1"
+      ]
+    }
+  ],
+  "boundary_manifest_sha256": "16eab8dc46d6f294d8e0c8883e095be13df17988ddd23e21b3db0cf8d6b4d393"
+}

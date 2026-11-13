@@ -1,0 +1,31 @@
+{
+  "suite_id": "ip2-inventory-turnover-dev-v1",
+  "status": "frozen_development",
+  "evaluation_role": "development_only",
+  "is_blind": false,
+  "model_calls": 0,
+  "synthetic_only": true,
+  "data_version": "insightpilot-inventory-v1",
+  "data_fingerprint": "4ec11a55a1acfa7269760bcdeb0f09c9a6c691aed497cae28396cc4129cf2e3d",
+  "metric_id": "inventory_turnover",
+  "metric_version": "1.0.0",
+  "effective_from": "2026-11-01",
+  "timezone": "Asia/Shanghai",
+  "case_count": 3,
+  "gold_method": "independent Python inventory ledger; each case cross-checked against compiled read-only SQL",
+  "questions_sha256": "0103046cd36655aba863506e0619063474bff517a81bc06491b20fe708d6a018",
+  "gold_sha256": "9c0210d0495f68d9774c43d7cb00fe21eecee33abdfdd2df413217c06a0375d2",
+  "exact_question_overlap_count": 0,
+  "exact_question_overlap": [],
+  "boundaries": [
+    "Asia/Shanghai local dates",
+    "NULL snapshot",
+    "daily inventory aggregation before average",
+    "inclusive local-day range",
+    "left-closed right-open",
+    "local midnight maps to UTC 16:00",
+    "zero denominator"
+  ],
+  "questions_path": "inventory-turnover-dev-v1.jsonl",
+  "gold_path": "inventory-turnover-dev-gold-v1.jsonl"
+}

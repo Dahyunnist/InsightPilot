@@ -37,7 +37,7 @@
 
 Fixture 使用 `inventory_daily_snapshots(category, local_date, snapshot_at, inventory_value_cents)` 与 `inventory_cogs_events(category, sold_at, cogs_cents)`。每天每品类只允许一条快照；销售成本来自合成发生事件。Fixture 不声明真实库存系统的数据完整性或生产 freshness。
 
-语义目录版本为 `insightpilot-semantic-catalog-v2`。每个已支持指标同时发布 `definition_version`、分子/分母、时区、freshness、grain、源表、字段 lineage、合法维度、访问 scope、契约来源和示例问法。规划只注入候选指标定义。MCP 目录资源与 CLI/API 使用相同对象。`refund_event_rate` 仍禁用，直到产品负责人冻结公式、时间归属、分母与生效版本。
+语义目录版本为 `insightpilot-semantic-catalog-v3`。每个已支持指标同时发布 `definition_version`、分子/分母、时区、freshness、grain、源表、字段 lineage、合法维度、访问 scope、契约来源和示例问法；退款指标明确绑定 S0、enterprise、multidomain 数据版本，campaign、ROI、库存指标分别绑定其扩展版本。规划只注入候选指标定义。MCP 目录资源与 CLI/API 使用相同对象。`refund_event_rate` 仍禁用，直到产品负责人冻结公式、时间归属、分母与生效版本。
 
 扩展基准 `insightpilot-enterprise-v1` 由 `data/enterprise_seed.py` 确定性生成。含 50,000 单、退款多行、多触点 campaign、区域/渠道/品类、synthetic customer PII decoy、recorded_at 迟到退款。该库不是 S0 的替代，统计结果只用于压力/语义回归。campaign 归因的未归因订单有显式 bucket；单条订单多 touch 的 weights 应和为 1。质量报告记录归因缺失率和 >1 天入库延迟；没有做历史 as-of point-in-time 查询。
 

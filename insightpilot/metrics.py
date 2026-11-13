@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, replace
 
 REGION_VALUES = ("华东", "华南", "华北", "西南")
+REFUND_DATA_VERSIONS = ("insightpilot-s0-v1", "insightpilot-enterprise-v1", "insightpilot-multidomain-v1")
 
 
 @dataclass(frozen=True)
@@ -17,13 +18,16 @@ class Metric:
     definition_version: str = "1.0.0"
     effective_from: str = "2026-10-01"
     grain: str = "订单 cohort"
-    source_tables: tuple[str, ...] = ("orders", "refunds")
-    lineage: tuple[str, ...] = ("orders.order_id", "refunds.order_id", "refunds.amount_cents", "refunds.status")
+    source_tables: tuple[str, ...] = ("orders", "refunds", "products")
+    lineage: tuple[str, ...] = ("orders.order_id", "orders.status", "orders.ordered_at", "orders.paid_amount_cents",
+                                "orders.region", "orders.channel", "products.category", "refunds.refund_id",
+                                "refunds.order_id", "refunds.refunded_at", "refunds.recorded_at",
+                                "refunds.amount_cents", "refunds.status")
     valid_dimensions: tuple[str, ...] = ("category", "channel")
     access_scopes: tuple[str, ...] = ("refund:read",)
     definition_source: str = "docs/product-contract.md#指标字典与口径"
     example_question: str = ""
-    required_data_versions: tuple[str, ...] = ()
+    required_data_versions: tuple[str, ...] = REFUND_DATA_VERSIONS
     business_domain: str = "退款分析"
     numerator_definition: str = ""
     denominator_definition: str = ""
@@ -36,52 +40,75 @@ METRICS = {
         "approved_refund_order_rate", "批准退款订单率",
         "至少有一笔批准退款的已支付订单数 / 全部符合条件的已支付订单数",
         "下单时间（UTC）", "仅 approved", example_question="指定日期内批准退款订单占已支付订单比例？",
+        lineage=("orders.order_id", "orders.status", "orders.ordered_at", "orders.region", "orders.channel",
+                 "products.category", "refunds.order_id", "refunds.status"),
     ),
     "approved_refund_amount_rate": Metric(
         "approved_refund_amount_rate", "批准退款金额率",
         "批准退款金额 / 对应订单实付金额",
         "下单时间（UTC）", "仅 approved", example_question="指定日期内批准退款金额占实付金额比例？",
+        lineage=("orders.order_id", "orders.status", "orders.ordered_at", "orders.paid_amount_cents",
+                 "orders.region", "orders.channel", "products.category", "refunds.order_id",
+                 "refunds.amount_cents", "refunds.status"),
     ),
     "approved_refund_amount_contribution": Metric(
         "approved_refund_amount_contribution", "批准退款金额贡献度",
         "分组批准退款金额 / 同切片全部批准退款金额",
         "下单时间（UTC）", "仅 approved", example_question="各品类退款金额贡献度？",
+        lineage=("orders.order_id", "orders.status", "orders.ordered_at", "orders.region", "orders.channel",
+                 "products.category", "refunds.order_id", "refunds.amount_cents", "refunds.status"),
     ),
     "approved_refund_amount": Metric(
         "approved_refund_amount", "批准退款金额",
         "所选时间窗口内的批准退款金额之和",
         "按计划选择下单时间或退款事件时间", "仅 approved", example_question="指定 cohort 的批准退款金额？",
+        lineage=("orders.order_id", "orders.status", "orders.ordered_at", "orders.region", "orders.channel",
+                 "products.category", "refunds.order_id", "refunds.refunded_at", "refunds.amount_cents",
+                 "refunds.status"),
     ),
     "approved_refund_event_amount": Metric(
         "approved_refund_event_amount", "按退款事件日统计的批准退款金额",
         "退款事件日的批准退款金额之和",
         "退款发生时间（UTC）", "仅 approved", grain="退款事件日", valid_dimensions=("refund_day_utc",),
         example_question="每天发生的批准退款金额？",
+        source_tables=("orders", "refunds"),
+        lineage=("orders.order_id", "orders.status", "orders.region", "refunds.order_id",
+                 "refunds.refunded_at", "refunds.amount_cents", "refunds.status"),
     ),
     "refund_amount_by_status": Metric(
         "refund_amount_by_status", "各处理状态退款金额",
         "按退款状态汇总退款记录金额；批准指标只计 approved",
         "退款发生时间（UTC）", "分状态展示", grain="退款记录状态", valid_dimensions=("refund_status",),
         example_question="指定时间窗内各退款状态金额？",
+        source_tables=("orders", "refunds"),
+        lineage=("orders.order_id", "orders.status", "orders.region", "refunds.order_id",
+                 "refunds.refunded_at", "refunds.amount_cents", "refunds.status"),
     ),
     "approved_refund_order_counts": Metric(
         "approved_refund_order_counts", "已支付与批准退款订单数",
         "已支付订单数；有至少一笔批准退款的去重订单数",
         "下单时间（UTC）", "仅 approved 订单计退款订单", valid_dimensions=(),
         example_question="已支付订单数和退款订单数？",
+        source_tables=("orders", "refunds"),
+        lineage=("orders.order_id", "orders.status", "orders.ordered_at", "orders.region",
+                 "refunds.order_id", "refunds.status"),
     ),
     "approved_refund_cohort_summary": Metric(
         "approved_refund_cohort_summary", "批准退款 cohort 汇总",
         "批准退款金额、去重退款订单数和已支付订单数",
         "下单时间（UTC）", "仅 approved", valid_dimensions=(),
         example_question="按下单日期汇总退款金额和去重订单数？",
+        source_tables=("orders", "refunds"),
+        lineage=("orders.order_id", "orders.status", "orders.ordered_at", "orders.region",
+                 "orders.paid_amount_cents", "refunds.order_id", "refunds.amount_cents", "refunds.status"),
     ),
     "approved_refund_campaign_attribution": Metric(
         "approved_refund_campaign_attribution", "批准退款金额多触点活动归因",
         "订单批准退款金额按有效 campaign touch 权重分摊；缺失 attribution 单独列示",
         "下单时间（UTC）", "仅 approved", grain="订单 × campaign attribution",
         source_tables=("orders", "refunds", "campaign_attributions", "campaigns"),
-        lineage=("orders.order_id", "refunds.amount_cents", "refunds.status",
+        lineage=("orders.order_id", "refunds.amount_cents", "refunds.status", "refunds.refunded_at",
+                 "refunds.recorded_at", "data_meta.snapshot_at",
                  "campaign_attributions.weight", "campaigns.campaign_name"),
         valid_dimensions=("campaign",), definition_source="docs/product-contract.md#多触点活动归因",
         example_question="比较各活动带来的批准退款金额贡献？",
@@ -96,9 +123,11 @@ METRICS = {
         grain="campaign × UTC 期间", source_tables=("orders", "refunds", "refund_reversals",
                                                      "campaign_attributions", "campaigns",
                                                      "campaign_spend_events", "data_meta"),
-        lineage=("orders.paid_amount_cents", "refunds.amount_cents", "refund_reversals.amount_cents",
+        lineage=("orders.paid_amount_cents", "refunds.amount_cents", "refunds.status", "refunds.refunded_at",
+                 "refunds.recorded_at", "refund_reversals.amount_cents", "refund_reversals.recorded_at",
                  "campaign_attributions.weight", "campaign_spend_events.spend_cents",
-                 "campaign_spend_events.business_event_id", "campaign_spend_events.revision"),
+                 "campaign_spend_events.business_event_id", "campaign_spend_events.revision",
+                 "campaign_spend_events.recorded_at", "campaign_spend_events.event_status", "data_meta.snapshot_at"),
         valid_dimensions=("campaign",), access_scopes=("marketing:read",),
         definition_source="docs/product-contract.md#营销净投资回报率",
         example_question="指定日期内各营销活动的净投资回报率是多少？",
@@ -215,7 +244,7 @@ def required_access_scopes(question: str) -> set[str]:
 def catalog_document() -> dict:
     """Return a deterministic, versioned semantic catalog for clients and audit."""
     return {
-        "catalog_version": "insightpilot-semantic-catalog-v2",
+        "catalog_version": "insightpilot-semantic-catalog-v3",
         "data_contract_version": "insightpilot-s0-v1",
         "data_contract_versions": ["insightpilot-s0-v1", "insightpilot-enterprise-v1", "insightpilot-multidomain-v1",
                                     "insightpilot-inventory-v1"],
