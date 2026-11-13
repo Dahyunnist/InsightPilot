@@ -1,0 +1,34 @@
+{
+  "manifest_version": 1,
+  "suite_id": "insightpilot-ip4-independent-v13",
+  "status": "blocked_pre_model_balance_unverified",
+  "attempted_at_utc": "2026-11-13T14:11:38Z",
+  "authorization": {
+    "source": "current root thread, relayed delegation",
+    "recorded_text": "授权发送冻结的 22 道合成题",
+    "scope": "22 frozen synthetic questions only; no private or production data; one call per case; no retries"
+  },
+  "model_id": "deepseek-v4-flash",
+  "prior_preregistration_file": "reports/ip4-v13-model-preregistration-20261113-r2.json",
+  "prior_preregistration_sha256": "4f4a4e405fe087b3fbdd5f3b9bb9215d8b77e8bd33ac1897b9cab986b572fe23",
+  "current_commit": "e37a683915a50ce4823aced531652112742032a2",
+  "question_set_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb6c4f33bfa66",
+  "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+  "model_calls": 0,
+  "provider_received": false,
+  "cost_usd": 0.0,
+  "current_lock_created": false,
+  "current_lock_failure": "DeepSeek balance GET preflight failed with URLError; no new lock or reservation written",
+  "dry_run_failure": "registered scorer, planner, runner, builder, or baseline changed; no request sent",
+  "provider_balance_current": null,
+  "prior_provider_balance_snapshot": {
+    "available_cny": 9.3,
+    "checked_at_utc": "2026-11-13T12:22:34.270381+00:00",
+    "usable_for_current_preflight": false
+  },
+  "global_cap_usd": 5.0,
+  "ledger_remaining_after_prior_reservation_usd": 4.53009415,
+  "prior_reservation_usd": 0.0936672,
+  "prior_reservation_bound_to_current_code": false,
+  "sensitive_payloads_recorded": false
+}
