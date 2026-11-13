@@ -39,6 +39,7 @@ class S1FlowTests(unittest.TestCase):
         result = InsightPilot(StubPlanner(plan), self.db_path).analyze("问题")
         self.assertEqual(result["status"], "answered")
         self.assertEqual(result["metric"]["id"], "approved_refund_amount_rate")
+        self.assertEqual(result["plan"]["metric_version"], result["metric"]["definition_version"])
         self.assertEqual(result["data_version"], "insightpilot-s0-v1")
         self.assertEqual(result["rows"][0]["numerator_cents"], 50000)
         self.assertEqual(result["rows"][0]["denominator_cents"], 90000)

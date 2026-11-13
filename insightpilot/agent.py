@@ -261,7 +261,8 @@ class InsightPilot:
                            else "不适用；该指标为金额或计数聚合"
                        ),
                        "timezone": metric.timezone, "freshness": metric.freshness},
-            "plan": {"start_date_inclusive": plan.start_date, "end_date_exclusive": plan.end_date,
+            "plan": {"metric_version": metric.definition_version,
+                     "start_date_inclusive": plan.start_date, "end_date_exclusive": plan.end_date,
                      "periods": [list(period) for period in plan.periods],
                      "region": plan.region, "dimension": plan.dimension},
             "data_version": dataset_version,
