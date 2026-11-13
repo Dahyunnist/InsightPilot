@@ -107,11 +107,9 @@ Remove-Item -Recurse -Force .tmp-ip3-otel-wheels, .tmp-ip3-otel-packages
 
 同文件既有取消回归验证显式取消持久化 `cancelled`、同键重放不重复规划；进程重启验收 `reports/ip3-process-restart-acceptance.json` 验证遗留 `running` 变为 `interrupted`，同键重试返回 `result_unavailable` 而不重执行。Python 3.12 禁网容器中，IP-3 数据库恢复、S6 运行边界、S12 恢复回归共 23/23 通过。假 planner 只覆盖 API/RunStore 中断语义，不模拟供应商 SDK 的底层网络取消。IP-3 仍部分完成。
 
-
 ## 2026-11-13 Compose runner 修复与冒烟尝试
 
 Compose runner 固定独立项目名，先检查配置和遗留容器，再用 `build --pull` 构建基础镜像；启动后等待健康状态，退出时只清理该项目容器/网络，不删卷。UTF-8 BOM 保留，兼容 Windows PowerShell 5.1。Docker Hub token 请求超时，构建未完成、容器未启动；详见 `reports/ip3-docker-smoke-20261113.json`。PowerShell parser/runner 行为测试覆盖脚本格式、构建顺序、隔离与清理。IP-3 live smoke 仍 pending，未调用模型。
-
 
 ## 2026-11-13 取消与事件登记竞态
 
@@ -120,3 +118,13 @@ Compose runner 固定独立项目名，先检查配置和遗留容器，再用 `
 修复一个取消窗口：run 已持久化为 `running`、内存取消事件尚未登记时，取消请求会保存 `cancel_requested=1`，但旧代码丢失事件通知。事件登记后现在重读持久标记并补设事件。新增 Event barrier 纯进程回归：在该窗口请求取消，worker 观察取消并持久化终态；同键重放仍指向原 run，planner 只执行一次，查询执行数为零。该定向回归通过。
 
 尝试运行现有 TestClient API 回归时，Windows Python 3.14 在 `asyncio.new_event_loop()` 的本地 socketpair 初始化处挂起，测试未进入断言；Selector loop 也无法初始化。未启 Docker、模型或外部服务。PostgreSQL/RLS 与并发负载仍待宿主联调。
+
+## 2026-11-13 宿主 Compose、API 与 RLS 验收
+
+PowerShell Parser 与 UTF-8 BOM 检查通过。首次 runner 强制刷新基础镜像时，Docker Hub token 请求超时；本机随后确认 `python:3.12-slim` 已缓存，runner 改为缓存存在时 `build --pull=false`、缺失时才拉取。第二次宿主运行构建通过（pip 层命中缓存），Compose health 为 healthy，真实 HTTP API smoke 通过，0 模型调用。幂等首次/重放均 200 且 run ID 一致，冲突 409；并发 1/5/20 分别返回 1/1、5/5、8/20 个 200，20 并发另有预期 12 个 429、0 个 503。脚本 down 已移除专用容器与网络。明细见 `reports/ip3-compose-http-20261113.json`。
+
+独立 PostgreSQL/RLS runner 也已通过：PostgreSQL 经 FastAPI/InsightPilot/PostgresQueryEngine 跑冻结 synthetic cases，tenant-a、tenant-b 各 12/12；缺失 tenant 被拒，DML 被拒，statement timeout 与连接池耗尽/恢复均符合预期，数值经独立 SQLite gold 核验。runner stop 发出警告；随后只读检查确认本次专用容器已 `Exited (0)`，再移除该容器，未删卷。RLS 详情见 `reports/ip4-postgres-verification.json`。
+
+本次 `tests.test_ip3_database_recovery` 5/5 通过，含取消事件登记竞态、并发同键只保留一个可执行 run、取消/超时重放和数据库失败恢复。Compose 负载仅为合成 SQLite 上最多 20 个短 burst，不是持续并发验收；PostgreSQL RLS corpus 固定为每租户 12 题、顺序执行。
+
+首次 registry token 超时与宿主权限边界、Compose HTTP、RLS、清理及负载限制汇总见 `reports/ip3-host-integration-20261113.json`。此前“TestClient 无法初始化”的默认沙箱尝试已由宿主权限 API 回归通过覆盖。

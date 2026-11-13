@@ -4,6 +4,7 @@ $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $ComposeProject = 'insightpilot-ip3-compose'
 $ComposeFile = Join-Path $ProjectRoot 'docker-compose.ip3.yml'
 $Python = Join-Path $ProjectRoot '.venv\Scripts\python.exe'
+$BaseImage = 'python:3.12-slim'
 $ComposeStarted = $false
 $PushedLocation = $false
 
@@ -44,7 +45,12 @@ try {
         Stop-WithFallback '当前 Compose 项目已有容器；为避免影响现有容器，本次停止。'
     }
 
-    & docker compose --project-name $ComposeProject -f $ComposeFile build --pull api-probe
+    $LocalBaseImage = @(& docker image inspect $BaseImage --format '{{.Id}}' 2>&1)
+    if ($LASTEXITCODE -eq 0 -and $LocalBaseImage) {
+        & docker compose --project-name $ComposeProject -f $ComposeFile build --pull=false api-probe
+    } else {
+        & docker compose --project-name $ComposeProject -f $ComposeFile build --pull api-probe
+    }
     if ($LASTEXITCODE -ne 0) {
         throw 'IP-3 镜像 pull/build 失败。检查 Docker Hub 与包索引网络后可安全重跑。'
     }
@@ -54,7 +60,8 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "IP-3 Compose 启动失败（退出码 $LASTEXITCODE）。检查 Docker 构建输出和包索引网络。"
     }
-    & $Python scripts\probe_ip3_http.py
+    $SmokeReport = Join-Path $ProjectRoot ('reports\ip3-compose-http-' + (Get-Date -Format 'yyyyMMdd') + '.json')
+    & $Python scripts\probe_ip3_http.py --output $SmokeReport
     if ($LASTEXITCODE -ne 0) {
         throw "IP-3 HTTP 验收失败（退出码 $LASTEXITCODE）。"
     }

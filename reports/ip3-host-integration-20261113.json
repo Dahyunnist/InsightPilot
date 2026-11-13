@@ -1,0 +1,102 @@
+{
+  "manifest_version": 1,
+  "run_date": "2026-11-13",
+  "model_calls": 0,
+  "powershell": {
+    "parser": "passed",
+    "utf8_bom": true,
+    "windows_powershell_5_1_compatible": true
+  },
+  "compose": {
+    "config": "valid",
+    "project": "insightpilot-ip3-compose",
+    "base_image": "python:3.12-slim",
+    "base_image_digest": "sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704",
+    "first_forced_pull_build": "blocked_by_registry_token_timeout",
+    "first_forced_pull_error": "failed to authorize: failed to fetch oauth token: Post \"https://auth.docker.io/token\": dial tcp 162.125.80.6:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.",
+    "cached_base_build": "passed",
+    "pip_install_layer": "cached",
+    "health": "healthy",
+    "http_api_smoke": "passed",
+    "http_api_report": "reports/ip3-compose-http-20261113.json",
+    "http_idempotency": {
+      "first_status": 200,
+      "replay_status": 200,
+      "same_run_id": true,
+      "replay_header": "true",
+      "conflict_status": 409
+    },
+    "burst_results": [
+      {
+        "concurrency": 1,
+        "requests": 1,
+        "http_200": 1,
+        "http_429": 0,
+        "http_503": 0
+      },
+      {
+        "concurrency": 5,
+        "requests": 5,
+        "http_200": 5,
+        "http_429": 0,
+        "http_503": 0
+      },
+      {
+        "concurrency": 20,
+        "requests": 20,
+        "http_200": 8,
+        "http_429": 12,
+        "http_503": 0
+      }
+    ],
+    "cleanup": {
+      "compose_down": "passed",
+      "container_remains": false,
+      "network_remains": false
+    }
+  },
+  "postgresql_rls": {
+    "status": "passed",
+    "runner": "scripts/run_ip1_rls.ps1",
+    "verification_report": "reports/ip4-postgres-verification.json",
+    "backend": "PostgreSQL via FastAPI/InsightPilot/PostgresQueryEngine",
+    "case_count_per_tenant": 12,
+    "tenant_results": {
+      "tenant-a": "12/12",
+      "tenant-b": "12/12"
+    },
+    "missing_tenant_context": "rejected",
+    "postgres_dml_denied": true,
+    "statement_timeout": "timed_out_as_expected",
+    "pool_exhaustion_and_recovery": "recovered",
+    "independent_sqlite_gold": true,
+    "test_container_cleanup": {
+      "runner_stop_warning": "Could not stop the test PostgreSQL service; original result is preserved.",
+      "observed_state_after_runner": "Exited (0)",
+      "exact_created_container_removed": true,
+      "container_remains": false,
+      "volume_deleted": false
+    }
+  },
+  "lifecycle_concurrency_tests": {
+    "suite": "tests.test_ip3_database_recovery",
+    "result": "5 passed",
+    "coverage": [
+      "cancel-after-persist-before-event-registration",
+      "same-key-concurrent-reservation",
+      "cancel-terminal-replay",
+      "timeout-terminal-replay",
+      "database-failure-recovery"
+    ],
+    "model_calls": 0
+  },
+  "limits": [
+    "Compose API smoke uses synthetic SQLite and a fixed planner; it is not PostgreSQL/RLS evidence.",
+    "Concurrency is a short burst capped at 20 requests; it is not sustained load acceptance.",
+    "PostgreSQL/RLS cases cover the frozen synthetic corpus only; tenant requests run sequentially."
+  ],
+  "docker_access": {
+    "default_shell_error": "permission denied while trying to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine",
+    "host_authorized_docker_access": "available"
+  }
+}

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sqlite3
 import tempfile
 import threading
 import time
@@ -100,6 +101,49 @@ class CountingSQLiteEngine(SQLiteQueryEngine):
 
 
 class IP3DatabaseRecoveryTests(unittest.TestCase):
+    def test_concurrent_same_key_reservation_creates_one_executable_run(self):
+        with tempfile.TemporaryDirectory() as temp:
+            store = RunStore(Path(temp) / "runs.sqlite")
+            thread_count = 8
+            scoped_key = "default:parallel-reservation"
+            barrier = threading.Barrier(thread_count)
+            proposed_ids = [str(uuid.uuid4()) for _ in range(thread_count)]
+            reservations = []
+            errors = []
+
+            def reserve(run_id):
+                try:
+                    barrier.wait(timeout=3)
+                    stored_id = store.start(run_id, QUESTION, scoped_key)
+                    reservations.append((run_id, stored_id))
+                except Exception as exc:
+                    errors.append(exc)
+
+            workers = [threading.Thread(target=reserve, args=(run_id,)) for run_id in proposed_ids]
+            for worker in workers:
+                worker.start()
+            for worker in workers:
+                worker.join(timeout=5)
+
+            self.assertTrue(all(not worker.is_alive() for worker in workers))
+            self.assertEqual(errors, [])
+            stored_ids = {stored_id for _, stored_id in reservations}
+            self.assertEqual(len(reservations), thread_count)
+            self.assertEqual(len(stored_ids), 1)
+            winner_id = stored_ids.pop()
+            self.assertEqual(sum(proposed == stored_id for proposed, stored_id in reservations), 1)
+
+            store.finish(winner_id, {"run_id": winner_id, "status": "failed", "stage": "query"})
+            replay_id = store.start(str(uuid.uuid4()), QUESTION, scoped_key)
+            self.assertEqual(replay_id, winner_id)
+            self.assertEqual(store.get(winner_id)["status"], "failed")
+            self.assertEqual(store.get(winner_id)["result"]["status"], "failed")
+            connection = sqlite3.connect(store.path)
+            try:
+                self.assertEqual(connection.execute("SELECT COUNT(*) FROM runs").fetchone()[0], 1)
+            finally:
+                connection.close()
+
     def test_sqlite_disconnect_is_terminal_idempotent_and_new_run_recovers(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

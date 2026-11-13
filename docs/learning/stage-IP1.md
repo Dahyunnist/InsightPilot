@@ -58,7 +58,10 @@ PostgreSQL 16.15 经真实 FastAPI → InsightPilot → `PostgresQueryEngine` �
 
 后续并发回归扩到 12 个同时交错请求、两 token 各 6 个。每个请求带相反的伪造 `X-Tenant-ID`；核心收到的 tenant 仍与 bearer 映射逐项一致。API 测试也核对跨租户 run 读取为 404、幂等键彼此隔离。数据库错误响应附脱敏 `failure_detail`：层、类别、异常类、后端、tenant context 是否绑定、SQL SHA-256 和参数数量；不含 SQL、参数、tenant ID、DSN 或底层异常文本。
 
-
 ## 2026-11-13 宿主 RLS 重试
 
 合成 PostgreSQL 容器健康检查通过，但宿主连接 `127.0.0.1:55432` 超时，RLS 验证未开始。runner 停止容器后，已确认并移除本次创建的退出容器；临时 tmpfs 未转成数据卷，也未删除卷。结果见 `reports/ip1-rls-attempt-20261113.json`。宿主 Docker 网络路径修复后仍需重跑；RLS gate 未通过也未完成。
+
+## 2026-11-13 宿主 PostgreSQL/RLS 复验通过
+
+后续宿主运行 `scripts/run_ip1_rls.ps1 -Execute -ConfirmDatabaseCreation` 通过；tenant-a、tenant-b 各 12/12，含 FastAPI 查询、RLS 隔离、只读约束、statement timeout、连接池恢复与 SQLite gold 核验。runner stop 发出警告，但专用测试容器状态为 `Exited (0)`，之后已精确移除；未删卷。完整汇总见 `reports/ip3-host-integration-20261113.json`，逐题记录见 `reports/ip4-postgres-verification.json`。此前 pending 记录描述的是较早失败尝试，不代表本次结果。

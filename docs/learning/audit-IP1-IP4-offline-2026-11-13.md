@@ -17,7 +17,10 @@
 
 IP1 后续离线切片补齐 QueryEngine 后端能力契约、共享核心构造入口和 SQLite adapter contract tests；43 项 SQLite/API/MCP/CLI/tenant/tracing/parity 定向回归通过。PostgreSQL/RLS integration gate 继续 pending，未启动 Docker；详情见 [IP1 查询引擎记录](stage-IP1.md#2026-11-13-离线前置切片)。
 
-
 ## 后续主机验证尝试（2026-11-13）
 
 后续经授权尝试 Docker：IP-3 Compose runner 已修复并运行，Docker Hub 拉取认证 token 请求超时，容器未启动；IP-1 合成 PostgreSQL 健康检查通过，但宿主端口连接超时，RLS 未开始。仅本次 runner 创建的已退出 PostgreSQL 容器已移除；未删卷、未用私有数据、未调用模型。两项 gate 仍 pending，详见 `reports/ip3-docker-smoke-20261113.json` 与 `reports/ip1-rls-attempt-20261113.json`。前文“未启动 Docker”仅描述离线切片当时状态，不描述此次后续尝试。
+
+## 宿主验收后续（2026-11-13）
+
+前述离线审计后，IP-3 Compose health/HTTP smoke 与 IP-1 PostgreSQL/RLS 宿主验收均已通过。Compose 首次拉取遇 Docker Hub token 超时，使用已缓存基础镜像重试后通过。RLS 两租户各 12/12，RLS/只读/超时/池恢复有效。专用 PostgreSQL 容器已移除，未删卷；无模型调用。旧审计中的 IP-1 pending 状态由后续实测覆盖。详见 `reports/ip3-host-integration-20261113.json`。

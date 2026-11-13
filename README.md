@@ -8,7 +8,7 @@
 
 首次配置可复制 `.env.example` 为 `.env` 并填写模型服务配置。`.env.example` 只含空白占位值。
 
-IP-3 Compose HTTP 验收需 Docker Engine、Docker Compose v2 和 Docker Hub/包索引网络。PowerShell 脚本以 UTF-8 BOM 保存，兼容 Windows PowerShell 5.1。运行 `scripts/run_ip3_compose.ps1` 会先检查 daemon、Compose 配置和独立项目是否已有容器，再运行 `docker compose build --pull api-probe` 拉取 Python 基础镜像并构建 fixture，随后等待健康检查、运行 HTTP/只读查询探针，最后只清理本脚本的容器与网络，不删卷。成功或失败后都可重跑；已有同项目容器时脚本停止以免覆盖。
+IP-3 Compose HTTP 验收需 Docker Engine、Docker Compose v2 和包索引网络。PowerShell 脚本以 UTF-8 BOM 保存，兼容 Windows PowerShell 5.1。运行 `scripts/run_ip3_compose.ps1` 会先检查 daemon、Compose 配置和独立项目是否已有容器；本地已有 `python:3.12-slim` 时使用该缓存构建，缺少时才拉取基础镜像。随后等待健康检查、运行 HTTP/只读查询探针，最后只清理本脚本的容器与网络，不删卷。成功或失败后都可重跑；已有同项目容器时脚本停止以免覆盖。
 
 需要验证 PostgreSQL/RLS 时，在 Windows PowerShell 运行：
 
