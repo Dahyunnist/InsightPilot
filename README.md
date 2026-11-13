@@ -8,7 +8,15 @@
 
 首次配置可复制 `.env.example` 为 `.env` 并填写模型服务配置。`.env.example` 只含空白占位值。
 
-IP-3 Compose HTTP 验收需 Docker Engine 可访问、本地已有 `python:3.12-slim` 镜像，并能从包索引安装依赖。运行 `scripts/run_ip3_compose.ps1` 会先检查条件，再以禁止拉取镜像的方式启动 fixture；条件不满足时会提示本机回退命令。离线冒烟只验证健康检查和只读查询，不代表容器性能测量。
+IP-3 Compose HTTP 验收需 Docker Engine、Docker Compose v2 和 Docker Hub/包索引网络。PowerShell 脚本以 UTF-8 BOM 保存，兼容 Windows PowerShell 5.1。运行 `scripts/run_ip3_compose.ps1` 会先检查 daemon、Compose 配置和独立项目是否已有容器，再运行 `docker compose build --pull api-probe` 拉取 Python 基础镜像并构建 fixture，随后等待健康检查、运行 HTTP/只读查询探针，最后只清理本脚本的容器与网络，不删卷。成功或失败后都可重跑；已有同项目容器时脚本停止以免覆盖。
+
+需要验证 PostgreSQL/RLS 时，在 Windows PowerShell 运行：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/run_ip1_rls.ps1 -Execute -ConfirmDatabaseCreation
+```
+
+该 runner 只接受绑定到 `127.0.0.1:55432` 的合成 PostgreSQL，拒绝已有测试容器，使用临时数据库盘，验证结束后停止服务但不删卷。Docker daemon 无法访问时不会创建数据库；把验证记录为 pending，待 Docker Desktop 可用后重跑。IP-3 HTTP 冒烟验证健康检查和只读查询，不代表容器性能测量。
 
 只验证本地 API 和固定 S0 数据查询时，无需 `.env` 或模型服务。离线冒烟脚本会临时生成固定数据，启动本机 API，检查健康状态，并将查询答案与独立 SQL 结果比较：
 

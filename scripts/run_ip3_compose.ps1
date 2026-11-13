@@ -1,9 +1,9 @@
 ﻿$ErrorActionPreference = 'Stop'
 
 $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$ComposeProject = 'insightpilot-ip3-compose'
 $ComposeFile = Join-Path $ProjectRoot 'docker-compose.ip3.yml'
 $Python = Join-Path $ProjectRoot '.venv\Scripts\python.exe'
-$BaseImage = 'python:3.12-slim'
 $ComposeStarted = $false
 $PushedLocation = $false
 
@@ -32,11 +32,11 @@ try {
         Stop-WithFallback "缺少可用的 Docker Compose v2：$($ComposeVersion -join ' ')"
     }
 
-    $CachedImage = @(& docker image inspect $BaseImage --format '{{.Id}}' 2>&1)
-    if ($LASTEXITCODE -ne 0 -or -not $CachedImage) {
-        Stop-WithFallback "本地未缓存 $BaseImage；脚本不会拉取镜像。"
+    & docker compose --project-name $ComposeProject -f $ComposeFile config --quiet
+    if ($LASTEXITCODE -ne 0) {
+        Stop-WithFallback 'IP-3 Compose 配置无效。'
     }
-    $Existing = @(& docker compose -f $ComposeFile ps -q 2>&1)
+    $Existing = @(& docker compose --project-name $ComposeProject -f $ComposeFile ps -a -q 2>&1)
     if ($LASTEXITCODE -ne 0) {
         Stop-WithFallback "无法检查 IP-3 Compose 服务：$($Existing -join ' ')"
     }
@@ -44,8 +44,13 @@ try {
         Stop-WithFallback '当前 Compose 项目已有容器；为避免影响现有容器，本次停止。'
     }
 
+    & docker compose --project-name $ComposeProject -f $ComposeFile build --pull api-probe
+    if ($LASTEXITCODE -ne 0) {
+        throw 'IP-3 镜像 pull/build 失败。检查 Docker Hub 与包索引网络后可安全重跑。'
+    }
+
     $ComposeStarted = $true
-    & docker compose -f $ComposeFile up -d --build --wait --pull never
+    & docker compose --project-name $ComposeProject -f $ComposeFile up -d --wait --pull never
     if ($LASTEXITCODE -ne 0) {
         throw "IP-3 Compose 启动失败（退出码 $LASTEXITCODE）。检查 Docker 构建输出和包索引网络。"
     }
@@ -60,7 +65,7 @@ catch {
 }
 finally {
     if ($ComposeStarted) {
-        & docker compose -f $ComposeFile down
+        & docker compose --project-name $ComposeProject -f $ComposeFile down
         if ($LASTEXITCODE -ne 0) { Write-Warning '无法清理 IP-3 Compose 容器。' }
     }
     if ($PushedLocation) { Pop-Location }

@@ -16,3 +16,8 @@
 本审计当时未读取 `.env`、密钥或临时目录，也未发外部请求。后续 2026-11-13 v13 单轮预检多次调用 DeepSeek 只读余额接口；详情、哈希、预算和自动审核阻断见 [v13 单轮预检](stage-IP4-v13-full-suite-2026-11-13.md#2026-11-13-单轮预检与审批阻断)。没有 Docker 操作或模型请求。
 
 IP1 后续离线切片补齐 QueryEngine 后端能力契约、共享核心构造入口和 SQLite adapter contract tests；43 项 SQLite/API/MCP/CLI/tenant/tracing/parity 定向回归通过。PostgreSQL/RLS integration gate 继续 pending，未启动 Docker；详情见 [IP1 查询引擎记录](stage-IP1.md#2026-11-13-离线前置切片)。
+
+
+## 后续主机验证尝试（2026-11-13）
+
+后续经授权尝试 Docker：IP-3 Compose runner 已修复并运行，Docker Hub 拉取认证 token 请求超时，容器未启动；IP-1 合成 PostgreSQL 健康检查通过，但宿主端口连接超时，RLS 未开始。仅本次 runner 创建的已退出 PostgreSQL 容器已移除；未删卷、未用私有数据、未调用模型。两项 gate 仍 pending，详见 `reports/ip3-docker-smoke-20261113.json` 与 `reports/ip1-rls-attempt-20261113.json`。前文“未启动 Docker”仅描述离线切片当时状态，不描述此次后续尝试。

@@ -1,0 +1,17 @@
+{
+  "manifest_version": 1,
+  "run_date": "2026-11-13",
+  "status": "blocked_during_database_preparation",
+  "suite": "ip1-postgresql-rls-local-synthetic",
+  "container_created_by_runner": true,
+  "postgres_healthcheck_passed": true,
+  "host_database_connection": "timed_out",
+  "failure_class": "psycopg.errors.ConnectionTimeout",
+  "rls_verification_started": false,
+  "container_status_after_runner": "exited",
+  "cleanup": "container_removed_after_runner_stop_warning",
+  "volume_deleted": false,
+  "private_data_used": false,
+  "model_calls": 0,
+  "status_after_attempt": "pending_host_verification"
+}

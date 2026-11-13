@@ -106,3 +106,8 @@ Remove-Item -Recurse -Force .tmp-ip3-otel-wheels, .tmp-ip3-otel-packages
 新增 `test_model_timeout_persists_failure_and_idempotent_retry_does_not_replan`。可控 fake planner 进入等待后，API 请求超时返回 504；同键重放仍为运行中 202，没有启动第二次规划。释放 fake planner 后，它返回合成 `PlanError`；RunStore 持久化 `failed` / `planning`，结果不含 plan 或 rows。终态同键重试返回同一 `run_id` 的 502 已存失败，planner 调用数仍为 1。新幂等键发起后续请求则成功并持久化 `answered`，planner 调用数增至 2。测试没有真实模型调用，也没有伪答案。
 
 同文件既有取消回归验证显式取消持久化 `cancelled`、同键重放不重复规划；进程重启验收 `reports/ip3-process-restart-acceptance.json` 验证遗留 `running` 变为 `interrupted`，同键重试返回 `result_unavailable` 而不重执行。Python 3.12 禁网容器中，IP-3 数据库恢复、S6 运行边界、S12 恢复回归共 23/23 通过。假 planner 只覆盖 API/RunStore 中断语义，不模拟供应商 SDK 的底层网络取消。IP-3 仍部分完成。
+
+
+## 2026-11-13 Compose runner 修复与冒烟尝试
+
+Compose runner 固定独立项目名，先检查配置和遗留容器，再用 `build --pull` 构建基础镜像；启动后等待健康状态，退出时只清理该项目容器/网络，不删卷。UTF-8 BOM 保留，兼容 Windows PowerShell 5.1。Docker Hub token 请求超时，构建未完成、容器未启动；详见 `reports/ip3-docker-smoke-20261113.json`。PowerShell parser/runner 行为测试覆盖脚本格式、构建顺序、隔离与清理。IP-3 live smoke 仍 pending，未调用模型。

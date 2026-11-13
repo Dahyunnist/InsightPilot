@@ -1,0 +1,17 @@
+{
+  "manifest_version": 1,
+  "run_date": "2026-11-13",
+  "status": "blocked_before_container_start",
+  "suite": "ip3-compose-health-smoke",
+  "compose_project": "insightpilot-ip3-compose",
+  "base_image": "python:3.12-slim",
+  "pull_build_attempted": true,
+  "pull_build_completed": false,
+  "failure_stage": "docker_hub_base_image_auth",
+  "failure_category": "network_timeout_fetching_registry_token",
+  "container_started": false,
+  "compose_cleanup_required": false,
+  "model_calls": 0,
+  "postgresql_or_rls_covered": false,
+  "retryable_after_docker_hub_connectivity_recovers": true
+}

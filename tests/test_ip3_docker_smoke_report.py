@@ -4,6 +4,18 @@ from pathlib import Path
 
 
 class IP3DockerSmokeReportTests(unittest.TestCase):
+    def test_20261113_attempt_records_registry_block_without_claiming_rls(self):
+        root = Path(__file__).resolve().parents[1]
+        ip3 = json.loads((root / "reports/ip3-docker-smoke-20261113.json").read_text(encoding="utf-8"))
+        rls = json.loads((root / "reports/ip1-rls-attempt-20261113.json").read_text(encoding="utf-8"))
+        self.assertEqual(ip3["status"], "blocked_before_container_start")
+        self.assertFalse(ip3["pull_build_completed"])
+        self.assertFalse(ip3["container_started"])
+        self.assertFalse(ip3["postgresql_or_rls_covered"])
+        self.assertEqual(rls["status_after_attempt"], "pending_host_verification")
+        self.assertFalse(rls["rls_verification_started"])
+        self.assertFalse(rls["volume_deleted"])
+
     def test_report_preserves_partial_success_and_scope_limits(self):
         report = json.loads((Path(__file__).resolve().parents[1] /
                              "reports/ip3-docker-smoke-20261112.json").read_text(encoding="utf-8"))
