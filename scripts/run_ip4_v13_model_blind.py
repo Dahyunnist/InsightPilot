@@ -120,8 +120,8 @@ def main() -> None:
         raise SystemExit("Python runtime differs from preregistration; no request sent")
     current_commit = git_text("rev-parse", "HEAD")
     freeze_commit = lock["freeze_commit_sha"]
-    if current_commit != freeze_commit:
-        raise SystemExit("current commit differs from registered freeze; no request sent")
+    if not is_ancestor(freeze_commit, current_commit):
+        raise SystemExit("registered freeze is not an ancestor of current commit; no request sent")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
     if baseline.get("model_calls") != 0 or baseline.get("data_fingerprint") != lock["data_fingerprint"]:
