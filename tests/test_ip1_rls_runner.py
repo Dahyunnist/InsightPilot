@@ -21,6 +21,8 @@ class IP1RlsRunnerTests(unittest.TestCase):
         self.assertIn("if (-not $Execute)", script)
         self.assertIn("Refusing non-local PostgreSQL target", script)
         self.assertIn("if (-not $ConfirmDatabaseCreation)", script)
+        self.assertLess(script.index("if (-not $Execute)"), script.index("docker compose -f $compose up -d postgres"))
+        self.assertLess(script.index("if (-not $ConfirmDatabaseCreation)"), script.index("docker compose -f $compose up -d postgres"))
         self.assertIn("ENABLE ROW LEVEL SECURITY", sql)
         self.assertIn("FORCE ROW LEVEL SECURITY", sql)
         self.assertIn("CURRENT_SETTING('APP.TENANT_ID'", sql)

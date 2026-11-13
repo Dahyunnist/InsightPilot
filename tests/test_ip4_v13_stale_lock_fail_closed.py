@@ -18,6 +18,16 @@ class StaleLockFailClosedTests(unittest.TestCase):
         self.assertIn("provider_balance(", prereg)
         self.assertIn("status\": \"blocked_by_review\"", (ROOT / "reports/ip4-v13-attempt-manifest.json").read_text(encoding="utf-8"))
 
+    def test_blocked_report_contract_never_turns_unknown_cost_or_calls_into_success(self):
+        manifest = json.loads((ROOT / "reports/ip4-v13-attempt-manifest.json").read_text(encoding="utf-8"))
+        runner = (ROOT / "scripts/run_ip4_v13_model_blind.py").read_text(encoding="utf-8")
+        self.assertEqual(manifest["status"], "blocked_by_review")
+        self.assertIsNone(manifest["provider_received"])
+        self.assertIsNone(manifest["cost_usd"])
+        self.assertNotEqual(manifest["status"], "completed")
+        self.assertIn("frozen v13 artifact hash mismatch; no request sent", runner)
+        self.assertIn("report_path.write_text", runner)
+
 
 if __name__ == "__main__":
     unittest.main()
