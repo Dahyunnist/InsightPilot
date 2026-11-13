@@ -1,0 +1,147 @@
+{
+  "schema_version": 2,
+  "project": "InsightPilot",
+  "run_id": null,
+  "trace_id": null,
+  "span_id": null,
+  "evaluation_id": null,
+  "environment": null,
+  "git_sha": "e37a683915a50ce4823aced531652112742032a2",
+  "source_tree_clean": null,
+  "dataset_id": "insightpilot-ip4-independent-v13",
+  "dataset_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+  "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
+  "split": "frozen_synthetic",
+  "model_id": "none",
+  "planned_model_id": "deepseek-v4-flash",
+  "prompt_sha256": null,
+  "planned_prompt_source_sha256": "90cea7ac5f38c6a2745446017435a3d421530b6a310fcde5c3fee73101abff1c",
+  "tool_schema_sha256": null,
+  "scorer_sha256": null,
+  "planned_scorer_sha256": "0bdfeb6afe819305aecb8248e007f7b45370471a32cec1a46f620f82cb0000c4",
+  "runtime": {
+    "digest_sha256": null,
+    "python": null,
+    "python_implementation": null,
+    "platform": null,
+    "lock_sha256": null
+  },
+  "budget": {
+    "cap_usd": 5.0,
+    "spent_usd": 0.0,
+    "reserved_usd": 0.0936672,
+    "remaining_after_reserve_usd": 4.53009415,
+    "status": "blocked_stale_lock_and_balance_unverified",
+    "reservation_bound_to_current_code": false
+  },
+  "gold_source": "independent_synthetic",
+  "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+  "cost_usd": 0.0,
+  "model_calls": 0,
+  "model_input_received": false,
+  "max_steps": null,
+  "planned_max_calls": 22,
+  "max_tokens": null,
+  "planned_max_tokens": 1024,
+  "status": "blocked",
+  "source_status": "blocked_pre_model_balance_unverified",
+  "evaluation_outcome": "not_run_preflight_blocked",
+  "started_at": "2026-11-13T14:11:38Z",
+  "completed_at": null,
+  "field_status": {
+    "git_sha": "recorded",
+    "run_id": "blocked",
+    "trace_id": "blocked",
+    "span_id": "blocked",
+    "evaluation_id": "blocked",
+    "environment": "blocked",
+    "dataset_id": "recorded",
+    "dataset_sha256": "recorded",
+    "data_fingerprint": "recorded",
+    "split": "recorded",
+    "model_id": "not_applicable",
+    "prompt_sha256": "not_applicable",
+    "tool_schema_sha256": "not_applicable",
+    "scorer_sha256": "blocked",
+    "runtime.digest_sha256": "blocked",
+    "runtime.python": "blocked",
+    "runtime.platform": "blocked",
+    "runtime.lock_sha256": "blocked",
+    "budget.cap_usd": "recorded",
+    "budget.spent_usd": "recorded",
+    "gold_sha256": "recorded",
+    "gold_source": "recorded",
+    "started_at": "recorded",
+    "completed_at": "blocked",
+    "max_steps": "blocked",
+    "max_tokens": "not_applicable",
+    "normalizer_sha256": "recorded",
+    "source_tree_clean": "blocked",
+    "schema_sha256": "recorded"
+  },
+  "trace_event_coverage": {
+    "timeout": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "retry": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "budget_exceeded": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "cancel": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "unsafe_action_blocked": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "checkpoint_resume": {
+      "count": 0,
+      "coverage": "not_covered"
+    }
+  },
+  "native_event_coverage": {
+    "analysis.started": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "analysis.completed": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "analysis.failed": {
+      "count": 0,
+      "coverage": "not_covered"
+    }
+  },
+  "source_artifacts": {
+    "attempt_manifest_sha256": "55522987998e648701537bc01d69c3617bf8048a9300ebe8e444adc52cd20f13",
+    "preregistration_sha256": "4f4a4e405fe087b3fbdd5f3b9bb9215d8b77e8bd33ac1897b9cab986b572fe23",
+    "question_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+    "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+    "ledger_sha256": "7c968ead6026d13d670473e3942862883ae5f353c733e1eff502b5e263c6f50e",
+    "attempt_path": "reports/ip4-v13-attempt-manifest-2026-11-13-r3.json"
+  },
+  "normalizer_sha256": "b1e3c1132ee6766271ce9c913ba2e205f48650fef1b24f6a619fa04e7f06961a",
+  "schema_sha256": "d75bd9beb4806b7e273d30e64cf3ce07f021adb87252c54220949c7fa0620f5d",
+  "blocked_fields": [
+    "completed_at",
+    "environment",
+    "evaluation_id",
+    "max_steps",
+    "run_id",
+    "runtime.digest_sha256",
+    "runtime.lock_sha256",
+    "runtime.platform",
+    "runtime.python",
+    "scorer_sha256",
+    "source_tree_clean",
+    "span_id",
+    "trace_id"
+  ]
+}

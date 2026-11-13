@@ -1,0 +1,131 @@
+{
+  "schema_version": 2,
+  "project": "InsightPilot",
+  "run_id": "2096b84c7548eb00110dd0911a4834ad",
+  "trace_id": "6dc549d5dbe09f087fb88619e2373486",
+  "span_id": null,
+  "evaluation_id": "ip4-v13-rule-baseline",
+  "environment": "Windows-11-10.0.26200-SP0",
+  "git_sha": "242d0036b38c1bda318d2a4338a593a215282868",
+  "source_tree_clean": false,
+  "dataset_id": "insightpilot-ip4-independent-v13",
+  "dataset_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+  "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
+  "split": "frozen_synthetic",
+  "model_id": "none",
+  "planned_model_id": null,
+  "prompt_sha256": null,
+  "tool_schema_sha256": null,
+  "scorer_sha256": "0bdfeb6afe819305aecb8248e007f7b45370471a32cec1a46f620f82cb0000c4",
+  "runtime": {
+    "digest_sha256": "70c28918f8108677b701b8fcdc55d0a2154fbc3797d0d475de11b78588546c2a",
+    "python": "3.14.5",
+    "python_implementation": "CPython",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "lock_sha256": null,
+    "dependency_manifest_sha256": "a44d6c437927b2d5cc162e1580cdf72ef8a3d72391ca121c577868494e7f168b",
+    "runner_sha256": "c08e238bb5f58ed07431fe5549080b93e1458ac0d2be4bd55a7c4fa1153b0f00"
+  },
+  "budget": {
+    "cap_usd": 5.0,
+    "spent_usd": 0.0,
+    "reserved_usd": 0.0,
+    "status": "completed_no_model_cost"
+  },
+  "gold_source": "independent",
+  "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+  "cost_usd": 0.0,
+  "model_calls": 0,
+  "model_input_received": false,
+  "max_steps": 1,
+  "max_tokens": null,
+  "status": "completed",
+  "source_status": "completed",
+  "evaluation_outcome": "failed",
+  "started_at": "2026-11-13T14:23:19.971985+00:00",
+  "completed_at": "2026-11-13T14:23:20.971186+00:00",
+  "field_status": {
+    "git_sha": "recorded",
+    "run_id": "recorded",
+    "trace_id": "recorded",
+    "span_id": "not_applicable",
+    "evaluation_id": "recorded",
+    "environment": "recorded",
+    "dataset_id": "recorded",
+    "dataset_sha256": "recorded",
+    "data_fingerprint": "recorded",
+    "split": "recorded",
+    "model_id": "not_applicable",
+    "prompt_sha256": "not_applicable",
+    "tool_schema_sha256": "not_applicable",
+    "scorer_sha256": "recorded",
+    "runtime.digest_sha256": "recorded",
+    "runtime.python": "recorded",
+    "runtime.platform": "recorded",
+    "runtime.lock_sha256": "blocked",
+    "budget.cap_usd": "recorded",
+    "budget.spent_usd": "recorded",
+    "gold_sha256": "recorded",
+    "gold_source": "recorded",
+    "started_at": "recorded",
+    "completed_at": "recorded",
+    "max_steps": "recorded",
+    "max_tokens": "not_applicable",
+    "normalizer_sha256": "recorded",
+    "schema_sha256": "recorded",
+    "source_tree_clean": "recorded"
+  },
+  "trace_event_coverage": {
+    "timeout": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "retry": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "budget_exceeded": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "cancel": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "unsafe_action_blocked": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "checkpoint_resume": {
+      "count": 0,
+      "coverage": "not_covered"
+    }
+  },
+  "native_event_coverage": {
+    "analysis.started": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "analysis.completed": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "analysis.failed": {
+      "count": 0,
+      "coverage": "not_covered"
+    }
+  },
+  "source_artifacts": {
+    "manifest_sha256": "687f79b592f80607303f9dd7f2777dbe0910ebfd8de64f447f1196165a8d42fd",
+    "report_sha256": "b0c751f97264fb55b5183251dc34f9fc1847217f8efed08d9c6447fc01169bb5",
+    "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+    "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+    "manifest_path": "reports/ip4-v13-rule-baseline-manifest.json",
+    "report_path": "reports/ip4-v13-rule-baseline.json"
+  },
+  "normalizer_sha256": "b1e3c1132ee6766271ce9c913ba2e205f48650fef1b24f6a619fa04e7f06961a",
+  "schema_sha256": "d75bd9beb4806b7e273d30e64cf3ce07f021adb87252c54220949c7fa0620f5d",
+  "blocked_fields": [
+    "runtime.lock_sha256"
+  ]
+}

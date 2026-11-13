@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import platform
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -19,6 +20,7 @@ from insightpilot.run_manifest import write_validated_reports
 
 
 def main() -> None:
+    started_at = datetime.now(timezone.utc).isoformat()
     blind_path = ROOT / "evals/ip4-v13-blind.jsonl"
     gold_path = ROOT / "evals/ip4-v13-gold.jsonl"
     manifest_path = ROOT / "evals/ip4-v13-manifest.json"
@@ -51,16 +53,28 @@ def main() -> None:
     output = ROOT / "reports/ip4-v13-rule-baseline.json"
     report_bytes = json.dumps(report, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-    now = datetime.now(timezone.utc).isoformat()
+    ended_at = datetime.now(timezone.utc).isoformat()
+    runtime_facts = {
+        "python": platform.python_version(), "python_implementation": platform.python_implementation(),
+        "platform": platform.platform(),
+        "requirements_sha256": hashlib.sha256((ROOT / "requirements.txt").read_bytes()).hexdigest(),
+        "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "working_tree_clean": not bool(subprocess.check_output(
+            ["git", "status", "--porcelain"], cwd=ROOT, text=True).strip()),
+    }
+    runtime_digest = hashlib.sha256(json.dumps(
+        runtime_facts, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+    trace_id = hashlib.sha256((git_sha + started_at).encode()).hexdigest()[:32]
     manifest = {
         "schema_version": 1, "project": "InsightPilot", "git_sha": git_sha,
         "dataset_id": manifest["suite_id"], "dataset_sha256": hashlib.sha256(blind_path.read_bytes()).hexdigest(),
         "split": "frozen_synthetic", "model_id": "none", "prompt_sha": None,
-        "tool_schema_sha": None, "runtime_digest": None, "max_steps": 1, "max_tokens": None,
+        "tool_schema_sha": None, "runtime_digest": runtime_digest, "runtime_facts": runtime_facts,
+        "span_id": None, "max_steps": 1, "max_tokens": None,
         "scorer_sha": hashlib.sha256((ROOT / "insightpilot/enterprise_evaluate.py").read_bytes()).hexdigest(),
         "gold_source": "independent", "cost_usd_estimate": 0.0, "run_id": hashlib.sha256(report_bytes).hexdigest()[:32],
-        "trace_id": hashlib.sha256((git_sha + now).encode()).hexdigest()[:32], "started_at": now,
-        "ended_at": now, "status": "completed", "evaluation_id": "ip4-v13-rule-baseline",
+        "trace_id": trace_id, "started_at": started_at,
+        "ended_at": ended_at, "status": "completed", "evaluation_id": "ip4-v13-rule-baseline",
         "domain": "refunds+marketing_roi", "truth_sha256": hashlib.sha256(gold_path.read_bytes()).hexdigest(),
         "result_fingerprint_sha256": hashlib.sha256(report_bytes).hexdigest(),
     }

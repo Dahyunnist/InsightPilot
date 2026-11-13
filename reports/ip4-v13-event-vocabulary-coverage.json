@@ -1,0 +1,156 @@
+{
+  "report_version": 1,
+  "normalizer_sha256": "b1e3c1132ee6766271ce9c913ba2e205f48650fef1b24f6a619fa04e7f06961a",
+  "schema_sha256": "d75bd9beb4806b7e273d30e64cf3ce07f021adb87252c54220949c7fa0620f5d",
+  "source_logs_available": false,
+  "observation_note": "No trace JSONL was emitted for the RulePlanner baseline or blocked preflight; zero means not observed, not proof of absence.",
+  "vocabularies": {
+    "shared_v2": {
+      "events": [
+        "timeout",
+        "retry",
+        "budget_exceeded",
+        "cancel",
+        "unsafe_action_blocked",
+        "checkpoint_resume"
+      ],
+      "observed": {
+        "timeout": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "retry": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "budget_exceeded": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "cancel": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "unsafe_action_blocked": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "checkpoint_resume": {
+          "count": 0,
+          "coverage": "not_covered"
+        }
+      }
+    },
+    "insightpilot_native_jsonl": {
+      "events": [
+        "analysis.started",
+        "analysis.completed",
+        "analysis.failed"
+      ],
+      "observed": {
+        "analysis.started": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "analysis.completed": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "analysis.failed": {
+          "count": 0,
+          "coverage": "not_covered"
+        }
+      }
+    }
+  },
+  "runs": [
+    {
+      "kind": "offline_rule_baseline",
+      "run_id": "2096b84c7548eb00110dd0911a4834ad",
+      "shared_v2": {
+        "timeout": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "retry": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "budget_exceeded": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "cancel": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "unsafe_action_blocked": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "checkpoint_resume": {
+          "count": 0,
+          "coverage": "not_covered"
+        }
+      },
+      "native": {
+        "analysis.started": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "analysis.completed": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "analysis.failed": {
+          "count": 0,
+          "coverage": "not_covered"
+        }
+      }
+    },
+    {
+      "kind": "blocked_model_preflight",
+      "run_id": null,
+      "shared_v2": {
+        "timeout": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "retry": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "budget_exceeded": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "cancel": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "unsafe_action_blocked": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "checkpoint_resume": {
+          "count": 0,
+          "coverage": "not_covered"
+        }
+      },
+      "native": {
+        "analysis.started": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "analysis.completed": {
+          "count": 0,
+          "coverage": "not_covered"
+        },
+        "analysis.failed": {
+          "count": 0,
+          "coverage": "not_covered"
+        }
+      }
+    }
+  ]
+}
