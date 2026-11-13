@@ -1,11 +1,24 @@
 import unittest
+import subprocess
+import shutil
 from pathlib import Path
 
 
 class IP1RlsRunnerTests(unittest.TestCase):
+    def test_local_port_guard_powershell_cases(self):
+        root = Path(__file__).resolve().parents[1]
+        host = shutil.which("pwsh") or shutil.which("powershell")
+        self.assertIsNotNone(host, "PowerShell host is required")
+        result = subprocess.run([host, "-NoProfile", "-File",
+                                 str(root / "tests/test_ip1_rls_config_guard.ps1")],
+                                capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("RLS_CONFIG_GUARD_OK", result.stdout)
+
     def test_runner_scopes_cleanup_and_never_removes_volumes(self):
         root = Path(__file__).resolve().parents[1]
         script = (root / "scripts/run_ip1_rls.ps1").read_text(encoding="utf-8")
+        guard = (root / "scripts/rls_config_guard.ps1").read_text(encoding="utf-8")
         sql = (root / "docs/postgresql-rls-bootstrap.sql").read_text(encoding="utf-8").upper()
         compose = (root / "docker-compose.ip4.yml").read_text(encoding="utf-8")
         self.assertIn("docker compose -f $compose stop postgres", script)
@@ -20,6 +33,12 @@ class IP1RlsRunnerTests(unittest.TestCase):
         self.assertIn("[switch]$ConfirmDatabaseCreation", script)
         self.assertIn("if (-not $Execute)", script)
         self.assertIn("Refusing non-local PostgreSQL target", script)
+        self.assertIn("config --format json", script)
+        self.assertIn("rls_config_guard.ps1", script)
+        self.assertIn("$port.host_ip -eq '127.0.0.1'", guard)
+        self.assertIn("[string]$port.target -eq '5432'", guard)
+        self.assertIn("[string]$port.published -eq '55432'", guard)
+        self.assertIn("catch { return $false }", guard)
         self.assertIn("if (-not $ConfirmDatabaseCreation)", script)
         self.assertLess(script.index("if (-not $Execute)"), script.index("docker compose -f $compose up -d postgres"))
         self.assertLess(script.index("if (-not $ConfirmDatabaseCreation)"), script.index("docker compose -f $compose up -d postgres"))
