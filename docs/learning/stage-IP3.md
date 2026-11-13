@@ -111,3 +111,12 @@ Remove-Item -Recurse -Force .tmp-ip3-otel-wheels, .tmp-ip3-otel-packages
 ## 2026-11-13 Compose runner 修复与冒烟尝试
 
 Compose runner 固定独立项目名，先检查配置和遗留容器，再用 `build --pull` 构建基础镜像；启动后等待健康状态，退出时只清理该项目容器/网络，不删卷。UTF-8 BOM 保留，兼容 Windows PowerShell 5.1。Docker Hub token 请求超时，构建未完成、容器未启动；详见 `reports/ip3-docker-smoke-20261113.json`。PowerShell parser/runner 行为测试覆盖脚本格式、构建顺序、隔离与清理。IP-3 live smoke 仍 pending，未调用模型。
+
+
+## 2026-11-13 取消与事件登记竞态
+
+审查确认幂等键以 principal scope 后哈希入库；SQLite `BEGIN IMMEDIATE` 与唯一索引保证同键同问题只建一个 run；不同问题复用同键返回冲突。超时先返回 HTTP 504 并置取消事件，worker 终结后持久化失败/取消结果；进程重启把遗留 `running` 标为 `interrupted`。
+
+修复一个取消窗口：run 已持久化为 `running`、内存取消事件尚未登记时，取消请求会保存 `cancel_requested=1`，但旧代码丢失事件通知。事件登记后现在重读持久标记并补设事件。新增 Event barrier 纯进程回归：在该窗口请求取消，worker 观察取消并持久化终态；同键重放仍指向原 run，planner 只执行一次，查询执行数为零。该定向回归通过。
+
+尝试运行现有 TestClient API 回归时，Windows Python 3.14 在 `asyncio.new_event_loop()` 的本地 socketpair 初始化处挂起，测试未进入断言；Selector loop 也无法初始化。未启 Docker、模型或外部服务。PostgreSQL/RLS 与并发负载仍待宿主联调。

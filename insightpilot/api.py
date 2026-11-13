@@ -31,6 +31,17 @@ class AnalysisRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
 
 
+def _register_cancel_event(store: RunStore, active_events: dict[str, Event], events_lock: Lock,
+                           run_id: str, cancel_event: Event, principal_id: str | None) -> None:
+    with events_lock:
+        active_events[run_id] = cancel_event
+    # Cancellation can arrive after the durable row starts but before this
+    # in-memory event exists. Reconcile the durable bit after registration.
+    record = store.get(run_id, principal_id=principal_id)
+    if record is not None and record["cancel_requested"]:
+        cancel_event.set()
+
+
 def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_token: str | None = None,
                api_scopes: set[str] | None = None, authorized_region: str | None = None,
                api_tenant_tokens: dict[str, str] | None = None,
@@ -190,8 +201,20 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
             return replay_response(stored_run_id, principal_id)
 
         cancel_event = Event()
-        with events_lock:
-            active_events[run_id] = cancel_event
+        try:
+            _register_cancel_event(store, active_events, events_lock, run_id, cancel_event, principal_id)
+        except Exception:
+            with events_lock:
+                active_events.pop(run_id, None)
+            capacity.release()
+            try:
+                store.finish(run_id, {"run_id": run_id, "status": "failed", "stage": "storage",
+                                      "reason": "run_store_unavailable"})
+            except Exception:
+                pass
+            return JSONResponse(status_code=503,
+                content={"run_id": run_id, "status": "failed", "stage": "storage",
+                         "reason": "run_store_unavailable"}, headers={"X-Request-ID": run_id})
 
         def execute_run() -> dict:
             try:

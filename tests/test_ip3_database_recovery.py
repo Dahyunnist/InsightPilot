@@ -4,13 +4,14 @@ import tempfile
 import threading
 import time
 import unittest
+import uuid
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
 from data.seed import create_database
 from insightpilot.agent import InsightPilot
-from insightpilot.api import create_app
+from insightpilot.api import _register_cancel_event, create_app
 from insightpilot.planner import PlanError, QueryPlan
 from insightpilot.query_engine import SQLiteQueryEngine
 from insightpilot.run_store import RunStore
@@ -72,6 +73,30 @@ class SlowTimeoutPlanner:
                 raise AssertionError("test did not release the fake model request")
             raise PlanError("synthetic model request timed out")
         return PLAN
+
+
+class PauseAfterStartRunStore(RunStore):
+    def __init__(self, path: Path):
+        self.persisted = threading.Event()
+        self.release_start = threading.Event()
+        super().__init__(path)
+
+    def start(self, *args, **kwargs):
+        run_id = super().start(*args, **kwargs)
+        self.persisted.set()
+        if not self.release_start.wait(timeout=5):
+            raise AssertionError("test did not release run-store start")
+        return run_id
+
+
+class CountingSQLiteEngine(SQLiteQueryEngine):
+    def __init__(self, path: Path):
+        super().__init__(path)
+        self.query_count = 0
+
+    def execute_readonly(self, query, *, tenant_id=None, cancel_event=None):
+        self.query_count += 1
+        return super().execute_readonly(query, tenant_id=tenant_id, cancel_event=cancel_event)
 
 
 class IP3DatabaseRecoveryTests(unittest.TestCase):
@@ -145,6 +170,59 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
                 self.assertEqual(replay.json()["run_id"], run_id)
                 self.assertEqual(replay.headers.get("Idempotency-Replay"), "true")
                 self.assertEqual(planner.calls, 1)
+
+    def test_cancel_between_persisted_start_and_event_registration_is_reconciled(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            database = create_database(root / "synthetic.sqlite")
+            planner = FixedPlanner()
+            engine = CountingSQLiteEngine(database)
+            store = PauseAfterStartRunStore(root / "runs.sqlite")
+            run_id = str(uuid.uuid4())
+            scoped_key = "default:cancel-start-window"
+            event = threading.Event()
+            events: dict[str, threading.Event] = {}
+            lock = threading.Lock()
+            result_box = []
+            errors = []
+            core = InsightPilot(planner, database, query_engine=engine, tracer=None)
+
+            def start_and_execute():
+                try:
+                    self.assertEqual(store.start(run_id, QUESTION, scoped_key), run_id)
+                    _register_cancel_event(store, events, lock, run_id, event, None)
+                    result = core.analyze(QUESTION, run_id=run_id, cancel_event=event)
+                    store.finish(run_id, result)
+                    result_box.append(result)
+                except Exception as exc:
+                    errors.append(exc)
+
+            worker = threading.Thread(target=start_and_execute)
+            worker.start()
+            try:
+                self.assertTrue(store.persisted.wait(timeout=3), "run row was not persisted")
+                self.assertTrue(store.request_cancel(run_id))
+                self.assertTrue(store.get(run_id)["cancel_requested"])
+
+                store.release_start.set()
+                worker.join(timeout=5)
+                self.assertFalse(worker.is_alive(), "run worker did not finish")
+                self.assertEqual(errors, [])
+                self.assertTrue(event.is_set())
+                self.assertEqual(result_box[0]["status"], "cancelled")
+                self.assertEqual(store.get(run_id)["status"], "cancelled")
+                self.assertEqual(store.get(run_id)["result"]["status"], "cancelled")
+                self.assertEqual(engine.query_count, 0)
+
+                replayed_id = store.find_idempotent(scoped_key, QUESTION)
+                self.assertEqual(replayed_id, run_id)
+                self.assertEqual(store.start(str(uuid.uuid4()), QUESTION, scoped_key), run_id)
+                self.assertEqual(store.get(run_id)["result"]["status"], "cancelled")
+                self.assertEqual(planner.calls, 1)
+                self.assertEqual(engine.query_count, 0)
+            finally:
+                store.release_start.set()
+                worker.join(timeout=2)
 
     def test_model_timeout_persists_failure_and_idempotent_retry_does_not_replan(self):
         with tempfile.TemporaryDirectory() as temp:
