@@ -22,6 +22,8 @@
 
 复跑命令：`Set-Location E:\job\insightpilot; .\scripts\run_ip3_compose.ps1`。脚本先检查 Docker Engine、Compose v2、Python venv、缓存的 `python:3.12-slim` 和当前项目容器；镜像缺失时不自动 pull。若端口 58080 被其他服务占用，Compose 启动会失败并进入 finally 清理本项目资源；手动停止命令为 `docker compose -f .\docker-compose.ip3.yml down`。不要添加 `-v`。
 
+2026-11-13 离线宿主检查中，Docker CLI 存在，但 daemon pipe `//./pipe/dockerDesktopLinuxEngine` 返回 `Access is denied`。因此本轮无法读取 `python:3.12-slim` 镜像是否仍在本地，也无法确认当前 Compose 容器状态；没有启动或清理任何容器。此前 2026-11-12 用户提供的 healthy/HTTP smoke 记录仍是最近可用运行证据，不据此推断当前 Docker 状态。
+
 | 检查 | 结果 |
 | --- | --- |
 | 幂等首请求 / 重放 | 200 / 200，同一 `run_id` |
