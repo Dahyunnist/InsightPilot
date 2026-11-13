@@ -7,3 +7,5 @@
 ## 宿主操作与清理
 
 默认运行 `Set-Location E:\job\insightpilot; .\scripts\run_ip1_rls.ps1` 只做 dry-run。真实执行须显式传入 `-Execute -ConfirmDatabaseCreation`。Runner 先拒绝同名容器，再设置进程级临时凭据；创建合成库后先运行 `prepare_ip4_postgres.py`，再运行 RLS verifier。finally 只停止本次目标服务，不删除卷。即使 up 返回失败，也会尝试 stop；stop 失败只输出通用警告，不覆盖原错误。静态测试核顺序、环境变量恢复路径与清理边界；未运行 Docker 宿主集成。验收证据需含两租户隔离、无 tenant 拒绝、DDL/DML 拒绝、超时与池恢复；不要粘贴密码或 DSN。
+
+本机可独立运行 `tests/test_ip1_rls_config_guard.ps1`，覆盖 loopback 正确绑定、非回环地址、错误端口和无效 JSON；该测试不启动容器。

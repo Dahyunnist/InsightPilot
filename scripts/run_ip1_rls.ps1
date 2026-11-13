@@ -11,14 +11,15 @@ $envNames = @('INSIGHTPILOT_IP4_ADMIN_PASSWORD','INSIGHTPILOT_IP4_ADMIN_DSN',
 $oldValues = @{}
 foreach ($name in $envNames) { $oldValues[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
 $started = $false
+. (Join-Path $PSScriptRoot 'rls_config_guard.ps1')
 try {
     Push-Location $root
     if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { throw 'Docker CLI is required.' }
     if (-not $env:INSIGHTPILOT_IP4_ADMIN_PASSWORD) { $env:INSIGHTPILOT_IP4_ADMIN_PASSWORD = [guid]::NewGuid().ToString('N') }
     & docker compose -f $compose config --quiet
     if ($LASTEXITCODE -ne 0) { throw 'Compose configuration is invalid.' }
-    $rendered = @(& docker compose -f $compose config)
-    if ($LASTEXITCODE -ne 0 -or ($rendered -join "`n") -notmatch '127\.0\.0\.1:55432:5432') {
+    $rendered = @(& docker compose -f $compose config --format json)
+    if ($LASTEXITCODE -ne 0 -or -not (Test-LocalPostgresPort ($rendered -join "`n"))) {
         throw 'Refusing non-local PostgreSQL target.'
     }
     if (-not $Execute) {
