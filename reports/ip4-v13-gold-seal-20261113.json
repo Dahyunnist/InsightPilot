@@ -1,0 +1,14 @@
+{
+  "suite_id": "insightpilot-ip4-independent-v13",
+  "status": "sealed_pre_model",
+  "sealed_at_utc": "2026-11-13T12:17:34.414605+00:00",
+  "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
+  "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+  "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+  "manifest_sha256": "c7b7875dcf01380fc6f9da32c7ad8593f9f19f5ca5fc38f32a3521236e349932",
+  "case_count": 22,
+  "gold_method": "Refund gold uses an independent Python source-row oracle cross-checked against compiled read-only SQL; marketing gold uses two independent Python event-ledger oracles cross-checked against SQL.",
+  "gold_not_in_agent_context": true,
+  "old_ip4_touched": false,
+  "model_calls_during_freeze_and_baseline": 0
+}

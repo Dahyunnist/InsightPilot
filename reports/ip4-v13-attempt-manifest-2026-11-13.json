@@ -1,0 +1,23 @@
+{
+  "manifest_version": 1,
+  "suite_id": "insightpilot-ip4-independent-v13",
+  "status": "blocked_by_auto_review",
+  "attempted_at_utc": "2026-11-13T12:19:18Z",
+  "model_id": "deepseek-v4-flash",
+  "preregistration_file": "reports/ip4-v13-model-preregistration-20261113.json",
+  "preregistration_sha256": "7ff7d2d451402e047d9ac535022a582021bb0860a99e99100fb5764f3b8f303c",
+  "question_set_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+  "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+  "scorer_sha256": "0bdfeb6afe819305aecb8248e007f7b45370471a32cec1a46f620f82cb0000c4",
+  "runner_sha256": "c95dd4dc867765ab82fc3ff4559ec1e7da7f0473278ae1b8d204fc9feac5fc73",
+  "case_count": 22,
+  "planned_max_api_calls": 22,
+  "execution_attempts_per_case": 1,
+  "model_calls": 0,
+  "provider_received": false,
+  "cost_usd": 0.0,
+  "model_request_outcome": "blocked_before_process_start_by_auto_review",
+  "review_reason": "The reviewer did not accept the relayed authorization as explicit approval to send this question set to the external model service.",
+  "historical_exposure": "unknown",
+  "sensitive_payloads_recorded": false
+}
