@@ -119,7 +119,7 @@ class MultiDomainTests(unittest.TestCase):
         }
         plan = planner.plan("看2026年10月各产品类别中，至少领过批准退款的付款订单占比。")
         self.assertEqual(plan, QueryPlan("approved_refund_order_rate", "2026-10-01", "2026-11-01",
-                                         None, "category", (("2026-10-01", "2026-11-01"),)))
+                                         None, "category", (("2026-10-01", "2026-11-01"),), "1.0.0"))
 
     def test_amount_share_still_retrieves_contribution_metric(self):
         planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)
@@ -158,7 +158,7 @@ class MultiDomainTests(unittest.TestCase):
         }
         plan = planner.plan("2026-10-01 到 2026-10-31 各营销活动 ROI 是多少？")
         self.assertEqual(plan, QueryPlan("marketing_net_roi", "2026-10-01", "2026-11-01", None, "campaign",
-                                         (("2026-10-01", "2026-11-01"),)))
+                                         (("2026-10-01", "2026-11-01"),), "1.0.0"))
 
     def test_dev_and_test_holdouts_freeze_questions_gold_and_data_fingerprint(self):
         output = Path(self.root.name) / "frozen-evals"

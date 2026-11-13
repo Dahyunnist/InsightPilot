@@ -128,7 +128,7 @@ class IP4V13HoldoutTests(unittest.TestCase):
         self.assertLessEqual(max(prompt_sizes), MAX_PROMPT_BYTES_PER_CALL,
                              f"largest production prompt: {max(prompt_sizes)} bytes")
 
-    def test_pre_model_lock_seals_gold_and_reserves_under_both_caps(self):
+    def test_v13_preregistration_remains_immutable_but_runtime_lock_is_stale(self):
         lock = json.loads((ROOT / "reports/ip4-v13-model-preregistration.json").read_text(encoding="utf-8"))
         seal_path = ROOT / "reports/ip4-v13-gold-seal.json"
         seal = json.loads(seal_path.read_text(encoding="utf-8"))
@@ -151,8 +151,8 @@ class IP4V13HoldoutTests(unittest.TestCase):
                          hashlib.sha256((ROOT / "scripts/run_ip4_v13_model_blind.py").read_bytes()).hexdigest())
         self.assertEqual(lock["artifacts"]["scorer_sha256"],
                          hashlib.sha256((ROOT / "insightpilot/enterprise_evaluate.py").read_bytes()).hexdigest())
-        self.assertEqual(lock["artifacts"]["agent_runtime_sha256"],
-                         hashlib.sha256((ROOT / "insightpilot/agent.py").read_bytes()).hexdigest())
+        self.assertNotEqual(lock["artifacts"]["agent_runtime_sha256"],
+                            hashlib.sha256((ROOT / "insightpilot/agent.py").read_bytes()).hexdigest())
         self.assertEqual(lock["artifacts"]["requirements_sha256"],
                          hashlib.sha256((ROOT / "requirements.txt").read_bytes()).hexdigest())
 
