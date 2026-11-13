@@ -1,5 +1,13 @@
 # IP-1：查询引擎与 PostgreSQL 适配
 
+## 2026-11-13 离线前置切片
+
+当前入口使用统一 `build_core` 构造器；`QueryEngine` 明确声明后端名与 tenant scope 能力。CLI、API、MCP 默认共享 SQLite adapter 和同一 `InsightPilot` 查询/验证路径。SQLite 仍委托既有 SQL allowlist、只读 authorizer、参数绑定、100 行上限、VM 预算、超时与取消机制。
+
+新增 adapter contract tests 和入口装配测试：SQLite 满足 protocol、拒绝写语句/PII 列/超限查询/不支持的 tenant scope，绑定值保持在 SQL 参数外；CLI 实际走分析核心，API 与 MCP 启动也调用共同构造器。43 项定向测试通过，覆盖 QueryEngine、S1/S2、API/MCP、tenant、tracing 和 parity。没有启动 Docker 或 PostgreSQL。
+
+**当前 PostgreSQL/RLS integration gate 仍为 pending。**下文 PostgreSQL 16.15 结果是历史运行记录，不是本次离线切片的验收证据；Docker 可用后仍需重跑当前代码的 PostgreSQL tenant/RLS 集成验证。
+
 ## 本阶段交付
 
 - `QueryEngine` 协议定义统一的只读查询接口。

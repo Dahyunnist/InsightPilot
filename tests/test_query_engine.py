@@ -62,6 +62,8 @@ class QueryEngineTests(unittest.TestCase):
         engine = PostgresQueryEngine("unused", tenant_id="tenant-a", pool=FakePool(connection))
         query = compile_query(QueryPlan("approved_refund_order_rate", "2026-10-01", "2026-10-08", None, None))
         self.assertIsInstance(engine, QueryEngine)
+        self.assertEqual(engine.backend_name, "postgresql")
+        self.assertTrue(engine.requires_tenant_scope)
 
         rows, version = engine.execute_readonly(query)
 

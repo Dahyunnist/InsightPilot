@@ -83,7 +83,7 @@ class InsightPilot:
             "layer": layer,
             "category": failure_code,
             "exception_class": type(exc).__name__,
-            "backend": "postgresql" if hasattr(self.query_engine, "tenant_id") else "sqlite",
+            "backend": self.query_engine.backend_name,
             "tenant_context": "bound" if tenant_id or self.tenant_id else "missing",
             "sql_sha256": hashlib.sha256(sql.encode("utf-8")).hexdigest() if sql is not None else None,
             "parameter_count": parameter_count,
@@ -169,7 +169,7 @@ class InsightPilot:
         trusted_tenant_id = tenant_id or self.tenant_id
         try:
             dataset_version, data_fingerprint = self.query_engine.read_data_identity(tenant_id=trusted_tenant_id)
-            if not isinstance(self.query_engine, SQLiteQueryEngine):
+            if self.query_engine.backend_name != "sqlite":
                 verifier_version, verifier_fingerprint = SQLiteQueryEngine(
                     self.database_path).read_data_identity()
                 if (dataset_version, data_fingerprint) != (verifier_version, verifier_fingerprint):
@@ -194,7 +194,7 @@ class InsightPilot:
             return {"run_id": run_id, "status": "failed", "stage": "planning",
                     "reason": "invalid_region_filter", "message": "地区筛选值不在已知数据目录中。",
                     "failure_detail": {"layer": "plan", "category": "invalid_region",
-                                       "backend": "postgresql" if hasattr(self.query_engine, "tenant_id") else "sqlite"}}
+                                       "backend": self.query_engine.backend_name}}
         if cancel_event is not None and cancel_event.is_set():
             return {"run_id": run_id, "status": "cancelled", "stage": "planning", "message": "分析已取消。"}
         if authorized_region is not None:
@@ -245,7 +245,7 @@ class InsightPilot:
             return {"run_id": run_id, "status": "failed", "stage": "verification",
                     "message": "独立汇总复核未通过；已停止生成结论。", "verification": verification,
                     "failure_detail": {"layer": "verification", "category": "independent_reconciliation",
-                                       "backend": "postgresql" if hasattr(self.query_engine, "tenant_id") else "sqlite",
+                                       "backend": self.query_engine.backend_name,
                                        "tenant_context": "bound" if trusted_tenant_id else "missing"}}
         return {
             "run_id": run_id,
@@ -267,7 +267,7 @@ class InsightPilot:
                      "region": plan.region, "dimension": plan.dimension},
             "data_version": dataset_version,
             "data_fingerprint": data_fingerprint,
-            "query_backend": "sqlite" if isinstance(self.query_engine, SQLiteQueryEngine) else "postgresql",
+            "query_backend": self.query_engine.backend_name,
             "generated_at_utc": datetime.now(timezone.utc).isoformat(),
             "sql": compiled.sql,
             "parameters": list(compiled.params),
@@ -276,3 +276,9 @@ class InsightPilot:
             "verification": verification,
             "limitations": ["只回答语义目录支持的单指标和维度。", "当前数据为可复现的合成样本。"],
         }
+
+
+def build_core(settings, *, query_engine: QueryEngine | None = None, tracer=_DEFAULT_TRACER) -> InsightPilot:
+    """Build the shared guarded analysis core used by CLI, API, and MCP entrypoints."""
+    return InsightPilot(OpenAICompatiblePlanner(settings), settings.database_path,
+                        query_engine=query_engine, tracer=tracer)

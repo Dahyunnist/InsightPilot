@@ -7,9 +7,8 @@ import json
 import sys
 from pathlib import Path
 
-from .agent import InsightPilot
+from .agent import build_core
 from .config import load_settings
-from .planner import OpenAICompatiblePlanner
 
 
 def main() -> None:
@@ -20,7 +19,7 @@ def main() -> None:
     args = parser.parse_args()
     root = Path.cwd()
     settings = load_settings(root)
-    app = InsightPilot(OpenAICompatiblePlanner(settings), settings.database_path)
+    app = build_core(settings)
     print(json.dumps(app.analyze(args.question), ensure_ascii=False, indent=2))
 
 

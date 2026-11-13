@@ -17,6 +17,8 @@ from insightpilot.rule_baseline import RulePlanner
 
 
 class TenantCaptureEngine:
+    backend_name = "postgresql"
+    requires_tenant_scope = True
     tenant_id = None
 
     def __init__(self, database: Path):

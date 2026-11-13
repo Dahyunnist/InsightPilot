@@ -24,6 +24,10 @@ from .sql_policy import MAX_ROWS, SQLPolicyError, validate_sql
 class QueryEngine(Protocol):
     """Execute only compiler-produced, validated, parameterized read queries."""
 
+    backend_name: str
+    requires_tenant_scope: bool
+    tenant_id: str | None
+
     def read_data_identity(self, *, tenant_id: str | None = None) -> tuple[str, str | None]: ...
 
     def execute_readonly(
@@ -37,6 +41,10 @@ class QueryEngine(Protocol):
 
 class SQLiteQueryEngine:
     """SQLite compatibility adapter retaining existing authorizer and budgets."""
+
+    backend_name = "sqlite"
+    requires_tenant_scope = False
+    tenant_id: str | None = None
 
     def __init__(self, database_path: Path):
         self.database_path = database_path
@@ -55,6 +63,9 @@ class SQLiteQueryEngine:
 
 class PostgresQueryEngine:
     """PostgreSQL adapter using a bounded psycopg pool and transaction-local RLS scope."""
+
+    backend_name = "postgresql"
+    requires_tenant_scope = True
 
     def __init__(self, dsn: str, *, tenant_id: str | None = None,
                  pool: Any | None = None, max_rows: int = MAX_ROWS,

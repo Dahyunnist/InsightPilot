@@ -10,11 +10,10 @@ from mcp.server import MCPServer
 from mcp.types import CallToolResult, TextContent
 import uvicorn
 
-from .agent import InsightPilot
+from .agent import InsightPilot, build_core
 from .auth import BearerScopeMiddleware
 from .config import load_settings
 from .metrics import METRICS, catalog_document, required_access_scopes
-from .planner import OpenAICompatiblePlanner
 
 
 def build_mcp_server(core: InsightPilot, contract_path: Path | None = None,
@@ -46,7 +45,7 @@ def build_mcp_server(core: InsightPilot, contract_path: Path | None = None,
 def main() -> None:
     root = Path(__file__).resolve().parents[1]
     settings = load_settings(root)
-    core = InsightPilot(OpenAICompatiblePlanner(settings), settings.database_path)
+    core = build_core(settings)
     server = build_mcp_server(core, authorized_region=os.environ.get("INSIGHTPILOT_API_REGION") or None)
     app = server.streamable_http_app(streamable_http_path="/mcp", stateless_http=True, host="127.0.0.1")
     app.add_middleware(BearerScopeMiddleware, token=os.environ.get("INSIGHTPILOT_API_TOKEN") or None,

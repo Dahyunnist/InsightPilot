@@ -14,3 +14,5 @@
 3. IP3 Collector 生产部署、长期采样/保留策略尚未实测。
 
 本审计当时未读取 `.env`、密钥或临时目录，也未发外部请求。后续 2026-11-13 v13 单轮预检多次调用 DeepSeek 只读余额接口；详情、哈希、预算和自动审核阻断见 [v13 单轮预检](stage-IP4-v13-full-suite-2026-11-13.md#2026-11-13-单轮预检与审批阻断)。没有 Docker 操作或模型请求。
+
+IP1 后续离线切片补齐 QueryEngine 后端能力契约、共享核心构造入口和 SQLite adapter contract tests；43 项 SQLite/API/MCP/CLI/tenant/tracing/parity 定向回归通过。PostgreSQL/RLS integration gate 继续 pending，未启动 Docker；详情见 [IP1 查询引擎记录](stage-IP1.md#2026-11-13-离线前置切片)。

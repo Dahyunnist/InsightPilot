@@ -18,10 +18,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from .agent import InsightPilot
+from .agent import InsightPilot, build_core
 from .config import load_settings
 from .metrics import required_access_scopes
-from .planner import OpenAICompatiblePlanner
 from .query_engine import PostgresQueryEngine
 from .run_store import IdempotencyConflict, RunStore
 from .tracing import (configure_otlp_tracing, finish_analysis_span, get_tracer,
@@ -54,7 +53,7 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
     tenant_tokens = api_tenant_tokens or {}
     if any(not token or not tenant.strip() for token, tenant in tenant_tokens.items()):
         raise ValueError("Tenant token mapping requires non-empty tokens and tenant IDs")
-    if hasattr(core.query_engine, "tenant_id") and not tenant_tokens:
+    if core.query_engine.requires_tenant_scope and not tenant_tokens:
         raise ValueError("PostgreSQL API requires a server-side authenticated token-to-tenant mapping")
     app.state.core = core
     app.state.run_store = store
@@ -284,8 +283,7 @@ def build_default_app() -> FastAPI:
     ).split(",")))
     region = os.environ.get("INSIGHTPILOT_API_REGION") or None
     tracer, trace_shutdown = configure_otlp_tracing()
-    core = InsightPilot(OpenAICompatiblePlanner(settings), settings.database_path,
-                        query_engine=query_engine, tracer=tracer)
+    core = build_core(settings, query_engine=query_engine, tracer=tracer)
     return create_app(core, api_token=token, api_tenant_tokens=token_tenants,
                       api_scopes=scopes, authorized_region=region, tracer=tracer,
                       trace_shutdown=trace_shutdown)
