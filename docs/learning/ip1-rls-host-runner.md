@@ -6,4 +6,4 @@
 
 ## 宿主操作与清理
 
-在仓库目录运行 `Set-Location E:\job\insightpilot; .\scripts\run_ip1_rls.ps1`。脚本仅接受 Compose 中绑定 `127.0.0.1:55432` 的服务；测试数据位于容器 tmpfs。完成后 `finally` 执行 `docker compose ... stop postgres`，不删除卷、不运行 `down -v`。验收证据应包含退出码、两租户隔离、无 tenant 拒绝、只读 DDL/DML 拒绝、statement timeout 与连接池恢复结果；不要粘贴密码或连接串。
+默认运行 `.\scripts\run_ip1_rls.ps1` 只做 dry-run：校验 Compose 并确认目标绑定 `127.0.0.1:55432`，不启动服务。真实执行须显式传入 `-Execute -ConfirmDatabaseCreation`。脚本拒绝非本机端口映射；测试数据位于容器 tmpfs。完成后 `finally` 只停止 `postgres`，不删除卷、不运行 `down -v`。验收证据应包含退出码、两租户隔离、无 tenant 拒绝、只读 DDL/DML 拒绝、statement timeout 与连接池恢复结果；不要粘贴密码或连接串。
