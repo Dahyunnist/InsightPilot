@@ -467,7 +467,7 @@
     "global_remaining_after_reserve_usd": 4.53009415,
     "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
     "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
-    "preregistration_sha256": "7ff7d2d451402e047d9ac535022a582021bb0860a99e99100fb5764f3b8f303c",
+    "preregistration_sha256": "4f4a4e405fe087b3fbdd5f3b9bb9215d8b77e8bd33ac1897b9cab986b572fe23",
     "model_calls": 0
   },
   "ip4_v13_historical_reservation": {
@@ -475,11 +475,14 @@
     "holdout": "insightpilot-ip4-independent-v13",
     "worst_case_reserve_usd": 0.0936672,
     "worst_case_reserve_cny": 0.702504,
+    "historical_attempt_exposure": "unknown",
+    "historical_uncertain_reserve_usd": 0.0468336,
+    "current_run_reserve_usd": 0.0468336,
     "global_remaining_before_usd": 4.62376135,
     "global_remaining_after_reserve_usd": 4.53009415,
     "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
     "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
-    "preregistration_sha256": "3b95b8b4cca74f1c93799d1916cf991933d79c539b4912c152863e5fbce05346",
+    "preregistration_sha256": "7ff7d2d451402e047d9ac535022a582021bb0860a99e99100fb5764f3b8f303c",
     "model_calls": 0,
     "historical_exposure": "unknown"
   }
