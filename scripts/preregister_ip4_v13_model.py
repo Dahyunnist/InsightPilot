@@ -79,7 +79,8 @@ def main() -> None:
     ledger_path = reports / "model-experiment-cost-ledger.json"
     ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
     existing_reservation = ledger.get("ip4_v13_reservation", {})
-    if existing_reservation.get("status") == "reserved":
+    if (existing_reservation.get("status") == "reserved" and
+            "ip4_v13_historical_reservation" not in ledger):
         if (existing_reservation.get("holdout") != manifest["suite_id"] or
                 existing_reservation.get("blind_sha256") != sha(blind) or
                 existing_reservation.get("gold_sha256") != sha(gold)):
