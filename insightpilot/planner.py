@@ -201,6 +201,9 @@ class OpenAICompatiblePlanner:
             raise NeedsClarification("日期无效，请提供正确的日历日期。") from None
         if not source_periods:
             raise NeedsClarification("请提供明确日期；对比问题需提供两个日期区间。")
+        if any(date.fromisoformat(period_start) >= date.fromisoformat(period_end)
+               for period_start, period_end in source_periods):
+            raise NeedsClarification("结束日期必须晚于开始日期。")
         use_metric_retrieval = getattr(self, "use_metric_retrieval", True)
         candidates = retrieve_metrics(q) if use_metric_retrieval else []
         if candidates and candidates[0].metric_id == "marketing_net_roi" and any(
@@ -231,8 +234,6 @@ class OpenAICompatiblePlanner:
         if any(period[0] < METRICS[metric_id].effective_from for period in source_periods):
             raise NeedsClarification(f"指标定义自 {METRICS[metric_id].effective_from} 起生效；请提供该日期之后的时间窗。")
         start, end = (date.fromisoformat(value) for value in source_periods[0])
-        if any(date.fromisoformat(period_start) >= date.fromisoformat(period_end) for period_start, period_end in source_periods):
-            raise NeedsClarification("结束日期必须晚于开始日期。")
         dimension = result.get("dimension")
         if dimension not in (None, "category", "channel", "region", "month_utc", "refund_day_utc", "refund_status", "campaign"):
             raise PlanError("LLM selected a dimension outside the allowed set")

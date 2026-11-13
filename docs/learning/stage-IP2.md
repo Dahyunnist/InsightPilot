@@ -21,4 +21,6 @@
 
 定向测试覆盖多表 JOIN、重复/修订费用、撤销对净收入影响、UTC 右开边界、NULL、seed 重建、gold 哈希、目录检索、API/MCP scope 和地区澄清。全套 unittest：84/84 通过；`git diff --check` 通过。
 
+指标版本行为回归另覆盖生效日当天允许并绑定当前 `metric_version`、生效日前拒绝、跨生效日区间澄清、反向日期拒绝。三条拒绝路径都断言 planner 的模型调用数为 0。反向日期检查已前移到模型调用前，避免无效日期消耗模型请求。
+
 当时的 IP-2 冻结只在 SQLite 上完成；该段记录了当时的限制。后续 IP-1 已集成 PostgreSQL/RLS，并把临时双租户 PostgreSQL fixture 与 IP-2 数据集一同复验。新结果及边界见 [IP-1/IP-2 数据库权限复验](stage-IP1.md#ip-1ip-2-数据库权限复验2026-10-23) 与 `reports/ip1-ip2-postgres-acceptance-v1.json`。源 SQLite 仍是未分租户的合成基线；PG 装载器在临时副本中为租户表加 `tenant_id` 并复制两租户数据。
