@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import argparse
 import json
 import platform
 import subprocess
@@ -54,8 +55,12 @@ def provider_balance(api_key: str, origin: str) -> dict:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--revision", required=True, help="versioned run-lock suffix, e.g. 20261113")
+    args = parser.parse_args()
     evals = ROOT / "evals"
     reports = ROOT / "reports"
+    suffix = "-" + args.revision
     blind = evals / "ip4-v13-blind.jsonl"
     gold = evals / "ip4-v13-gold.jsonl"
     manifest_path = evals / "ip4-v13-manifest.json"
@@ -89,6 +94,7 @@ def main() -> None:
     per_call = (INPUT_TOKENS_PER_CALL * INPUT_PEAK_USD_PER_MILLION +
                 OUTPUT_TOKENS_PER_CALL * OUTPUT_PEAK_USD_PER_MILLION) / 1_000_000
     reserve_usd = round(max_calls * per_call, 8)
+    one_pass_reserve_usd = round(len(CASES) * per_call, 8)
     reserve_cny = round(reserve_usd * CONSERVATIVE_CNY_PER_USD, 6)
     if reserve_usd > prior_remaining or reserve_cny > 5.0:
         raise SystemExit("v13 peak-price reserve exceeds the remaining cap or ¥5 limit")
@@ -119,7 +125,7 @@ def main() -> None:
         "gold_not_in_agent_context": True, "old_ip4_touched": False,
         "model_calls_during_freeze_and_baseline": 0,
     }
-    seal_path = reports / "ip4-v13-gold-seal.json"
+    seal_path = reports / f"ip4-v13-gold-seal{suffix}.json"
     seal_path.write_text(json.dumps(seal, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     artifacts = {
@@ -157,10 +163,14 @@ def main() -> None:
         "guard_case_count": manifest["guard_case_count"], "max_attempts_per_case": MAX_ATTEMPTS_PER_CASE,
         "max_api_calls": max_calls, "execution_attempts_per_case": 1,
         "planned_max_api_calls": len(CASES), "input_tokens_per_request": INPUT_TOKENS_PER_CALL,
+        "single_pass_only": True, "historical_attempt_exposure": "unknown",
+        "historical_uncertain_reserve_usd": one_pass_reserve_usd,
+        "current_run_reserve_usd": one_pass_reserve_usd,
         "max_prompt_bytes_per_call": MAX_PROMPT_BYTES_PER_CALL,
         "output_tokens_per_request": OUTPUT_TOKENS_PER_CALL,
         "temperature": 0, "single_backend_arm": "SQLite",
-        "agent_input_contract": "Each model request receives one blind question only; scorer loads gold after analysis.",
+        "agent_input_contract": "Each model request receives one frozen question only; scorer loads gold after analysis.",
+        "gold_seal_file": f"reports/ip4-v13-gold-seal{suffix}.json",
         "pricing": {"source": PRICING_SOURCE, "basis": "DeepSeek Flash peak uncached input and peak output rates",
                     "input_peak_usd_per_million": INPUT_PEAK_USD_PER_MILLION,
                     "output_peak_usd_per_million": OUTPUT_PEAK_USD_PER_MILLION},
@@ -173,12 +183,21 @@ def main() -> None:
         "old_ip4_touched": False, "v12_score_reused": False,
         "artifacts": artifacts,
     }
-    lock_path = reports / "ip4-v13-model-preregistration.json"
+    lock_path = reports / f"ip4-v13-model-preregistration{suffix}.json"
     lock_path.write_text(json.dumps(lock, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if existing_reservation.get("status") == "reserved":
+        ledger["ip4_v13_historical_reservation"] = {
+            **existing_reservation,
+            "status": "historical_provider_receipt_unknown",
+            "historical_exposure": "unknown",
+        }
     ledger["remaining_global_cap_after_ip4_v13_reserve_usd"] = round(prior_remaining - reserve_usd, 8)
     ledger["ip4_v13_reservation"] = {
         "status": "reserved", "holdout": manifest["suite_id"],
         "worst_case_reserve_usd": reserve_usd, "worst_case_reserve_cny": reserve_cny,
+        "historical_attempt_exposure": "unknown",
+        "historical_uncertain_reserve_usd": one_pass_reserve_usd,
+        "current_run_reserve_usd": one_pass_reserve_usd,
         "global_remaining_before_usd": prior_remaining,
         "global_remaining_after_reserve_usd": round(prior_remaining - reserve_usd, 8),
         "blind_sha256": artifacts["blind_sha256"], "gold_sha256": artifacts["gold_sha256"],

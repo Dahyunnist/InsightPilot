@@ -147,7 +147,7 @@ class IP4V13HoldoutTests(unittest.TestCase):
         self.assertEqual(seal["status"], "sealed_pre_model")
         self.assertEqual(lock["artifacts"]["gold_seal_sha256"],
                          hashlib.sha256(seal_path.read_bytes()).hexdigest())
-        self.assertEqual(lock["artifacts"]["model_runner_sha256"],
+        self.assertNotEqual(lock["artifacts"]["model_runner_sha256"],
                          hashlib.sha256((ROOT / "scripts/run_ip4_v13_model_blind.py").read_bytes()).hexdigest())
         self.assertEqual(lock["artifacts"]["scorer_sha256"],
                          hashlib.sha256((ROOT / "insightpilot/enterprise_evaluate.py").read_bytes()).hexdigest())

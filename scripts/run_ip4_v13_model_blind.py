@@ -76,12 +76,16 @@ def is_ancestor(commit: str, ref: str) -> bool:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="verify all gates and send no model requests")
+    parser.add_argument("--preregistration", type=Path,
+                        default=Path("reports/ip4-v13-model-preregistration.json"))
+    parser.add_argument("--report", type=Path,
+                        default=Path("reports/ip4-v13-model-evaluation-report.json"))
     args = parser.parse_args()
-    lock_path = ROOT / "reports/ip4-v13-model-preregistration.json"
+    lock_path = (ROOT / args.preregistration).resolve()
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
     blind_path, gold_path = ROOT / "evals/ip4-v13-blind.jsonl", ROOT / "evals/ip4-v13-gold.jsonl"
     manifest_path = ROOT / "evals/ip4-v13-manifest.json"
-    seal_path = ROOT / "reports/ip4-v13-gold-seal.json"
+    seal_path = ROOT / lock.get("gold_seal_file", "reports/ip4-v13-gold-seal.json")
     baseline_path = ROOT / "reports/ip4-v13-rule-baseline.json"
     if lock["status"] != "frozen_pre_model":
         raise SystemExit("v13 preregistration is not pre-model; no request sent")
@@ -114,11 +118,10 @@ def main() -> None:
     if (platform.python_version() != lock["python_version"] or
             platform.python_implementation() != lock["python_implementation"]):
         raise SystemExit("Python runtime differs from preregistration; no request sent")
-    current_commit, remote_commit = git_text("rev-parse", "HEAD"), git_text("rev-parse", "origin/master")
+    current_commit = git_text("rev-parse", "HEAD")
     freeze_commit = lock["freeze_commit_sha"]
-    if (not is_ancestor(freeze_commit, current_commit) or
-            not is_ancestor(freeze_commit, remote_commit)):
-        raise SystemExit("registered freeze commit is not present locally and on origin/master; no request sent")
+    if current_commit != freeze_commit:
+        raise SystemExit("current commit differs from registered freeze; no request sent")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
     if baseline.get("model_calls") != 0 or baseline.get("data_fingerprint") != lock["data_fingerprint"]:
@@ -145,7 +148,7 @@ def main() -> None:
             lock.get("planned_max_api_calls") != len(cases) or
             lock["planned_max_api_calls"] > lock["max_api_calls"]):
         raise SystemExit("v13 execution count differs from one-call-per-case plan; no request sent")
-    report_path = ROOT / "reports/ip4-v13-model-blind-report.json"
+    report_path = (ROOT / args.report).resolve()
     if report_path.exists():
         raise SystemExit("v13 model report already exists; refusing to overwrite or rerun the frozen set")
 
@@ -167,11 +170,13 @@ def main() -> None:
         print(json.dumps({
             "status": "dry_preflight_passed", "model_requests_sent": 0,
             "freeze_commit_sha": freeze_commit, "current_commit_sha": current_commit,
-            "origin_master_sha": remote_commit, "model": settings.model,
+            "model": settings.model,
             "case_count": len(cases), "answerable_case_count": lock["answerable_case_count"],
             "guard_case_count": lock["guard_case_count"],
             "max_actual_model_calls": lock["planned_max_api_calls"],
             "reserved_worst_case_usd": lock["worst_case_reserve_usd"],
+            "current_run_reserve_usd": lock["current_run_reserve_usd"],
+            "historical_uncertain_reserve_usd": lock["historical_uncertain_reserve_usd"],
             "reserved_worst_case_cny": lock["worst_case_reserve_cny"],
             "provider_balance_preflight": balance,
             "blind_sha256": lock["artifacts"]["blind_sha256"],
@@ -212,9 +217,11 @@ def main() -> None:
         raise SystemExit("v13 cost reservation is missing or differs from lock; no request sent")
     before = lock["global_remaining_before_usd"]
     estimate = round(budget.estimated_usd, 8)
-    if estimate > lock["worst_case_reserve_usd"] + 1e-12 or estimate > before:
+    current_reserve = lock["current_run_reserve_usd"]
+    historical_reserve = lock["historical_uncertain_reserve_usd"]
+    if estimate > current_reserve + 1e-12 or historical_reserve + estimate > before:
         raise SystemExit("Observed v13 usage exceeded its reserved cap")
-    after = round(before - estimate, 8)
+    after = round(before - historical_reserve - estimate, 8)
     prompt_tokens = sum(call["usage"].get("prompt_tokens", 0) for row in outputs
                         for attempt in row["attempts"] for call in attempt["provider_calls"] if call["usage"])
     completion_tokens = sum(call["usage"].get("completion_tokens", 0) for row in outputs
@@ -245,8 +252,9 @@ def main() -> None:
                             and score.get("actual_status") == "answered"]
     report = {
         "created_at_utc": datetime.now(timezone.utc).isoformat(), "status": "completed",
+        "evaluation_design": "single pass on frozen synthetic questions; historical exposure unknown",
         "suite_id": lock["suite_id"], "model": settings.model,
-        "data_fingerprint": lock["data_fingerprint"], "blind_sha256": lock["artifacts"]["blind_sha256"],
+        "data_fingerprint": lock["data_fingerprint"], "questions_sha256": lock["artifacts"]["blind_sha256"],
         "gold_sha256": lock["artifacts"]["gold_sha256"], "preregistration_sha256": sha(lock_path),
         "scorer_sha256": lock["artifacts"]["scorer_sha256"], "old_ip4_touched": False,
         "model_calls": len([call for row in outputs for attempt in row["attempts"]
@@ -271,7 +279,8 @@ def main() -> None:
         "usage_missing_calls": sum(call["usage"] is None for row in outputs
                                     for attempt in row["attempts"] for call in attempt["provider_calls"]),
         "peak_list_price_estimate_usd": estimate,
-        "reserved_worst_case_usd": lock["worst_case_reserve_usd"],
+        "reserved_worst_case_usd": current_reserve,
+        "historical_uncertain_reserve_usd": historical_reserve,
         "global_remaining_before_usd": before, "global_remaining_after_actual_usage_usd": after,
         "global_cap_usd": lock["global_cap_usd"], "provider_balance_preflight": balance,
         "rule_baseline": {key: baseline[key] for key in
@@ -279,26 +288,29 @@ def main() -> None:
                            "guard_passed", "guard_total", "false_refusals", "false_accepts")},
         "cases": outputs,
     }
-    report_path = ROOT / "reports/ip4-v13-model-blind-report.json"
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     ledger["remaining_global_cap_after_ip4_v13_model_usd"] = after
     ledger["remaining_global_cap_after_ip4_v13_reserve_usd"] = round(
-        before - lock["worst_case_reserve_usd"], 8)
+        before - historical_reserve - current_reserve, 8)
     ledger["ip4_v13_reservation"].update({
-        "status": "consumed", "actual_usage_usd": estimate,
-        "unused_reserve_released_usd": round(lock["worst_case_reserve_usd"] - estimate, 8),
+        "status": "current_run_completed_prior_attempt_unresolved",
+        "current_run_actual_usage_usd": estimate,
+        "current_run_unused_reserve_released_usd": round(current_reserve - estimate, 8),
+        "historical_uncertain_reserve_usd": historical_reserve,
         "global_remaining_after_actual_usage_usd": after,
         "model_calls": report["model_calls"],
     })
-    ledger["ip4_v13_independent_holdout"] = {
-        "status": "completed", "holdout": lock["suite_id"],
-        "data_fingerprint": lock["data_fingerprint"], "blind_sha256": lock["artifacts"]["blind_sha256"],
+    ledger["ip4_v13_model_evaluation"] = {
+        "status": "completed_single_pass", "suite_id": lock["suite_id"],
+        "evaluation_design": report["evaluation_design"],
+        "data_fingerprint": lock["data_fingerprint"], "questions_sha256": lock["artifacts"]["blind_sha256"],
         "gold_sha256": lock["artifacts"]["gold_sha256"], "model_calls": report["model_calls"],
         "strict_passed": f"{report['passed']}/{report['total']}",
         "peak_list_price_estimate_usd": estimate,
-        "worst_case_reserve_usd": lock["worst_case_reserve_usd"],
+        "worst_case_reserve_usd": current_reserve,
+        "historical_uncertain_reserve_usd": historical_reserve,
         "global_remaining_before_usd": before, "global_remaining_after_actual_usage_usd": after,
-        "no_old_ip4_rerun": True,
+        "old_ip4_touched": False,
     }
     ledger_path.write_text(json.dumps(ledger, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({key: value for key, value in report.items() if key != "cases"},
