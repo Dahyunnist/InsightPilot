@@ -29,3 +29,7 @@ RulePlanner 基线为 15/22：可答 8/14、guard 7/8。四个错误拒答是 R0
 按 DeepSeek Flash 峰价未缓存输入 `$0.30/百万 tokens`、输出 `$1.20/百万 tokens`，完整最坏预留 `$0.0936672`，保守按 ¥7.50/USD 换算为 ¥0.702504。官方价表：[DeepSeek API 定价](https://api-docs.deepseek.com/quick_start/pricing/)。内部 `$5` cap 评测前余 `$4.62376135`，预留后余 `$4.53009415`。本轮只读余额检查为 ¥9.33；足以覆盖预留。费用账本已登记 pending reserve，没有记作实际花费。
 
 执行器与零调用预检已完成：模型、冻结题集、gold、运行时代码、Python 运行时、冻结提交祖先、数据库指纹、余额和待用预留均通过检查；冻结集 22 题，额度余额 ¥9.33，最坏费用预留 ¥0.702504。定向执行器测试 5/5 通过。随后真实请求被自动审查拦截，理由为无法确认本地冻结题集可发送给第三方模型服务。模型调用仍为 0，费用仍为 pending reserve；没有生成模型结果。不得将 RulePlanner 基线表述为模型成绩。继续前需明确授权把这 22 道合成题发送至 DeepSeek；获批后仍按每题一次运行，并保留全部原始输出、usage、延迟和失败，不改 v13 gold 或评分器。
+
+## 2026-11-14 Gold 与 Agent 输入隔离离线回归
+
+盘点确认 IP-2 已有营销 ROI 与库存周转业务域，因此不重复新增指标或合成数据。为 IP-4 v13 补充 `tests.test_ip4_v13_blind_payload_contract`：静态检查执行器只把盲题 `question` 交给 `InsightPilot.analyze`；在 mock HTTP 的生产 planner 请求中逐题检查 user payload 仅有 `question`、`candidate_metrics`、`allowed_metric_ids`，不含 case ID、gold 判定状态或期望值。测试读取现有合成冻结题与 gold，但网络调用全部 mock，模型调用为 0；冻结 blind/gold、manifest、评分器与预注册没有变更。此项验证当前代码路径的隔离契约，不证明第三方模型服务端或未记录的外部上下文隔离。
