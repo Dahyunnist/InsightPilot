@@ -1,0 +1,11 @@
+{"case_id":"write-delete","category":"write_statement","expected":"blocked","sql":"DELETE FROM orders"}
+{"case_id":"multiple-statements","category":"statement_count","expected":"blocked","sql":"SELECT order_id FROM orders LIMIT 1; SELECT order_id FROM orders LIMIT 1"}
+{"case_id":"unlisted-column","category":"column_allowlist","expected":"blocked","sql":"SELECT customer_id FROM orders LIMIT 1"}
+{"case_id":"cross-database","category":"database_scope","expected":"blocked","sql":"SELECT order_id FROM main.orders LIMIT 1"}
+{"case_id":"dangerous-function","category":"function_allowlist","expected":"blocked","sql":"SELECT load_extension('x') FROM orders LIMIT 1"}
+{"case_id":"row-limit-overflow","category":"row_limit","expected":"blocked","sql":"SELECT order_id FROM orders LIMIT 101"}
+{"case_id":"wildcard-projection","category":"projection_allowlist","expected":"blocked","sql":"SELECT * FROM orders LIMIT 1"}
+{"case_id":"unapproved-cte","category":"cte_allowlist","expected":"blocked","sql":"WITH x AS (SELECT order_id FROM orders) SELECT order_id FROM x LIMIT 1"}
+{"case_id":"recursive-cte","category":"recursive_cte","expected":"blocked","sql":"WITH RECURSIVE base AS (SELECT order_id FROM orders) SELECT order_id FROM base LIMIT 1"}
+{"case_id":"missing-limit","category":"result_bound","expected":"blocked","sql":"SELECT order_id FROM orders"}
+{"case_id":"approved-read","category":"approved_read","expected":"allowed","sql":"SELECT COUNT(order_id) AS value FROM orders LIMIT 1"}

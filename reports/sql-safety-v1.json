@@ -1,0 +1,103 @@
+{
+  "suite_id": "insightpilot-sql-safety-v1",
+  "status": "completed",
+  "case_count": 11,
+  "passed": 11,
+  "dangerous_blocked": 10,
+  "dangerous_total": 10,
+  "approved_allowed": 1,
+  "approved_total": 1,
+  "cases_sha256": "baed76a6ca4cdc474e84e90d916c9c2ab09d81dedc06e73d45de8cfc61bc85d9",
+  "model_calls": 0,
+  "database": "fixed synthetic S0 seed; approved query executed read-only",
+  "results": [
+    {
+      "case_id": "write-delete",
+      "category": "write_statement",
+      "expected": "blocked",
+      "observed": "blocked",
+      "passed": true,
+      "reason": "Only SELECT queries are allowed"
+    },
+    {
+      "case_id": "multiple-statements",
+      "category": "statement_count",
+      "expected": "blocked",
+      "observed": "blocked",
+      "passed": true,
+      "reason": "Exactly one SQL statement is allowed"
+    },
+    {
+      "case_id": "unlisted-column",
+      "category": "column_allowlist",
+      "expected": "blocked",
+      "observed": "blocked",
+      "passed": true,
+      "reason": "Column is outside the allowlist"
+    },
+    {
+      "case_id": "cross-database",
+      "category": "database_scope",
+      "expected": "blocked",
+      "observed": "blocked",
+      "passed": true,
+      "reason": "Cross-database references are not allowed"
+    },
+    {
+      "case_id": "dangerous-function",
+      "category": "function_allowlist",
+      "expected": "blocked",
+      "observed": "blocked",
+      "passed": true,
+      "reason": "Function is outside the allowlist"
+    },
+    {
+      "case_id": "row-limit-overflow",
+      "category": "row_limit",
+      "expected": "blocked",
+      "observed": "blocked",
+      "passed": true,
+      "reason": "LIMIT must be between 1 and 100"
+    },
+    {
+      "case_id": "wildcard-projection",
+      "category": "projection_allowlist",
+      "expected": "blocked",
+      "observed": "blocked",
+      "passed": true,
+      "reason": "Wildcard projection is not allowed"
+    },
+    {
+      "case_id": "unapproved-cte",
+      "category": "cte_allowlist",
+      "expected": "blocked",
+      "observed": "blocked",
+      "passed": true,
+      "reason": "CTE name is outside the allowlist"
+    },
+    {
+      "case_id": "recursive-cte",
+      "category": "recursive_cte",
+      "expected": "blocked",
+      "observed": "blocked",
+      "passed": true,
+      "reason": "Recursive CTEs are not allowed"
+    },
+    {
+      "case_id": "missing-limit",
+      "category": "result_bound",
+      "expected": "blocked",
+      "observed": "blocked",
+      "passed": true,
+      "reason": "A numeric LIMIT is required"
+    },
+    {
+      "case_id": "approved-read",
+      "category": "approved_read",
+      "expected": "allowed",
+      "observed": "allowed",
+      "passed": true,
+      "reason": null
+    }
+  ]
+}
