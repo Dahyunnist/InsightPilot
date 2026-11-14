@@ -1,0 +1,35 @@
+{
+  "migration": "ip4-v13-r3-ledger-provenance-v1",
+  "status": "forward_audit_only",
+  "historical_records_modified": false,
+  "migration_audit": {
+    "migration_version": 1,
+    "status": "legacy_history_inconsistent",
+    "source_attempt_status": "blocked_pre_model_balance_unverified",
+    "attempt_referenced_preregistration_sha256": "4f4a4e405fe087b3fbdd5f3b9bb9215d8b77e8bd33ac1897b9cab986b572fe23",
+    "r2_lock_file_sha256": "4f4a4e405fe087b3fbdd5f3b9bb9215d8b77e8bd33ac1897b9cab986b572fe23",
+    "r2_lock_cost_ledger_sha256_before_reservation": "9ca0120b037dfb2e880b969b7eaad7ae6b7e0b45bcaae1fa6d257709f22fd6fe",
+    "ledger_historical_preregistration_sha256": "9c88623226a6b8bc12f15e8113c9a2535e27d4b0839434b14e4eb32ce6c56e6d",
+    "ledger_active_preregistration_sha256": "06d3afff9616d23715e0b156e752e5b733f11e23522187f801b4f448b08f38c7",
+    "attempt_prior_reservation_usd": 0.0936672,
+    "r2_lock_reservation_usd": 0.0936672,
+    "ledger_historical_reservation_usd": 0.0936672,
+    "checks": {
+      "attempt_reference_matches_lock_file": true,
+      "attempt_reference_matches_r2_lock_artifact": true,
+      "question_hash_matches": true,
+      "gold_hash_matches": true,
+      "reservation_hash_matches_attempt": false,
+      "attempt_amount_matches_lock": true,
+      "ledger_amount_matches_lock": true
+    },
+    "source_unchanged": true
+  },
+  "source_hashes": {
+    "attempt_manifest_sha256": "55522987998e648701537bc01d69c3617bf8048a9300ebe8e444adc52cd20f13",
+    "r2_preregistration_sha256": "4f4a4e405fe087b3fbdd5f3b9bb9215d8b77e8bd33ac1897b9cab986b572fe23",
+    "ledger_sha256_at_migration": "cf8e4ffcb6227dd7ea2fd31ad6524770d0624ac6df29960f70fed42fe60460cb"
+  },
+  "question_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+  "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2"
+}

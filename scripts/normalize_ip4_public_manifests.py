@@ -190,6 +190,41 @@ def normalize_blocked_attempt(events: list[dict] | None = None) -> dict:
     return _seal(value)
 
 
+def audit_r3_legacy_reservation(attempt: dict, lock: dict, ledger: dict,
+                                *, attempt_lock_sha256: str, lock_file_sha256: str) -> dict:
+    """Forward-only provenance record; never mutates source attempt, lock, or ledger."""
+    active = ledger.get("ip4_v13_reservation", {})
+    historical = ledger.get("ip4_v13_historical_reservation", {})
+    expected_sha = attempt.get("prior_preregistration_sha256")
+    expected_amount = attempt.get("prior_reservation_usd")
+    lock_amount = lock.get("worst_case_reserve_usd")
+    historical_amount = historical.get("worst_case_reserve_usd")
+    checks = {
+        "attempt_reference_matches_lock_file": expected_sha == lock_file_sha256,
+        "attempt_reference_matches_r2_lock_artifact": expected_sha == attempt_lock_sha256,
+        "question_hash_matches": lock.get("artifacts", {}).get("blind_sha256") == attempt.get("question_set_sha256"),
+        "gold_hash_matches": lock.get("artifacts", {}).get("gold_sha256") == attempt.get("gold_sha256"),
+        "reservation_hash_matches_attempt": historical.get("preregistration_sha256") == expected_sha,
+        "attempt_amount_matches_lock": expected_amount == lock_amount,
+        "ledger_amount_matches_lock": historical_amount == lock_amount,
+    }
+    return {
+        "migration_version": 1,
+        "status": "verified" if all(checks.values()) else "legacy_history_inconsistent",
+        "source_attempt_status": attempt.get("status"),
+        "attempt_referenced_preregistration_sha256": expected_sha,
+        "r2_lock_file_sha256": lock_file_sha256,
+        "r2_lock_cost_ledger_sha256_before_reservation": lock.get("artifacts", {}).get("cost_ledger_sha256_before_reservation"),
+        "ledger_historical_preregistration_sha256": historical.get("preregistration_sha256"),
+        "ledger_active_preregistration_sha256": active.get("preregistration_sha256"),
+        "attempt_prior_reservation_usd": expected_amount,
+        "r2_lock_reservation_usd": lock_amount,
+        "ledger_historical_reservation_usd": historical_amount,
+        "checks": checks,
+        "source_unchanged": True,
+    }
+
+
 def build_public_views() -> tuple[dict, dict, dict]:
     baseline = normalize_baseline()
     attempt = normalize_blocked_attempt()

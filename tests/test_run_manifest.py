@@ -4,7 +4,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from insightpilot.run_manifest import validate_public_run_manifest, validate_run_manifest, write_validated_reports
-from scripts.normalize_ip4_public_manifests import build_public_views, normalize_baseline
+from scripts.normalize_ip4_public_manifests import (audit_r3_legacy_reservation,
+                                                    build_public_views, normalize_baseline)
 
 
 class RunManifestTests(unittest.TestCase):
@@ -108,6 +109,35 @@ class RunManifestTests(unittest.TestCase):
         invalid = copy.deepcopy(attempt)
         invalid["field_status"].pop("trace_id")
         self.assertTrue(any("trace_id" in error for error in validate_public_run_manifest(invalid)))
+
+    def test_forward_r3_reservation_audit_preserves_mismatch_and_fail_closed_status(self):
+        attempt = {"status": "blocked_pre_model_balance_unverified", "prior_preregistration_sha256": "a" * 64,
+                   "question_set_sha256": "b" * 64, "gold_sha256": "c" * 64, "prior_reservation_usd": 0.1}
+        lock = {"worst_case_reserve_usd": 0.1,
+                "artifacts": {"blind_sha256": "b" * 64, "gold_sha256": "c" * 64,
+                              "cost_ledger_sha256_before_reservation": "d" * 64}}
+        ledger = {"ip4_v13_reservation": {"preregistration_sha256": "a" * 64},
+                  "ip4_v13_historical_reservation": {"preregistration_sha256": "a" * 64,
+                                                      "worst_case_reserve_usd": 0.1}}
+        matched = audit_r3_legacy_reservation(attempt, lock, ledger,
+                                              attempt_lock_sha256="a" * 64, lock_file_sha256="a" * 64)
+        self.assertEqual("verified", matched["status"])
+        ledger["ip4_v13_historical_reservation"]["preregistration_sha256"] = "e" * 64
+        mismatched = audit_r3_legacy_reservation(attempt, lock, ledger,
+                                                 attempt_lock_sha256="a" * 64, lock_file_sha256="a" * 64)
+        self.assertEqual("legacy_history_inconsistent", mismatched["status"])
+        self.assertEqual("a" * 64, mismatched["attempt_referenced_preregistration_sha256"])
+        self.assertEqual("e" * 64, mismatched["ledger_historical_preregistration_sha256"])
+
+    def test_public_manifest_accepts_explicit_request_and_cost_uncertainty(self):
+        root = Path(__file__).resolve().parents[1]
+        baseline = json.loads((root / "reports/ip4-v13-rule-baseline-public-manifest.json").read_text(encoding="utf-8"))
+        baseline["request_outcome"] = {"attempted": 15, "provider_responses_received": 0,
+                                        "cost_status": "not_applicable"}
+        self.assertEqual([], validate_public_run_manifest(baseline))
+        baseline["request_outcome"]["provider_responses_received"] = 16
+        self.assertIn("provider responses cannot exceed attempted requests",
+                      validate_public_run_manifest(baseline))
 
 
 if __name__ == "__main__":

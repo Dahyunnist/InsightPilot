@@ -56,6 +56,23 @@ def validate_public_run_manifest(value: dict) -> list[str]:
     if not isinstance(value, dict):
         return ["public manifest must be an object"]
     errors: list[str] = []
+    request_outcome = value.get("request_outcome")
+    if request_outcome is not None:
+        if not isinstance(request_outcome, dict):
+            errors.append("request_outcome must be an object")
+        else:
+            for field in ("attempted", "provider_responses_received"):
+                count = request_outcome.get(field)
+                if not isinstance(count, int) or isinstance(count, bool) or count < 0:
+                    errors.append(f"request_outcome.{field} must be a non-negative integer")
+            if (isinstance(request_outcome.get("attempted"), int) and
+                    isinstance(request_outcome.get("provider_responses_received"), int) and
+                    request_outcome["provider_responses_received"] > request_outcome["attempted"]):
+                errors.append("provider responses cannot exceed attempted requests")
+            if request_outcome.get("cost_status") not in {"confirmed", "estimated", "unconfirmed", "not_applicable"}:
+                errors.append("invalid request_outcome.cost_status")
+            if request_outcome.get("cost_status") == "unconfirmed" and value.get("cost_usd") is not None:
+                errors.append("unconfirmed actual cost must be null")
     missing = PUBLIC_REQUIRED - value.keys()
     if missing:
         errors.append("missing public fields: " + ", ".join(sorted(missing)))
