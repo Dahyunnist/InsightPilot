@@ -456,7 +456,7 @@
   "remaining_global_cap_after_ip4_v3_model_usd": 4.62376135,
   "remaining_global_cap_after_ip4_v13_reserve_usd": 4.53009415,
   "ip4_v13_reservation": {
-    "status": "reserved",
+    "status": "current_run_completed_prior_attempt_unresolved",
     "holdout": "insightpilot-ip4-independent-v13",
     "worst_case_reserve_usd": 0.0936672,
     "worst_case_reserve_cny": 0.702504,
@@ -467,8 +467,11 @@
     "global_remaining_after_reserve_usd": 4.53009415,
     "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
     "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
-    "preregistration_sha256": "4f4a4e405fe087b3fbdd5f3b9bb9215d8b77e8bd33ac1897b9cab986b572fe23",
-    "model_calls": 0
+    "preregistration_sha256": "06d3afff9616d23715e0b156e752e5b733f11e23522187f801b4f448b08f38c7",
+    "model_calls": 15,
+    "current_run_actual_usage_usd": 0.031932,
+    "current_run_unused_reserve_released_usd": 0.0149016,
+    "global_remaining_after_actual_usage_usd": 4.54499575
   },
   "ip4_v13_historical_reservation": {
     "status": "historical_provider_receipt_unknown",
@@ -482,8 +485,30 @@
     "global_remaining_after_reserve_usd": 4.53009415,
     "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
     "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
-    "preregistration_sha256": "7ff7d2d451402e047d9ac535022a582021bb0860a99e99100fb5764f3b8f303c",
+    "preregistration_sha256": "9c88623226a6b8bc12f15e8113c9a2535e27d4b0839434b14e4eb32ce6c56e6d",
     "model_calls": 0,
     "historical_exposure": "unknown"
+  },
+  "remaining_global_cap_after_ip4_v13_model_usd": 4.54499575,
+  "ip4_v13_model_evaluation": {
+    "suite_id": "insightpilot-ip4-independent-v13",
+    "evaluation_design": "single pass on frozen synthetic questions; historical exposure unknown",
+    "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
+    "questions_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+    "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+    "model_calls": 15,
+    "strict_passed": "7/22",
+    "peak_list_price_estimate_usd": 0.031932,
+    "worst_case_reserve_usd": 0.0468336,
+    "historical_uncertain_reserve_usd": 0.0468336,
+    "global_remaining_before_usd": 4.62376135,
+    "global_remaining_after_actual_usage_usd": 4.54499575,
+    "old_ip4_touched": false,
+    "status": "partial_transport_blocked",
+    "model_answerable_outputs": "0/14",
+    "deterministic_guard_result": "7/8; RulePlanner only",
+    "confirmed_actual_cost_usd": null,
+    "peak_price_worst_case_reserve_usd": 0.031932,
+    "provider_receipt_status": "unknown; URLError with no response"
   }
 }

@@ -10,6 +10,21 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class IP4V13OfflineAuditTests(unittest.TestCase):
+    def test_r5_transport_failures_are_not_scored_as_model_results(self):
+        report = json.loads((ROOT / "reports/ip4-v13-model-evaluation-r5.json").read_text(encoding="utf-8-sig"))
+        self.assertEqual("partial_transport_blocked", report["status"])
+        self.assertEqual(15, report["model_requests_attempted"])
+        self.assertEqual(0, report["provider_responses_received"])
+        self.assertEqual("0/14", report["model_answerable_outputs"])
+        self.assertEqual("7/8; RulePlanner preflight only, not model output",
+                         report["deterministic_guard_result"])
+        self.assertIsNone(report["confirmed_actual_cost_usd"])
+        self.assertEqual(0.031932, report["peak_price_worst_case_reserve_usd"])
+        transport_rows = [attempt for case in report["cases"] for attempt in case["attempts"]
+                          if attempt.get("evaluation_disposition") == "not_scored_transport_error"]
+        self.assertEqual(15, len(transport_rows))
+        self.assertTrue(all(attempt["score"]["passed"] is None for attempt in transport_rows))
+
     def test_no_verifier_development_arm_is_per_case_and_zero_call(self):
         report = evaluate_no_verifier()
         self.assertEqual("development_only", report["evaluation_role"])
@@ -27,7 +42,18 @@ class IP4V13OfflineAuditTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             ablation_path = Path(directory) / "ablation.json"
             ablation_path.write_text(json.dumps(ablation), encoding="utf-8")
-            gate = build_preflight(ablation, ablation_path)
+            ledger_path = ROOT / "reports/model-experiment-cost-ledger.json"
+            ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+            saved_ledger = ledger_path.read_text(encoding="utf-8")
+            try:
+                ledger["ip4_v13_reservation"]["status"] = "reserved"
+                ledger["ip4_v13_reservation"]["worst_case_reserve_usd"] = 0.0936672
+                ledger["ip4_v13_reservation"]["blind_sha256"] = ablation["questions_sha256"]
+                ledger["ip4_v13_reservation"]["gold_sha256"] = ablation["gold_sha256"]
+                ledger_path.write_text(json.dumps(ledger), encoding="utf-8")
+                gate = build_preflight(ablation, ablation_path)
+            finally:
+                ledger_path.write_text(saved_ledger, encoding="utf-8")
         self.assertEqual("20261113-r4", gate["revision"])
         self.assertEqual("development_only", gate["evaluation_role"])
         self.assertFalse(gate["is_blind"])

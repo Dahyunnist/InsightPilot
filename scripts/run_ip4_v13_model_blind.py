@@ -80,6 +80,8 @@ def main() -> None:
                         default=Path("reports/ip4-v13-model-preregistration.json"))
     parser.add_argument("--report", type=Path,
                         default=Path("reports/ip4-v13-model-evaluation-report.json"))
+    parser.add_argument("--balance-evidence-json", help="sanitized provider balance JSON for this run only")
+    parser.add_argument("--balance-checked-at-utc", help="UTC timestamp supplied by trusted host")
     args = parser.parse_args()
     lock_path = (ROOT / args.preregistration).resolve()
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
@@ -133,7 +135,28 @@ def main() -> None:
     if settings.model != lock["model"] or origin != lock["base_url_origin"]:
         raise SystemExit("provider settings differ from preregistration; no request sent")
     settings = replace(settings, max_completion_tokens=lock["output_tokens_per_request"])
-    balance = check_provider_balance(settings.api_key, origin, lock["provider_balance_reserve_check"])
+    if args.balance_evidence_json or args.balance_checked_at_utc:
+        if not args.balance_evidence_json or not args.balance_checked_at_utc:
+            raise SystemExit("both sanitized balance evidence and checked-at timestamp are required")
+        checked_at = datetime.fromisoformat(args.balance_checked_at_utc.replace("Z", "+00:00"))
+        age_seconds = (datetime.now(timezone.utc) - checked_at.astimezone(timezone.utc)).total_seconds()
+        if age_seconds < 0 or age_seconds > 300:
+            raise SystemExit("balance evidence must be no older than five minutes")
+        payload = json.loads(args.balance_evidence_json)
+        rows = payload.get("balance_infos") if isinstance(payload, dict) else None
+        if not isinstance(payload, dict) or payload.get("is_available") is not True or not isinstance(rows, list):
+            raise SystemExit("sanitized balance evidence is unavailable or malformed")
+        currency = lock["provider_balance_reserve_check"]["currency"]
+        row = next((item for item in rows if isinstance(item, dict) and item.get("currency") == currency), None)
+        available = float(row.get("total_balance", "0")) if row else 0.0
+        required = float(lock["provider_balance_reserve_check"]["required"])
+        if available + 1e-9 < required:
+            raise SystemExit("DeepSeek balance below frozen reserve; no model request sent")
+        balance = {"checked_at_utc": checked_at.astimezone(timezone.utc).isoformat(),
+                   "is_available": True, "currency": currency,
+                   "available": available, "required": required}
+    else:
+        balance = check_provider_balance(settings.api_key, origin, lock["provider_balance_reserve_check"])
 
     database = ROOT / "data/insightpilot-ip4-v13.sqlite"
     identity = read_data_identity(database)
@@ -172,6 +195,8 @@ def main() -> None:
             "freeze_commit_sha": freeze_commit, "current_commit_sha": current_commit,
             "model": settings.model,
             "case_count": len(cases), "answerable_case_count": lock["answerable_case_count"],
+            "evaluation_role": lock.get("evaluation_role", "unspecified"),
+            "is_blind": lock.get("is_blind", False),
             "guard_case_count": lock["guard_case_count"],
             "max_actual_model_calls": lock["planned_max_api_calls"],
             "reserved_worst_case_usd": lock["worst_case_reserve_usd"],

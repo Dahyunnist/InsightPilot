@@ -57,6 +57,8 @@ def provider_balance(api_key: str, origin: str) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--revision", required=True, help="versioned run-lock suffix, e.g. 20261113")
+    parser.add_argument("--balance-evidence-json", help="sanitized provider balance JSON for this run only")
+    parser.add_argument("--balance-checked-at-utc", help="UTC timestamp supplied by trusted host")
     args = parser.parse_args()
     evals = ROOT / "evals"
     reports = ROOT / "reports"
@@ -103,7 +105,26 @@ def main() -> None:
     settings = load_settings(ROOT)
     parsed = urlparse(settings.base_url)
     origin = f"{parsed.scheme}://{parsed.netloc}"
-    balance = provider_balance(settings.api_key, origin)
+    if args.balance_evidence_json or args.balance_checked_at_utc:
+        if not args.balance_evidence_json or not args.balance_checked_at_utc:
+            raise SystemExit("both sanitized balance evidence and checked-at timestamp are required")
+        checked_at = datetime.fromisoformat(args.balance_checked_at_utc.replace("Z", "+00:00"))
+        age_seconds = (datetime.now(timezone.utc) - checked_at.astimezone(timezone.utc)).total_seconds()
+        if age_seconds < 0 or age_seconds > 300:
+            raise SystemExit("balance evidence must be no older than five minutes")
+        payload = json.loads(args.balance_evidence_json)
+        if not isinstance(payload, dict) or payload.get("is_available") is not True:
+            raise SystemExit("sanitized balance evidence is unavailable")
+        rows = payload.get("balance_infos")
+        if not isinstance(rows, list):
+            raise SystemExit("sanitized balance evidence missing balance_infos")
+        balance = {"checked_at_utc": checked_at.astimezone(timezone.utc).isoformat(),
+                   "is_available": True,
+                   "balances": [{key: row.get(key) for key in
+                                 ("currency", "total_balance", "granted_balance", "topped_up_balance")}
+                                for row in rows if isinstance(row, dict)]}
+    else:
+        balance = provider_balance(settings.api_key, origin)
     currencies = {row["currency"]: float(row["total_balance"] or 0)
                   for row in balance["balances"] if row.get("currency")}
     if currencies.get("USD", 0.0) >= reserve_usd:
@@ -153,6 +174,7 @@ def main() -> None:
     }
     lock = {
         "suite_id": manifest["suite_id"], "status": "frozen_pre_model",
+        "evaluation_role": "development_only", "is_blind": False,
         "preregistered_at_utc": stamp, "model_calls": 0,
         "freeze_commit_sha": subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
