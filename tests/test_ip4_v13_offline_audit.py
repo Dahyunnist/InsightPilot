@@ -2,7 +2,9 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+import scripts.audit_ip4_v13_offline as offline_audit
 from scripts.audit_ip4_v13_offline import build_preflight, evaluate_no_verifier
 
 
@@ -42,18 +44,16 @@ class IP4V13OfflineAuditTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             ablation_path = Path(directory) / "ablation.json"
             ablation_path.write_text(json.dumps(ablation), encoding="utf-8")
-            ledger_path = ROOT / "reports/model-experiment-cost-ledger.json"
+            ledger_path = Path(directory) / "ledger.json"
+            ledger_path.write_bytes((ROOT / "reports/model-experiment-cost-ledger.json").read_bytes())
             ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
-            saved_ledger = ledger_path.read_text(encoding="utf-8")
-            try:
-                ledger["ip4_v13_reservation"]["status"] = "reserved"
-                ledger["ip4_v13_reservation"]["worst_case_reserve_usd"] = 0.0936672
-                ledger["ip4_v13_reservation"]["blind_sha256"] = ablation["questions_sha256"]
-                ledger["ip4_v13_reservation"]["gold_sha256"] = ablation["gold_sha256"]
-                ledger_path.write_text(json.dumps(ledger), encoding="utf-8")
+            ledger["ip4_v13_reservation"]["status"] = "reserved"
+            ledger["ip4_v13_reservation"]["worst_case_reserve_usd"] = 0.0936672
+            ledger["ip4_v13_reservation"]["blind_sha256"] = ablation["questions_sha256"]
+            ledger["ip4_v13_reservation"]["gold_sha256"] = ablation["gold_sha256"]
+            ledger_path.write_text(json.dumps(ledger), encoding="utf-8")
+            with patch.object(offline_audit, "LEDGER", ledger_path):
                 gate = build_preflight(ablation, ablation_path)
-            finally:
-                ledger_path.write_text(saved_ledger, encoding="utf-8")
         self.assertEqual("20261113-r4", gate["revision"])
         self.assertEqual("development_only", gate["evaluation_role"])
         self.assertFalse(gate["is_blind"])
