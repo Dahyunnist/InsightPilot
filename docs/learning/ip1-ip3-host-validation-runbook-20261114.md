@@ -8,7 +8,7 @@
 .\scripts\run_ip1_ip3_host_validation.ps1
 ```
 
-入口先检查 Docker daemon。Docker CLI/daemon 不可用时，只写 `blocked_docker_*` 汇总和脱敏日志到 `.tmp\host-ip1-ip3-<run-id>`，退出并停止；不会启动容器或自动重试。当前环境检查到 Docker daemon pipe 不存在，因此本轮没有运行宿主验收。
+入口先检查 Docker daemon。Docker CLI/daemon 不可用时，只写 `blocked_docker_*` 汇总和脱敏日志到系统临时目录 `insightpilot-host-ip1-ip3-<run-id>`，退出并停止；不会启动容器或自动重试。可用 `-ArtifactDirectory <path>` 指定其他报告目录。仓库 `.tmp/` 不会被入口读写。当前执行环境的 Docker API 返回 `permission denied`，因此本轮没有运行宿主验收。
 
 ## 执行内容
 

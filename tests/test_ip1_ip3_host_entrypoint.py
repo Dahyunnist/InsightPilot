@@ -13,9 +13,12 @@ class IP1IP3HostEntrypointTests(unittest.TestCase):
         self.path = self.root / "scripts/run_ip1_ip3_host_validation.ps1"
         self.script = self.path.read_text(encoding="utf-8-sig")
 
-    def test_entrypoint_preflights_once_before_stages_and_stores_artifacts_in_tmp(self):
+    def test_entrypoint_preflights_once_and_stores_artifacts_outside_repo_tmp(self):
         script = self.script
-        self.assertIn(".tmp\\host-ip1-ip3-", script)
+        self.assertIn("param([string]$ArtifactDirectory)", script)
+        self.assertIn("[IO.Path]::GetFullPath($ArtifactDirectory)", script)
+        self.assertIn("Join-Path $env:TEMP ('insightpilot-host-ip1-ip3-' + $RunId)", script)
+        self.assertNotIn(".tmp\\host-ip1-ip3-", script)
         self.assertIn("summary.json", script)
         self.assertIn("host-validation.log", script)
         self.assertIn("docker info --format", script)

@@ -1,9 +1,13 @@
-param()
+param([string]$ArtifactDirectory)
 
 $ErrorActionPreference = 'Stop'
 $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $RunId = (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0, 8)
-$ArtifactRoot = Join-Path $ProjectRoot ('.tmp\host-ip1-ip3-' + $RunId)
+$ArtifactRoot = if ($ArtifactDirectory) {
+    [IO.Path]::GetFullPath($ArtifactDirectory)
+} else {
+    Join-Path $env:TEMP ('insightpilot-host-ip1-ip3-' + $RunId)
+}
 $null = New-Item -ItemType Directory -Path $ArtifactRoot -Force
 $SummaryPath = Join-Path $ArtifactRoot 'summary.json'
 $LogPath = Join-Path $ArtifactRoot 'host-validation.log'
