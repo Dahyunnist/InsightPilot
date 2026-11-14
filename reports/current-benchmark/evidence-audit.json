@@ -1,9 +1,11 @@
 {
   "suite_id": "insightpilot-current-benchmark-evidence-audit-v1",
-  "status": "partial",
+  "status": "completed",
   "raw_sha256": "5c0f73885c50f0ba64aa94c7de95d07dce2491622e4589a2a0b566a48e1efece",
+  "catalog_source_commit": "117cebb3743a6e8cdffebf5894c77101d61c2a81",
+  "catalog_snapshot_sha256": "dcd27cf860d7ef1559365974831393239ebab9f454fbc8c3a2918f92ea9fefbc",
   "answered_cases": 14,
-  "complete_evidence_bundles": 0,
+  "complete_evidence_bundles": 14,
   "checks_passed_by_case_count": {
     "metric_registered": 14,
     "definition_version_matches": 14,
@@ -12,17 +14,17 @@
     "refund_status_matches": 14,
     "definition_source_matches": 14,
     "source_heading_exists": 14,
-    "lineage_matches_catalog": 0,
+    "lineage_matches_catalog": 14,
     "lineage_columns_allowlisted": 14,
     "sql_passes_ast_policy": 14,
     "runtime_verification_passed": 14
   },
   "model_calls": 0,
-  "definition": "catalog and source-link consistency, allowlisted lineage, SQL AST validity, and recorded runtime verification; does not score claim-level source support",
+  "definition": "catalog and source-link consistency against the catalog frozen at evaluation time, allowlisted lineage, SQL AST validity, and recorded runtime verification; does not score claim-level source support",
   "cases": [
     {
       "case_id": "N01",
-      "complete": false,
+      "complete": true,
       "checks": {
         "metric_registered": true,
         "definition_version_matches": true,
@@ -31,7 +33,7 @@
         "refund_status_matches": true,
         "definition_source_matches": true,
         "source_heading_exists": true,
-        "lineage_matches_catalog": false,
+        "lineage_matches_catalog": true,
         "lineage_columns_allowlisted": true,
         "sql_passes_ast_policy": true,
         "runtime_verification_passed": true
@@ -39,7 +41,7 @@
     },
     {
       "case_id": "N02",
-      "complete": false,
+      "complete": true,
       "checks": {
         "metric_registered": true,
         "definition_version_matches": true,
@@ -48,7 +50,7 @@
         "refund_status_matches": true,
         "definition_source_matches": true,
         "source_heading_exists": true,
-        "lineage_matches_catalog": false,
+        "lineage_matches_catalog": true,
         "lineage_columns_allowlisted": true,
         "sql_passes_ast_policy": true,
         "runtime_verification_passed": true
@@ -56,7 +58,7 @@
     },
     {
       "case_id": "N03",
-      "complete": false,
+      "complete": true,
       "checks": {
         "metric_registered": true,
         "definition_version_matches": true,
@@ -65,7 +67,7 @@
         "refund_status_matches": true,
         "definition_source_matches": true,
         "source_heading_exists": true,
-        "lineage_matches_catalog": false,
+        "lineage_matches_catalog": true,
         "lineage_columns_allowlisted": true,
         "sql_passes_ast_policy": true,
         "runtime_verification_passed": true
@@ -73,7 +75,7 @@
     },
     {
       "case_id": "N04",
-      "complete": false,
+      "complete": true,
       "checks": {
         "metric_registered": true,
         "definition_version_matches": true,
@@ -82,7 +84,7 @@
         "refund_status_matches": true,
         "definition_source_matches": true,
         "source_heading_exists": true,
-        "lineage_matches_catalog": false,
+        "lineage_matches_catalog": true,
         "lineage_columns_allowlisted": true,
         "sql_passes_ast_policy": true,
         "runtime_verification_passed": true
@@ -90,7 +92,7 @@
     },
     {
       "case_id": "N05",
-      "complete": false,
+      "complete": true,
       "checks": {
         "metric_registered": true,
         "definition_version_matches": true,
@@ -99,7 +101,7 @@
         "refund_status_matches": true,
         "definition_source_matches": true,
         "source_heading_exists": true,
-        "lineage_matches_catalog": false,
+        "lineage_matches_catalog": true,
         "lineage_columns_allowlisted": true,
         "sql_passes_ast_policy": true,
         "runtime_verification_passed": true
@@ -107,7 +109,7 @@
     },
     {
       "case_id": "N06",
-      "complete": false,
+      "complete": true,
       "checks": {
         "metric_registered": true,
         "definition_version_matches": true,
@@ -116,7 +118,7 @@
         "refund_status_matches": true,
         "definition_source_matches": true,
         "source_heading_exists": true,
-        "lineage_matches_catalog": false,
+        "lineage_matches_catalog": true,
         "lineage_columns_allowlisted": true,
         "sql_passes_ast_policy": true,
         "runtime_verification_passed": true
@@ -124,7 +126,7 @@
     },
     {
       "case_id": "N07",
-      "complete": false,
+      "complete": true,
       "checks": {
         "metric_registered": true,
         "definition_version_matches": true,
@@ -133,7 +135,7 @@
         "refund_status_matches": true,
         "definition_source_matches": true,
         "source_heading_exists": true,
-        "lineage_matches_catalog": false,
+        "lineage_matches_catalog": true,
         "lineage_columns_allowlisted": true,
         "sql_passes_ast_policy": true,
         "runtime_verification_passed": true
@@ -141,7 +143,7 @@
     },
     {
       "case_id": "N08",
-      "complete": false,
+      "complete": true,
       "checks": {
         "metric_registered": true,
         "definition_version_matches": true,
@@ -150,7 +152,7 @@
         "refund_status_matches": true,
         "definition_source_matches": true,
         "source_heading_exists": true,
-        "lineage_matches_catalog": false,
+        "lineage_matches_catalog": true,
         "lineage_columns_allowlisted": true,
         "sql_passes_ast_policy": true,
         "runtime_verification_passed": true
@@ -158,7 +160,7 @@
     },
     {
       "case_id": "N10",
-      "complete": false,
+      "complete": true,
       "checks": {
         "metric_registered": true,
         "definition_version_matches": true,
@@ -167,7 +169,7 @@
         "refund_status_matches": true,
         "definition_source_matches": true,
         "source_heading_exists": true,
-        "lineage_matches_catalog": false,
+        "lineage_matches_catalog": true,
         "lineage_columns_allowlisted": true,
         "sql_passes_ast_policy": true,
         "runtime_verification_passed": true
@@ -175,7 +177,7 @@
     },
     {
       "case_id": "N11",
-      "complete": false,
+      "complete": true,
       "checks": {
         "metric_registered": true,
         "definition_version_matches": true,
@@ -184,7 +186,7 @@
         "refund_status_matches": true,
         "definition_source_matches": true,
         "source_heading_exists": true,
-        "lineage_matches_catalog": false,
+        "lineage_matches_catalog": true,
         "lineage_columns_allowlisted": true,
         "sql_passes_ast_policy": true,
         "runtime_verification_passed": true
@@ -192,7 +194,7 @@
     },
     {
       "case_id": "N13",
-      "complete": false,
+      "complete": true,
       "checks": {
         "metric_registered": true,
         "definition_version_matches": true,
@@ -201,7 +203,7 @@
         "refund_status_matches": true,
         "definition_source_matches": true,
         "source_heading_exists": true,
-        "lineage_matches_catalog": false,
+        "lineage_matches_catalog": true,
         "lineage_columns_allowlisted": true,
         "sql_passes_ast_policy": true,
         "runtime_verification_passed": true
@@ -209,7 +211,7 @@
     },
     {
       "case_id": "N14",
-      "complete": false,
+      "complete": true,
       "checks": {
         "metric_registered": true,
         "definition_version_matches": true,
@@ -218,7 +220,7 @@
         "refund_status_matches": true,
         "definition_source_matches": true,
         "source_heading_exists": true,
-        "lineage_matches_catalog": false,
+        "lineage_matches_catalog": true,
         "lineage_columns_allowlisted": true,
         "sql_passes_ast_policy": true,
         "runtime_verification_passed": true
@@ -226,7 +228,7 @@
     },
     {
       "case_id": "N15",
-      "complete": false,
+      "complete": true,
       "checks": {
         "metric_registered": true,
         "definition_version_matches": true,
@@ -235,7 +237,7 @@
         "refund_status_matches": true,
         "definition_source_matches": true,
         "source_heading_exists": true,
-        "lineage_matches_catalog": false,
+        "lineage_matches_catalog": true,
         "lineage_columns_allowlisted": true,
         "sql_passes_ast_policy": true,
         "runtime_verification_passed": true
@@ -243,7 +245,7 @@
     },
     {
       "case_id": "N16",
-      "complete": false,
+      "complete": true,
       "checks": {
         "metric_registered": true,
         "definition_version_matches": true,
@@ -252,7 +254,7 @@
         "refund_status_matches": true,
         "definition_source_matches": true,
         "source_heading_exists": true,
-        "lineage_matches_catalog": false,
+        "lineage_matches_catalog": true,
         "lineage_columns_allowlisted": true,
         "sql_passes_ast_policy": true,
         "runtime_verification_passed": true

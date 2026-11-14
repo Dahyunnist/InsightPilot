@@ -1,0 +1,24 @@
+{
+  "catalog_source_commit": "117cebb3743a6e8cdffebf5894c77101d61c2a81",
+  "catalog_source_file": "insightpilot/metrics.py",
+  "evaluation_id": "insightpilot-current-benchmark-v4",
+  "evaluation_date": "2026-10-20",
+  "metrics": {
+    "approved_refund_amount_rate": {
+      "definition_version": "1.0.0",
+      "formula": "批准退款金额 / 对应订单实付金额",
+      "time_basis": "下单时间（UTC）",
+      "refund_status": "仅 approved",
+      "definition_source": "docs/product-contract.md#指标字典与口径",
+      "lineage": ["orders.order_id", "refunds.order_id", "refunds.amount_cents", "refunds.status"]
+    },
+    "approved_refund_order_rate": {
+      "definition_version": "1.0.0",
+      "formula": "至少有一笔批准退款的已支付订单数 / 全部符合条件的已支付订单数",
+      "time_basis": "下单时间（UTC）",
+      "refund_status": "仅 approved",
+      "definition_source": "docs/product-contract.md#指标字典与口径",
+      "lineage": ["orders.order_id", "refunds.order_id", "refunds.amount_cents", "refunds.status"]
+    }
+  }
+}

@@ -20,7 +20,7 @@ Set-Location E:\job\insightpilot
 
 ## 当前评测证据一致性
 
-另有只读审计 `scripts/audit_current_benchmark_evidence.py`，核对当前 30 题原始模型结果中的 14 个 answered case。定义来源、来源标题、公式、版本、SQL 策略和 verifier 均匹配 14/14；lineage 与现行指标目录精确匹配 0/14，因此完整证据包为 0/14，报告状态为 partial。历史结果中的 lineage 不应被静默覆盖；需确认生成时使用的目录版本或在同一冻结集重新生成证据后再重评完整性。该审计不调用模型。
+另有只读审计 `scripts/audit_current_benchmark_evidence.py`，核对当前 30 题原始模型结果中的 14 个 answered case。v4 评测记录于 2026-10-20；指标目录在 2026-11-13 更新。审计使用 `metric-catalog-snapshot.json` 中绑定到评测提交 `117cebb3743a6e8cdffebf5894c77101d61c2a81` 的历史定义。定义来源、标题、公式、版本、lineage、SQL 策略和 verifier 均匹配 14/14；完整证据包 14/14。该审计验证目录版本和返回结构一致，不验证每个自然语言 claim 的证据充分性，也不调用模型。
 
 冻结题集：`evals/sql-safety-v1.jsonl`。逐例结果和题集 SHA-256：`reports/sql-safety-v1.json`。评测代码：`scripts/evaluate_sql_safety.py`。修改题集须使用新版本号，不能覆盖 v1 报告。
 
