@@ -37,6 +37,12 @@ class IP1IP3HostEntrypointTests(unittest.TestCase):
         self.assertNotIn("down -v", script.lower())
         self.assertNotIn("volume rm", script.lower())
 
+    def test_ip3_child_launch_exception_is_recorded_as_failed(self):
+        script = self.script
+        ip3_section = script[script.index("$ip3Output ="):script.index("$Summary.status = 'passed'")]
+        self.assertIn("try {\n        $ip3Code = Invoke-StageProcess", ip3_section)
+        self.assertIn("catch {\n        $Summary.ip3 = 'failed'\n        throw\n    }", ip3_section)
+
     def test_entrypoint_parses_with_windows_powershell(self):
         powershell = shutil.which("powershell") or shutil.which("pwsh")
         self.assertIsNotNone(powershell, "PowerShell host is required")

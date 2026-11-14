@@ -22,3 +22,7 @@
 - 新增 `tests.test_ip3_mcp_cancellation`：正常 MCP 工具结果与取消时向 core worker 传递取消事件，2/2 通过。
 - API timeout 持久取消标记、取消登记竞态、并发同键预留，3/3 通过。
 - `git diff --check` 通过。没有付费模型请求，也没有启动 Docker。
+
+## 2026-11-14 宿主入口失败状态补记
+
+离线审查发现 IP-3 子进程启动阶段抛错时，一键入口的汇总会保留 `ip3=not_started`，与整体 `failed` 状态不一致。现捕获该阶段启动异常并先写入 `ip3=failed`，再交由外层保留失败摘要；新增静态契约测试并保留 PowerShell parser 检查。此修复只影响验收报告状态，不启动 Docker。IP-1/IP-3 宿主验收仍待用户回传运行日志，不能据此标记通过。

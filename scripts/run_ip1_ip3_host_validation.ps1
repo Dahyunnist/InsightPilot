@@ -95,7 +95,12 @@ try {
     $ip3Output = Join-Path $ArtifactRoot 'ip3'
     $null = New-Item -ItemType Directory -Path $ip3Output -Force
     $ip3Args = @('-ArtifactDirectory', $ip3Output)
-    $ip3Code = Invoke-StageProcess 'ip3-compose' (Join-Path $ProjectRoot 'scripts\run_ip3_compose.ps1') $ip3Args
+    try {
+        $ip3Code = Invoke-StageProcess 'ip3-compose' (Join-Path $ProjectRoot 'scripts\run_ip3_compose.ps1') $ip3Args
+    } catch {
+        $Summary.ip3 = 'failed'
+        throw
+    }
     $Summary.ip3 = if ($ip3Code -eq 0) { 'passed' } else { 'failed' }
     if ($ip3Code -ne 0) { throw 'IP-3 host validation failed; see sanitized ip3-compose.log.' }
 
