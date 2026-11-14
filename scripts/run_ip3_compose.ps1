@@ -70,11 +70,24 @@ try {
         throw "IP-3 HTTP 验收失败（退出码 $LASTEXITCODE）。"
     }
     $McpReport = Join-Path $ArtifactRoot 'ip3-mcp-cancellation.json'
-    $McpOutput = @(& docker compose --project-name $ComposeProject -f $ComposeFile exec -T api-probe python scripts/probe_ip3_mcp_cancel.py)
-    if ($LASTEXITCODE -ne 0) {
-        throw "IP-3 MCP cancellation smoke failed (exit code $LASTEXITCODE)."
+    $McpRawOut = Join-Path $ArtifactRoot 'ip3-mcp-cancellation.stdout.raw'
+    $McpRawErr = Join-Path $ArtifactRoot 'ip3-mcp-cancellation.stderr.raw'
+    $DockerPath = (Get-Command docker -ErrorAction Stop).Source
+    $McpProcess = Start-Process -FilePath $DockerPath `
+        -ArgumentList @('compose', '--project-name', $ComposeProject, '-f', $ComposeFile,
+                        'exec', '-T', 'api-probe', 'python', 'scripts/probe_ip3_mcp_cancel.py') `
+        -WorkingDirectory $ProjectRoot -PassThru -Wait -WindowStyle Hidden `
+        -RedirectStandardOutput $McpRawOut -RedirectStandardError $McpRawErr
+    $McpExitCode = $McpProcess.ExitCode
+    $McpStdout = if (Test-Path -LiteralPath $McpRawOut) { [IO.File]::ReadAllText($McpRawOut) } else { '' }
+    $McpStderr = if (Test-Path -LiteralPath $McpRawErr) { [IO.File]::ReadAllText($McpRawErr) } else { '' }
+    $McpOutputText = ($McpStdout + [Environment]::NewLine + $McpStderr) -replace '(?i)Bearer\s+[A-Za-z0-9._~+/-]+', 'Bearer [REDACTED]'
+    $McpOutputText | Set-Content -LiteralPath (Join-Path $ArtifactRoot 'ip3-mcp-cancellation.log') -Encoding UTF8
+    Remove-Item -LiteralPath $McpRawOut, $McpRawErr -Force -ErrorAction SilentlyContinue
+    if ($McpExitCode -ne 0) {
+        throw "IP-3 MCP cancellation smoke failed (exit code $McpExitCode); see ip3-mcp-cancellation.log."
     }
-    $McpResult = ($McpOutput -join "`n") | ConvertFrom-Json
+    $McpResult = $McpStdout | ConvertFrom-Json
     if ($McpResult.status -ne 'passed' -or -not $McpResult.core_cancel_event_observed -or
         -not $McpResult.worker_finished -or $McpResult.model_calls -ne 0) {
         throw 'IP-3 MCP cancellation smoke returned an unexpected result.'

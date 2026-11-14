@@ -13,7 +13,7 @@ import uvicorn
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 
-from insightpilot.mcp_server import build_mcp_server
+from insightpilot.mcp_server import build_streamable_http_app
 
 
 class CancellationProbeCore:
@@ -37,8 +37,7 @@ class CancellationProbeCore:
 
 async def verify() -> dict:
     core = CancellationProbeCore()
-    app = build_mcp_server(core).streamable_http_app(
-        streamable_http_path="/mcp", stateless_http=True, host="127.0.0.1")
+    app = build_streamable_http_app(core)
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     listener.bind(("127.0.0.1", 0))

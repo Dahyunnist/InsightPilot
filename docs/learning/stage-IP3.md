@@ -6,9 +6,11 @@ API 请求等待超过 `request_timeout_seconds` 时此前只设置内存取消�
 
 ## MCP 请求取消信号桥接
 
-MCP 工具此前同步调用 `core.analyze()`，没有传递取消事件。现工具改为异步入口，把分析放入 AnyIO worker thread；MCP 调度器取消工具任务时，入口设置 `threading.Event`，让分析核心在后续阶段检查并停止。离线单元测试直接驱动工具协程与 worker，覆盖正常返回和取消事件传递；API timeout、取消登记竞态及并发同键三项回归一并通过。本轮未执行完整 Streamable HTTP MCP 传输回归，因为当前 Windows Python 3.14 的 asyncio loop 初始化会卡住。取消不能中断已经在进行中的供应商 HTTP 请求；底层网络取消仍需供应商/宿主验证。
+MCP 工具异步运行于 AnyIO worker thread。SDK 请求取消事件桥接为核心 `threading.Event`，分析核心在阶段边界检查并停止。取消不能中断已经在进行中的供应商 HTTP 请求；底层网络取消仍需供应商客户端验收。
 
-宿主验收准备：IP-3 Compose runner 现在会在 API HTTP/idempotency/burst smoke 后，通过 Docker 容器内的 Python 3.12 启动本机 TCP Streamable HTTP MCP 服务，使用客户端取消实际工具请求，并检查 core worker 收到事件后结束。只使用 synthetic core，`model_calls=0`；报告写入传入的 artifact directory。容器镜像新增 smoke 脚本副本；当前 Docker daemon 不可用，未构建或启动容器。
+真实取消桥接依赖 MCP SDK 2.0.0 的内部请求上下文：`Context.request_context.session._request_outbound.cancel_requested`。通知由 SDK dispatcher 关联到原工具请求；工具监视该事件并设置核心 `threading.Event`。升级 MCP SDK 时必须重验这个内部字段与取消语义。
+
+2026-11-14 宿主 Compose 验收通过：stateful Streamable HTTP 使用真实 TCP 客户端发送取消通知。`client_cancel_received=true`、`core_cancel_event_observed=true`、`worker_finished=true`、`model_calls=0`，数据全为 synthetic。HTTP 幂等和并发 smoke 同轮通过；容器与网络均清理。报告在系统临时目录 `insightpilot-ip3-cancel-retry-20261114`。本机 Windows Python 3.14 的 asyncio loop 初始化会挂起，因此异步单元回归转在 Compose 的 Linux Python 3.12 镜像执行。取消不保证中断已发出的供应商 HTTP 请求，仍需供应商客户端单独验收。
 
 ## 幂等重放与限流次序
 
