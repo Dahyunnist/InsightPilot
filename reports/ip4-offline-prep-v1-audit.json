@@ -2537,21 +2537,64 @@
   },
   "interpretation": "完成状态表示双后端执行和逐题一致性检查完成；规则基线错误作为评测结果保留，不折算为执行器通过。",
   "model_ablation": {
-    "status": "pending_explicit_authorization_and_provider_transport",
+    "status": "pending_user_authorization_and_provider_transport",
     "comparison": "semantic retrieval on vs off; independent verifier on vs disabled using identical model outputs",
-    "maximum_api_calls": 44,
-    "attempts_per_case_per_retrieval_arm": 1,
+    "planned_first_pass_requests": 44,
+    "retrieval_arms": {
+      "retrieval_on": 22,
+      "retrieval_off": 22
+    },
+    "max_attempts_per_analysis": 2,
+    "maximum_api_calls_conservative": 88,
+    "maximum_api_calls_after_current_preflight": 76,
+    "preflight_blocked_case_ids_per_arm": [
+      "IP4V13-R11",
+      "IP4V13-R12",
+      "IP4V13-M10"
+    ],
     "cases": {
       "refunds": 12,
       "marketing_roi": 10
     },
     "input_tokens_per_request_cap": 3000,
     "output_tokens_per_request_cap": 1024,
-    "locked_peak_price_upper_bound_usd": 0.0936672,
+    "per_request_peak_price_upper_bound_usd": 0.0021288,
+    "conservative_reserve_usd": 0.1873344,
+    "project_cap_usd": 5.0,
+    "latest_ledger_remaining_before_reserve_usd": 4.54499575,
+    "ledger_implied_booked_peak_estimates_and_reserves_usd": 0.45500425,
+    "balance_after_planned_reserve_usd": 4.35766135,
+    "provider_invoice_actuals_verified": false,
+    "cumulative_accounting_breakdown": {
+      "usage_backed_peak_price_estimates_usd": 0.2528991,
+      "older_reserve_or_unreconciled_usage_usd": 0.12333955,
+      "prior_v13_unknown_exposure_reserve_usd": 0.0468336,
+      "current_v13_no_response_attempts_peak_estimate_usd": 0.031932,
+      "provider_invoice_actuals_available": false
+    },
+    "latest_v13_attempts": {
+      "attempted_requests": 15,
+      "provider_responses_received": 0,
+      "confirmed_actual_cost_usd": null,
+      "peak_price_estimate_usd": 0.031932
+    },
     "price_basis": "existing IP4 v13 preregistration at $0.30/M uncached input and $1.20/M output",
+    "request_payload": {
+      "common_system_prompt": "fixed planner instructions and JSON output contract",
+      "user_payload_fields": [
+        "question",
+        "candidate_metrics",
+        "allowed_metric_ids"
+      ],
+      "retrieval_on": "frozen synthetic question, retrieved static metric definitions and their IDs",
+      "retrieval_off": "same question, empty candidate_metrics and all allowed metric IDs",
+      "includes_query_results_or_database_rows": false,
+      "includes_gold_or_expected_answers": false,
+      "synthetic_only": true
+    },
     "replay_note": "Verifier-on/off comparison reuses identical captured model plans; it adds no API calls.",
     "data_artifacts": {
-      "bundle_root": "E:\\job\\insightpilot\\benchmarks\\ip4-offline-prep-v1",
+      "bundle_root": "benchmarks/ip4-offline-prep-v1",
       "agent_visible_files": [
         "agent-visible/refunds-blind.jsonl",
         "agent-visible/marketing_roi-blind.jsonl"
@@ -2562,6 +2605,8 @@
       ],
       "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
       "sqlite_sha256": "654663f4176fc4c91aa723c8d83d5f1e462ce90e0967e8b5c76cb53df5fcf311"
-    }
+    },
+    "model_backend_scope": "SQLite only; PostgreSQL remains covered by deterministic RulePlanner and parity arms",
+    "combined_v13_unreceipted_worst_case_usd": 0.0787656
   }
 }

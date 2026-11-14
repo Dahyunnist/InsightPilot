@@ -48,7 +48,19 @@ class IP4OfflineBundleTests(unittest.TestCase):
                               report["ruleplanner_without_independent_verifier_sqlite"]["failures"]])
             self.assertEqual(report["metric_retrieval_candidate_coverage"]["total_answerable"], 14)
             self.assertEqual(report["model_ablation"]["status"],
-                             "pending_explicit_authorization_and_provider_transport")
+                             "pending_user_authorization_and_provider_transport")
+            ablation = report["model_ablation"]
+            self.assertEqual(ablation["planned_first_pass_requests"], 44)
+            self.assertEqual(ablation["maximum_api_calls_conservative"], 88)
+            self.assertEqual(ablation["maximum_api_calls_after_current_preflight"], 76)
+            self.assertEqual(ablation["conservative_reserve_usd"], 0.1873344)
+            self.assertEqual(ablation["latest_ledger_remaining_before_reserve_usd"], 4.54499575)
+            self.assertEqual(ablation["balance_after_planned_reserve_usd"], 4.35766135)
+            self.assertEqual(ablation["ledger_implied_booked_peak_estimates_and_reserves_usd"], 0.45500425)
+            self.assertEqual(ablation["combined_v13_unreceipted_worst_case_usd"], 0.0787656)
+            self.assertEqual(ablation["cumulative_accounting_breakdown"]["usage_backed_peak_price_estimates_usd"],
+                             0.2528991)
+            self.assertFalse(ablation["request_payload"]["includes_query_results_or_database_rows"])
 
 
 if __name__ == "__main__":

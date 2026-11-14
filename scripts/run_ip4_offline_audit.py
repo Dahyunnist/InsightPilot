@@ -18,9 +18,10 @@ import sys
 sys.path.insert(0, str(ROOT))
 
 from data.multidomain_seed import create_multidomain_database
-from insightpilot.agent import InsightPilot
+from insightpilot.agent import InsightPilot, _preflight
 from insightpilot.enterprise_evaluate import _compare, _compare_without_verification, _without_verification
 from insightpilot.metrics import retrieve_metrics
+from insightpilot.planner import _MAX_CALLS_PER_ANALYSIS
 from insightpilot.query_engine import PostgresQueryEngine
 from insightpilot.rule_baseline import RulePlanner
 
@@ -186,6 +187,29 @@ def run(bundle: Path = BUNDLE, database: Path = DEFAULT_DATABASE, output: Path |
     sqlite_arm, sqlite_results = _run_arm(cases, gold, database)
 
     no_verifier = _run_no_verifier(cases, gold, database)
+    arms = ("retrieval_on", "retrieval_off")
+    per_request_usd = 3000 * 0.30 / 1_000_000 + 1024 * 1.20 / 1_000_000
+    planned_first_pass_calls = len(cases) * len(arms)
+    budgeted_max_calls = planned_first_pass_calls * _MAX_CALLS_PER_ANALYSIS
+    preflight_blocked_ids = [case["case_id"] for case in cases if _preflight(case["question"])]
+    call_cap_after_preflight = ((len(cases) - len(preflight_blocked_ids)) * len(arms)
+                                * _MAX_CALLS_PER_ANALYSIS)
+    ledger = json.loads((ROOT / "reports/model-experiment-cost-ledger.json").read_text(encoding="utf-8"))
+    legacy_audit = json.loads((ROOT / "reports/cost-audit-v9.json").read_text(encoding="utf-8"))
+    project_cap = float(ledger["cap_usd"])
+    latest_remaining = float(ledger["remaining_global_cap_after_ip4_v13_model_usd"])
+    planned_reserve = round(budgeted_max_calls * per_request_usd, 8)
+    usage_estimate_after_v8 = legacy_audit["named_usage_estimates_after_v8_usd"] + sum(
+        ledger[key]["peak_list_price_estimate_usd"] for key in (
+            "v9_independent_holdout", "v10_independent_holdout", "v11_independent_holdout",
+            "v12_independent_holdout", "ip4_v3_model_run"))
+    older_unreconciled = legacy_audit["prior_reserve_or_unreconciled_usage_usd"]
+    prior_v13_reserve = ledger["ip4_v13_model_evaluation"]["historical_uncertain_reserve_usd"]
+    current_v13_peak_estimate = ledger["ip4_v13_model_evaluation"]["peak_list_price_estimate_usd"]
+    booked_breakdown = round(usage_estimate_after_v8 + older_unreconciled + prior_v13_reserve
+                             + current_v13_peak_estimate, 8)
+    if abs(booked_breakdown - (project_cap - latest_remaining)) > 1e-8:
+        raise ValueError("Current cumulative peak/reserve breakdown does not reconcile to the ledger")
     postgres_arms = {}
     sqlite_parity = {}
     result_parity = {}
@@ -227,15 +251,50 @@ def run(bundle: Path = BUNDLE, database: Path = DEFAULT_DATABASE, output: Path |
         "postgresql_sqlite_result_parity": result_parity,
         "interpretation": "完成状态表示双后端执行和逐题一致性检查完成；规则基线错误作为评测结果保留，不折算为执行器通过。",
         "model_ablation": {
-            "status": "pending_explicit_authorization_and_provider_transport",
+            "status": "pending_user_authorization_and_provider_transport",
             "comparison": "semantic retrieval on vs off; independent verifier on vs disabled using identical model outputs",
-            "maximum_api_calls": 44,
-            "attempts_per_case_per_retrieval_arm": 1,
+            "model_backend_scope": "SQLite only; PostgreSQL remains covered by deterministic RulePlanner and parity arms",
+            "planned_first_pass_requests": planned_first_pass_calls,
+            "retrieval_arms": {arm: len(cases) for arm in arms},
+            "max_attempts_per_analysis": _MAX_CALLS_PER_ANALYSIS,
+            "maximum_api_calls_conservative": budgeted_max_calls,
+            "maximum_api_calls_after_current_preflight": call_cap_after_preflight,
+            "preflight_blocked_case_ids_per_arm": preflight_blocked_ids,
             "cases": {domain: item["case_count"] for domain, item in manifest["domains"].items()},
             "input_tokens_per_request_cap": 3000,
             "output_tokens_per_request_cap": 1024,
-            "locked_peak_price_upper_bound_usd": 0.0936672,
+            "per_request_peak_price_upper_bound_usd": round(per_request_usd, 8),
+            "conservative_reserve_usd": planned_reserve,
+            "project_cap_usd": project_cap,
+            "latest_ledger_remaining_before_reserve_usd": latest_remaining,
+            "ledger_implied_booked_peak_estimates_and_reserves_usd": round(project_cap - latest_remaining, 8),
+            "cumulative_accounting_breakdown": {
+                "usage_backed_peak_price_estimates_usd": round(usage_estimate_after_v8, 8),
+                "older_reserve_or_unreconciled_usage_usd": older_unreconciled,
+                "prior_v13_unknown_exposure_reserve_usd": prior_v13_reserve,
+                "current_v13_no_response_attempts_peak_estimate_usd": current_v13_peak_estimate,
+                "provider_invoice_actuals_available": False,
+            },
+            "balance_after_planned_reserve_usd": round(latest_remaining - planned_reserve, 8),
+            "provider_invoice_actuals_verified": False,
+            "unresolved_prior_v13_reserve_usd": ledger["ip4_v13_model_evaluation"]["historical_uncertain_reserve_usd"],
+            "combined_v13_unreceipted_worst_case_usd": round(prior_v13_reserve + current_v13_peak_estimate, 8),
+            "latest_v13_attempts": {
+                "attempted_requests": ledger["ip4_v13_model_evaluation"]["model_calls"],
+                "provider_responses_received": 0,
+                "confirmed_actual_cost_usd": None,
+                "peak_price_estimate_usd": ledger["ip4_v13_model_evaluation"]["peak_list_price_estimate_usd"],
+            },
             "price_basis": "existing IP4 v13 preregistration at $0.30/M uncached input and $1.20/M output",
+            "request_payload": {
+                "common_system_prompt": "fixed planner instructions and JSON output contract",
+                "user_payload_fields": ["question", "candidate_metrics", "allowed_metric_ids"],
+                "retrieval_on": "frozen synthetic question, retrieved static metric definitions and their IDs",
+                "retrieval_off": "same question, empty candidate_metrics and all allowed metric IDs",
+                "includes_query_results_or_database_rows": False,
+                "includes_gold_or_expected_answers": False,
+                "synthetic_only": True,
+            },
             "replay_note": "Verifier-on/off comparison reuses identical captured model plans; it adds no API calls.",
             "data_artifacts": {
                 "bundle_root": str(bundle),
