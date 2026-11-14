@@ -42,6 +42,10 @@ class IP3ComposeRunnerTests(unittest.TestCase):
         self.assertIn("docker compose --project-name $ComposeProject -f $ComposeFile up -d --wait --pull never", script)
         self.assertIn("docker compose --project-name $ComposeProject -f $ComposeFile down", script)
         self.assertIn(r"scripts\probe_ip3_http.py --output $SmokeReport", script)
+        self.assertIn("[string]$ArtifactDirectory", script)
+        self.assertIn("scripts/probe_ip3_mcp_cancel.py", script)
+        self.assertIn("core_cancel_event_observed", script)
+        self.assertLess(script.index("probe_ip3_http.py"), script.index("probe_ip3_mcp_cancel.py"))
         self.assertLess(script.index("if ($Existing)"), script.index("build --pull api-probe"))
         self.assertLess(script.index("docker image inspect $BaseImage"), script.index("$ComposeStarted = $true"))
         self.assertLess(script.index("build --pull=false api-probe"), script.index("$ComposeStarted = $true"))
@@ -49,6 +53,8 @@ class IP3ComposeRunnerTests(unittest.TestCase):
         self.assertIn("finally", script)
         self.assertNotIn("down -v", script.lower())
         self.assertNotIn("docker compose down -v", script.lower())
+        dockerfile = (self.root / "Dockerfile.ip3").read_text(encoding="utf-8")
+        self.assertIn("COPY scripts/probe_ip3_mcp_cancel.py", dockerfile)
 
 
 if __name__ == "__main__":

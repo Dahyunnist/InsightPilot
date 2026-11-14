@@ -4,6 +4,8 @@
 
 离线审查发现 PostgreSQL `read_data_identity()` 在身份查询事务内已绑定只读角色和 tenant RLS，但没有设置 `statement_timeout`；与普通查询不同，读取 `data_meta` 若被数据库锁或延迟，也可能让分析入口长时间等待。现对身份读取同样应用引擎配置的超时，并将 SQLSTATE `57014` 映射为 `QueryTimeoutError(statement_timeout)`，使运行记录准确归类。新增 75 ms 可控超时回归并核对事务设置；`tests.test_query_engine`、`tests.test_s2_policy`、`tests.test_ip1_rls_runner` 共 18 项通过。此为离线 fake connection 证据，不替代宿主 PostgreSQL 实测。
 
+后续宿主入口增强：`scripts/run_ip1_rls.ps1` 除两租户 API/RLS 验收外，还运行 `scripts/verify_ip1_data_meta_timeout.py`。该检查用临时管理员连接锁住专用库 `public.data_meta`，用应用角色和 100 ms 引擎预算确认数据身份查询得到 `statement_timeout`，然后释放锁并确认读取恢复。3 秒 watchdog 只防止回归时脚本无限等待，watchdog 取消会判失败。报告可指定落在 `.tmp`。Runner 使用专属 Compose project，finally 仅 `down --remove-orphans`，不使用 `-v`；Compose 服务为 tmpfs，没有命名/宿主数据卷。此宿主检查尚未执行。
+
 ## 2026-11-13 离线前置切片
 
 当前入口使用统一 `build_core` 构造器；`QueryEngine` 明确声明后端名与 tenant scope 能力。CLI、API、MCP 默认共享 SQLite adapter 和同一 `InsightPilot` 查询/验证路径。SQLite 仍委托既有 SQL allowlist、只读 authorizer、参数绑定、100 行上限、VM 预算、超时与取消机制。

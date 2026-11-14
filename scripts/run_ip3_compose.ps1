@@ -1,10 +1,14 @@
-﻿$ErrorActionPreference = 'Stop'
+﻿param([string]$ArtifactDirectory)
+
+$ErrorActionPreference = 'Stop'
 
 $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $ComposeProject = 'insightpilot-ip3-compose'
 $ComposeFile = Join-Path $ProjectRoot 'docker-compose.ip3.yml'
 $Python = Join-Path $ProjectRoot '.venv\Scripts\python.exe'
 $BaseImage = 'python:3.12-slim'
+$ArtifactRoot = if ($ArtifactDirectory) { $ArtifactDirectory } else { Join-Path $ProjectRoot 'reports' }
+$null = New-Item -ItemType Directory -Path $ArtifactRoot -Force
 $ComposeStarted = $false
 $PushedLocation = $false
 
@@ -60,11 +64,22 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "IP-3 Compose 启动失败（退出码 $LASTEXITCODE）。检查 Docker 构建输出和包索引网络。"
     }
-    $SmokeReport = Join-Path $ProjectRoot ('reports\ip3-compose-http-' + (Get-Date -Format 'yyyyMMdd') + '.json')
+    $SmokeReport = Join-Path $ArtifactRoot 'ip3-compose-http.json'
     & $Python scripts\probe_ip3_http.py --output $SmokeReport
     if ($LASTEXITCODE -ne 0) {
         throw "IP-3 HTTP 验收失败（退出码 $LASTEXITCODE）。"
     }
+    $McpReport = Join-Path $ArtifactRoot 'ip3-mcp-cancellation.json'
+    $McpOutput = @(& docker compose --project-name $ComposeProject -f $ComposeFile exec -T api-probe python scripts/probe_ip3_mcp_cancel.py)
+    if ($LASTEXITCODE -ne 0) {
+        throw "IP-3 MCP cancellation smoke failed (exit code $LASTEXITCODE)."
+    }
+    $McpResult = ($McpOutput -join "`n") | ConvertFrom-Json
+    if ($McpResult.status -ne 'passed' -or -not $McpResult.core_cancel_event_observed -or
+        -not $McpResult.worker_finished -or $McpResult.model_calls -ne 0) {
+        throw 'IP-3 MCP cancellation smoke returned an unexpected result.'
+    }
+    $McpResult | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $McpReport -Encoding UTF8
 }
 catch {
     Write-Error -Message $_.Exception.Message -ErrorAction Continue

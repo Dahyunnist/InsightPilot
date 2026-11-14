@@ -5,5 +5,6 @@ RUN pip install --no-cache-dir --disable-pip-version-check --retries 0 --timeout
 COPY insightpilot ./insightpilot
 COPY data ./data
 COPY scripts/ip3_probe_app.py ./scripts/ip3_probe_app.py
+COPY scripts/probe_ip3_mcp_cancel.py ./scripts/probe_ip3_mcp_cancel.py
 ENV PYTHONPATH=/app
 CMD ["python", "scripts/ip3_probe_app.py"]

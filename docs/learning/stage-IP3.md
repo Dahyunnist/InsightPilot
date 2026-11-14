@@ -8,6 +8,8 @@ API 请求等待超过 `request_timeout_seconds` 时此前只设置内存取消�
 
 MCP 工具此前同步调用 `core.analyze()`，没有传递取消事件。现工具改为异步入口，把分析放入 AnyIO worker thread；MCP 调度器取消工具任务时，入口设置 `threading.Event`，让分析核心在后续阶段检查并停止。离线单元测试直接驱动工具协程与 worker，覆盖正常返回和取消事件传递；API timeout、取消登记竞态及并发同键三项回归一并通过。本轮未执行完整 Streamable HTTP MCP 传输回归，因为当前 Windows Python 3.14 的 asyncio loop 初始化会卡住。取消不能中断已经在进行中的供应商 HTTP 请求；底层网络取消仍需供应商/宿主验证。
 
+宿主验收准备：IP-3 Compose runner 现在会在 API HTTP/idempotency/burst smoke 后，通过 Docker 容器内的 Python 3.12 启动本机 TCP Streamable HTTP MCP 服务，使用客户端取消实际工具请求，并检查 core worker 收到事件后结束。只使用 synthetic core，`model_calls=0`；报告写入传入的 artifact directory。容器镜像新增 smoke 脚本副本；当前 Docker daemon 不可用，未构建或启动容器。
+
 ## 幂等重放与限流次序
 
 分析接口现在先认证、校验幂等键并查重，再对新工作计入每分钟限额。相同主体、幂等键与问题的重放返回原 run，不消耗新工作额度；不同问题仍返回 409。限流仍保护新建分析，超限返回 429。回归覆盖限额为每分钟 1 次时首请求和幂等重放成功、另一新请求被限流。取消、超时、容量信号量与 PostgreSQL 连接池保持原有测试边界；这些离线测试不能替代宿主 Postgres 集成。
