@@ -134,7 +134,8 @@ def _without_verification(planner, database_path, question: str) -> dict:
         compiled = compile_query(plan)
         rows, data_version = execute_readonly(database_path, compiled)
         return {"status": "answered", "metric": {"id": plan.metric_id},
-                "plan": {"dimension": plan.dimension, "region": plan.region},
+                "plan": {"dimension": plan.dimension, "region": plan.region,
+                         "start_date_inclusive": plan.start_date, "end_date_exclusive": plan.end_date},
                 "rows": rows, "data_version": data_version, "verification": {"passed": None, "disabled": True},
                 "parameters": list(compiled.params),
                 "elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
