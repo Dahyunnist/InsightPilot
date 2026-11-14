@@ -28,9 +28,7 @@ def build() -> dict:
         "status": "forward_audit_only",
         "historical_records_modified": False,
         "migration_audit": audit_r3_legacy_reservation(
-            attempt, lock, ledger,
-            attempt_lock_sha256=attempt.get("prior_preregistration_sha256"),
-            lock_file_sha256=sha(lock_path)),
+            attempt, lock, ledger, lock_file_sha256=sha(lock_path)),
         "source_hashes": {
             "attempt_manifest_sha256": sha(attempt_path),
             "r2_preregistration_sha256": sha(lock_path),

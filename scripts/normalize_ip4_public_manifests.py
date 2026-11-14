@@ -191,7 +191,7 @@ def normalize_blocked_attempt(events: list[dict] | None = None) -> dict:
 
 
 def audit_r3_legacy_reservation(attempt: dict, lock: dict, ledger: dict,
-                                *, attempt_lock_sha256: str, lock_file_sha256: str) -> dict:
+                                *, lock_file_sha256: str) -> dict:
     """Forward-only provenance record; never mutates source attempt, lock, or ledger."""
     active = ledger.get("ip4_v13_reservation", {})
     historical = ledger.get("ip4_v13_historical_reservation", {})
@@ -201,7 +201,6 @@ def audit_r3_legacy_reservation(attempt: dict, lock: dict, ledger: dict,
     historical_amount = historical.get("worst_case_reserve_usd")
     checks = {
         "attempt_reference_matches_lock_file": expected_sha == lock_file_sha256,
-        "attempt_reference_matches_r2_lock_artifact": expected_sha == attempt_lock_sha256,
         "question_hash_matches": lock.get("artifacts", {}).get("blind_sha256") == attempt.get("question_set_sha256"),
         "gold_hash_matches": lock.get("artifacts", {}).get("gold_sha256") == attempt.get("gold_sha256"),
         "reservation_hash_matches_attempt": historical.get("preregistration_sha256") == expected_sha,

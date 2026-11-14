@@ -16,7 +16,6 @@
     "ledger_historical_reservation_usd": 0.0936672,
     "checks": {
       "attempt_reference_matches_lock_file": true,
-      "attempt_reference_matches_r2_lock_artifact": true,
       "question_hash_matches": true,
       "gold_hash_matches": true,
       "reservation_hash_matches_attempt": false,

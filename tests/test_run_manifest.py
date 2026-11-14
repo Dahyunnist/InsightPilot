@@ -122,11 +122,15 @@ class RunManifestTests(unittest.TestCase):
                   "ip4_v13_historical_reservation": {"preregistration_sha256": "a" * 64,
                                                       "worst_case_reserve_usd": 0.1}}
         matched = audit_r3_legacy_reservation(attempt, lock, ledger,
-                                              attempt_lock_sha256="a" * 64, lock_file_sha256="a" * 64)
+                                              lock_file_sha256="a" * 64)
         self.assertEqual("verified", matched["status"])
+        self.assertTrue(all(matched["checks"].values()))
+        bad_lock = audit_r3_legacy_reservation(attempt, lock, ledger, lock_file_sha256="f" * 64)
+        self.assertFalse(bad_lock["checks"]["attempt_reference_matches_lock_file"])
+        self.assertEqual("legacy_history_inconsistent", bad_lock["status"])
         ledger["ip4_v13_historical_reservation"]["preregistration_sha256"] = "e" * 64
         mismatched = audit_r3_legacy_reservation(attempt, lock, ledger,
-                                                 attempt_lock_sha256="a" * 64, lock_file_sha256="a" * 64)
+                                                 lock_file_sha256="a" * 64)
         self.assertEqual("legacy_history_inconsistent", mismatched["status"])
         self.assertEqual("a" * 64, mismatched["attempt_referenced_preregistration_sha256"])
         self.assertEqual("e" * 64, mismatched["ledger_historical_preregistration_sha256"])
