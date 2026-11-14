@@ -17,7 +17,7 @@ JSONL 只写时间、事件名、run/trace/span ID、阶段、状态和枚举化
 ## 复现
 
 ```powershell
-Set-Location E:\job\insightpilot
+Set-Location (git rev-parse --show-toplevel)
 .\.venv\Scripts\python.exe -m pytest -q tests/test_ip3_tracing.py
 ```
 

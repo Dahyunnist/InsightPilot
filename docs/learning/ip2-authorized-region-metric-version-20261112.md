@@ -16,7 +16,7 @@
 ## 复现
 
 ```powershell
-Set-Location E:\job\insightpilot
+Set-Location (git rev-parse --show-toplevel)
 .\.venv\Scripts\python.exe -m pytest -q tests/test_s6_runtime.py -k authorized_region
 ```
 
