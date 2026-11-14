@@ -1,24 +1,32 @@
 {
-  "created_at_utc": "2026-11-14",
+  "created_at_utc": "2026-11-14T12:44:18.072486+00:00",
   "status": "blocked_provider_balance_preflight",
   "suite_id": "insightpilot-ip4-offline-prep-v1",
   "case_count": 22,
-  "retrieval_arms": ["retrieval_on", "retrieval_off"],
-  "planned_external_analyses_by_arm": {
-    "retrieval_on": 15,
-    "retrieval_off": 19
-  },
+  "retrieval_arms": [
+    "retrieval_on",
+    "retrieval_off"
+  ],
   "maximum_api_calls": 68,
-  "input_content_byte_cap": 4000,
-  "completion_token_cap": 960,
   "worst_case_reserve_usd": 0.159936,
-  "approved_maximum_reserve_usd": 0.1873344,
   "global_remaining_before_usd": 4.54499575,
   "global_remaining_after_usd": 4.54499575,
-  "provider_balance_preflight": "unavailable_or_below_required_usd_reserve",
+  "provider_balance_preflight": {
+    "checked_at_utc": "2026-11-14T12:44:18.072472+00:00",
+    "status": "check_failed",
+    "error_class": "URLError"
+  },
   "model_requests_sent": 0,
   "model_payload_data_sent": false,
-  "ledger_debited": false,
-  "synthetic_questions_and_gold_remained_local": true,
-  "sample_limit": "22 道冻结合成题；无模型结论，不代表生产或总体表现。"
+  "model_call_authorization_used": false,
+  "manifest_sha256": "94aadf46f508f23a58dbff01b1ceff2fa2f342a3e9a18453814e3e7d19bd246f",
+  "blind_sha256": {
+    "refunds": "252993f200a1efb05ca0345ca36c233de3abc8f5e3907780e830b213969d1e7f",
+    "marketing_roi": "b1fc54513b86cf47d57b4d6e609c0bd4ca3e2acc9ee95d9021f6829328f16307"
+  },
+  "gold_sha256_local_only": {
+    "refunds": "088bcb677b189fb4d66b2f40be8a190fab331fdffc1c6c7a70d6e7da93222ae4",
+    "marketing_roi": "0c3dfb710f74820a9aa865b6e5df0395daab2550d9cc16a4431e9937ae8eb43b"
+  },
+  "note": "Only the provider's account-balance endpoint was checked. The synthetic questions and all evaluation data remained local."
 }

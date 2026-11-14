@@ -6,6 +6,7 @@ import argparse
 import atexit
 import hashlib
 import json
+import math
 import os
 import sys
 import tempfile
@@ -39,6 +40,7 @@ CAP_USD = 0.1873344
 INPUT_RATE = 0.30
 OUTPUT_RATE = 1.20
 PROMPT_BYTE_CAP = 4_000
+CONSERVATIVE_CNY_PER_USD = 7.5
 
 
 def sha(path: Path) -> str:
@@ -124,6 +126,37 @@ def planned_external_analyses(cases: list[dict], retrieval_on: bool) -> int:
     return count
 
 
+def assess_balance(payload: dict, required_usd: float) -> dict:
+    """Accept USD funds directly or CNY funds at the conservative locked rate."""
+    if not isinstance(payload, dict) or payload.get("is_available") is not True:
+        return {"status": "account_unavailable"}
+    rows = payload.get("balance_infos")
+    if not isinstance(rows, list):
+        return {"status": "balance_data_missing"}
+    currencies: dict[str, float] = {}
+    for row in rows:
+        if not isinstance(row, dict) or row.get("currency") not in {"USD", "CNY"}:
+            continue
+        try:
+            amount = float(row.get("total_balance") or 0)
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(amount) and amount >= 0:
+            currencies[row["currency"]] = amount
+    usd = currencies.get("USD", 0.0)
+    if usd + 1e-12 >= required_usd:
+        return {"status": "passed", "currency_checked": "USD", "available": usd,
+                "required_usd": required_usd}
+    cny = currencies.get("CNY", 0.0)
+    required_cny = required_usd * CONSERVATIVE_CNY_PER_USD
+    if cny + 1e-9 >= required_cny:
+        return {"status": "passed", "currency_checked": "CNY", "available": cny,
+                "required_cny": round(required_cny, 6),
+                "conservative_cny_per_usd": CONSERVATIVE_CNY_PER_USD}
+    return {"status": "unavailable_or_below_reserve", "required_usd": required_usd,
+            "required_cny": round(required_cny, 6), "usd_available": usd, "cny_available": cny}
+
+
 def check_balance(settings, required_usd: float) -> dict:
     parsed = urlparse(settings.base_url)
     origin = f"{parsed.scheme}://{parsed.netloc}"
@@ -135,14 +168,9 @@ def check_balance(settings, required_usd: float) -> dict:
     except Exception as exc:
         return {"checked_at_utc": datetime.now(timezone.utc).isoformat(), "status": "check_failed",
                 "error_class": type(exc).__name__}
-    rows = payload.get("balance_infos") if isinstance(payload, dict) else None
-    balance = next((row for row in rows if isinstance(row, dict) and row.get("currency") == "USD"), None) \
-        if isinstance(rows, list) else None
-    available = float(balance.get("total_balance", "0")) if balance else 0.0
-    passed = isinstance(payload, dict) and payload.get("is_available") is True and available + 1e-9 >= required_usd
-    return {"checked_at_utc": datetime.now(timezone.utc).isoformat(),
-            "status": "passed" if passed else "unavailable_or_below_reserve",
-            "currency_checked": "USD", "required_usd": required_usd}
+    result = assess_balance(payload, required_usd)
+    result["checked_at_utc"] = datetime.now(timezone.utc).isoformat()
+    return result
 
 
 def write_json(path: Path, value: dict) -> None:
