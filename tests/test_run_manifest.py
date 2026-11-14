@@ -5,7 +5,9 @@ from pathlib import Path
 
 from insightpilot.run_manifest import validate_public_run_manifest, validate_run_manifest, write_validated_reports
 from scripts.normalize_ip4_public_manifests import (audit_r3_legacy_reservation,
-                                                    build_public_views, normalize_baseline)
+                                                    build_public_views, normalize_baseline,
+                                                    normalize_blocked_attempt)
+from scripts.migrate_ip4_r3_legacy_manifest import build as build_r3_migration
 
 
 class RunManifestTests(unittest.TestCase):
@@ -128,6 +130,25 @@ class RunManifestTests(unittest.TestCase):
         self.assertEqual("legacy_history_inconsistent", mismatched["status"])
         self.assertEqual("a" * 64, mismatched["attempt_referenced_preregistration_sha256"])
         self.assertEqual("e" * 64, mismatched["ledger_historical_preregistration_sha256"])
+
+    def test_r3_forward_migration_is_repeatable_read_only_and_does_not_relax_normalizer(self):
+        root = Path(__file__).resolve().parents[1]
+        source_paths = [root / "reports/ip4-v13-attempt-manifest-2026-11-13-r3.json",
+                        root / "reports/ip4-v13-model-preregistration-20261113-r2.json",
+                        root / "reports/model-experiment-cost-ledger.json"]
+        before = [path.read_bytes() for path in source_paths]
+        first, second = build_r3_migration(), build_r3_migration()
+        self.assertEqual(first, second)
+        audit = first["migration_audit"]
+        self.assertEqual("legacy_history_inconsistent", audit["status"])
+        self.assertEqual(audit["attempt_referenced_preregistration_sha256"],
+                         audit["r2_lock_file_sha256"])
+        self.assertNotEqual(audit["attempt_referenced_preregistration_sha256"],
+                            audit["ledger_historical_preregistration_sha256"])
+        self.assertTrue(first["historical_records_modified"] is False)
+        self.assertEqual(before, [path.read_bytes() for path in source_paths])
+        with self.assertRaisesRegex(ValueError, "reservation"):
+            normalize_blocked_attempt()
 
     def test_public_manifest_accepts_explicit_request_and_cost_uncertainty(self):
         root = Path(__file__).resolve().parents[1]

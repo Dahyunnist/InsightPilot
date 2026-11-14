@@ -15,6 +15,10 @@ The public view maps actual git commit, frozen dataset and split, actual model c
 
 Minimum portable fields are identity and schema version, dataset/split hashes, scorer/runtime, budget and cost certainty, model request/response counts, outcome/status, timestamps, and explicit missing-field state. InsightPilot lacked a distinct request-attempt count, provider-response count, and cost-certainty vocabulary. Public v2 now accepts optional `request_outcome` with those counts and `cost_status`; old v1/v2 manifests remain valid. Unknown actual cost must serialize as null. This is an additive compatibility check; no other repository changed.
 
+## r3 historical reservation migration
+
+`reports/ip4-v13-r3-ledger-provenance-migration-v1.json` is a forward-only audit view. The r2 lock file still hashes to the SHA recorded by the r3 attempt, and question/gold hashes plus the `$0.0936672` reserve amount match. The ledger's historical reservation SHA is `9c88623226a6b8bc12f15e8113c9a2535e27d4b0839434b14e4eb32ce6c56e6d`, not the r3 attempt's `4f4a4e405fe087b3fbdd5f3ac1897b9cab986b572fe23`; result stays `legacy_history_inconsistent`. Active ledger reservation references r5. The migration tool records all three SHA values and both amounts. It is repeatable, does not alter source records, and does not relax the legacy normalizer or preregistration checks.
+
 The RulePlanner baseline has a completed run record, actual Python/platform/dependency and runner hashes, 0 model calls, and $0 model cost. Its frozen score remains 15/22; execution completed, evaluation outcome failed strict acceptance. Its legacy v1 manifest remains the source of truth for recorded run and trace IDs. No span was emitted.
 
 The r3 real-model attempt stopped before a model call. Public view records actual model as `none`, planned model separately, cost $0, prior reservation as stale, and missing run/trace/span/runtime/scorer facts as blocked. It does not claim that a model evaluated any question.
