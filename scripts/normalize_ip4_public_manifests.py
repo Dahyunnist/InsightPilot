@@ -136,14 +136,24 @@ def normalize_blocked_attempt(events: list[dict] | None = None) -> dict:
     attempt = json.loads(attempt_path.read_text(encoding="utf-8"))
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
     ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
-    reservation = ledger["ip4_v13_reservation"]
+    active_reservation = ledger["ip4_v13_reservation"]
+    historical_reservation = ledger.get("ip4_v13_historical_reservation", {})
     if (sha_file(lock_path) != attempt.get("prior_preregistration_sha256") or
             lock["artifacts"]["blind_sha256"] != attempt.get("question_set_sha256") or
             lock["artifacts"]["gold_sha256"] != attempt.get("gold_sha256") or
             sha_file(ROOT / "evals/ip4-v13-blind.jsonl") != attempt.get("question_set_sha256") or
-            sha_file(ROOT / "evals/ip4-v13-gold.jsonl") != attempt.get("gold_sha256") or
-            reservation.get("preregistration_sha256") != attempt.get("prior_preregistration_sha256")):
-        raise ValueError("blocked attempt does not match its lock, frozen questions, gold, or reservation")
+            sha_file(ROOT / "evals/ip4-v13-gold.jsonl") != attempt.get("gold_sha256")):
+        raise ValueError("blocked attempt does not match its lock or frozen questions/gold")
+    history_audit = audit_r3_legacy_reservation(
+        attempt, lock, ledger, lock_file_sha256=sha_file(lock_path))
+    history_consistent = history_audit["status"] == "verified"
+    # This function publishes a historical, already-blocked run. A ledger mismatch
+    # must remain visible without making the public report unreadable or turning it
+    # into permission to run a new model request.
+    if attempt.get("model_calls") != 0 or attempt.get("cost_usd") != 0:
+        raise ValueError("blocked attempt unexpectedly records model calls or cost")
+    reserved_usd = (historical_reservation.get("worst_case_reserve_usd")
+                    if history_consistent else None)
     value = {
         "schema_version": 2, "project": "InsightPilot", "run_id": None, "trace_id": None,
         "span_id": None, "evaluation_id": None, "environment": None,
@@ -157,10 +167,14 @@ def normalize_blocked_attempt(events: list[dict] | None = None) -> dict:
         "runtime": {"digest_sha256": None, "python": None, "python_implementation": None,
                     "platform": None, "lock_sha256": None},
         "budget": {"cap_usd": ledger["cap_usd"], "spent_usd": attempt["cost_usd"],
-                   "reserved_usd": reservation["worst_case_reserve_usd"],
-                   "remaining_after_reserve_usd": attempt["ledger_remaining_after_prior_reservation_usd"],
-                   "status": "blocked_stale_lock_and_balance_unverified",
-                   "reservation_bound_to_current_code": attempt["prior_reservation_bound_to_current_code"]},
+                   "reserved_usd": reserved_usd,
+                   "remaining_after_reserve_usd": (attempt["ledger_remaining_after_prior_reservation_usd"]
+                                                   if history_consistent else None),
+                   "status": ("blocked_stale_lock_and_balance_unverified" if history_consistent
+                              else "blocked_legacy_history_inconsistent"),
+                   "reservation_bound_to_current_code": bool(
+                       history_consistent and attempt["prior_reservation_bound_to_current_code"])},
+        "history_integrity": history_audit["status"],
         "gold_source": "independent_synthetic", "gold_sha256": attempt.get("gold_sha256"),
         "cost_usd": attempt.get("cost_usd"), "model_calls": attempt.get("model_calls"),
         "model_input_received": attempt.get("provider_received"),
@@ -187,6 +201,11 @@ def normalize_blocked_attempt(events: list[dict] | None = None) -> dict:
         "normalizer_sha256": "recorded", "source_tree_clean": "blocked",
         "schema_sha256": "recorded",
     })
+    if not history_consistent:
+        value["field_status"].update({
+            "budget.reserved_usd": "blocked",
+            "budget.remaining_after_reserve_usd": "blocked",
+        })
     return _seal(value)
 
 

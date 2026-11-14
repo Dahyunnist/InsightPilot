@@ -151,8 +151,16 @@ class RunManifestTests(unittest.TestCase):
                             audit["ledger_historical_preregistration_sha256"])
         self.assertTrue(first["historical_records_modified"] is False)
         self.assertEqual(before, [path.read_bytes() for path in source_paths])
-        with self.assertRaisesRegex(ValueError, "reservation"):
-            normalize_blocked_attempt()
+        blocked_view = normalize_blocked_attempt()
+        self.assertEqual("legacy_history_inconsistent", blocked_view["history_integrity"])
+        self.assertEqual("blocked", blocked_view["status"])
+        self.assertEqual("none", blocked_view["model_id"])
+        self.assertEqual(0, blocked_view["model_calls"])
+        self.assertEqual(0, blocked_view["cost_usd"])
+        self.assertIsNone(blocked_view["budget"]["reserved_usd"])
+        self.assertIsNone(blocked_view["budget"]["remaining_after_reserve_usd"])
+        self.assertEqual("blocked", blocked_view["field_status"]["budget.reserved_usd"])
+        self.assertEqual([], validate_public_run_manifest(blocked_view))
 
     def test_public_manifest_accepts_explicit_request_and_cost_uncertainty(self):
         root = Path(__file__).resolve().parents[1]

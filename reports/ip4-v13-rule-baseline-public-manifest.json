@@ -2,11 +2,11 @@
   "schema_version": 2,
   "project": "InsightPilot",
   "run_id": "2096b84c7548eb00110dd0911a4834ad",
-  "trace_id": "6dc549d5dbe09f087fb88619e2373486",
+  "trace_id": "c6e6ec988d17b645f1b75886d5097a39",
   "span_id": null,
   "evaluation_id": "ip4-v13-rule-baseline",
   "environment": "Windows-11-10.0.26200-SP0",
-  "git_sha": "242d0036b38c1bda318d2a4338a593a215282868",
+  "git_sha": "ae470c51d7dceae3fd6c5feb500ab6460457d026",
   "source_tree_clean": false,
   "dataset_id": "insightpilot-ip4-independent-v13",
   "dataset_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
@@ -16,7 +16,7 @@
   "planned_model_id": null,
   "prompt_sha256": null,
   "tool_schema_sha256": null,
-  "scorer_sha256": "0bdfeb6afe819305aecb8248e007f7b45370471a32cec1a46f620f82cb0000c4",
+  "scorer_sha256": "d545910893f47527bde115faa7af0967869bce7c416d99802650077f76692ef6",
   "runtime": {
     "digest_sha256": "70c28918f8108677b701b8fcdc55d0a2154fbc3797d0d475de11b78588546c2a",
     "python": "3.14.5",
@@ -42,8 +42,8 @@
   "status": "completed",
   "source_status": "completed",
   "evaluation_outcome": "failed",
-  "started_at": "2026-11-13T14:23:19.971985+00:00",
-  "completed_at": "2026-11-13T14:23:20.971186+00:00",
+  "started_at": "2026-11-14T00:50:37.124986+00:00",
+  "completed_at": "2026-11-14T00:50:37.883917+00:00",
   "field_status": {
     "git_sha": "recorded",
     "run_id": "recorded",
@@ -116,15 +116,15 @@
     }
   },
   "source_artifacts": {
-    "manifest_sha256": "687f79b592f80607303f9dd7f2777dbe0910ebfd8de64f447f1196165a8d42fd",
+    "manifest_sha256": "99f1f3f339211cdf41239d87daa76532aaad09c9c89643a9d38ac0548206e33a",
     "report_sha256": "b0c751f97264fb55b5183251dc34f9fc1847217f8efed08d9c6447fc01169bb5",
     "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
     "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
     "manifest_path": "reports/ip4-v13-rule-baseline-manifest.json",
     "report_path": "reports/ip4-v13-rule-baseline.json"
   },
-  "normalizer_sha256": "b1e3c1132ee6766271ce9c913ba2e205f48650fef1b24f6a619fa04e7f06961a",
-  "schema_sha256": "d75bd9beb4806b7e273d30e64cf3ce07f021adb87252c54220949c7fa0620f5d",
+  "normalizer_sha256": "3e4d2b366392f09c8b27aa36c3d6423c04979a8b495157c28a562f0469a5c752",
+  "schema_sha256": "9af957b8fdd527e8b184266e3e324d66edec22136fd516b9f04d2d94881622fd",
   "blocked_fields": [
     "runtime.lock_sha256"
   ]

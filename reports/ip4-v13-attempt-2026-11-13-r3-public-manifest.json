@@ -29,11 +29,12 @@
   "budget": {
     "cap_usd": 5.0,
     "spent_usd": 0.0,
-    "reserved_usd": 0.0936672,
-    "remaining_after_reserve_usd": 4.53009415,
-    "status": "blocked_stale_lock_and_balance_unverified",
+    "reserved_usd": null,
+    "remaining_after_reserve_usd": null,
+    "status": "blocked_legacy_history_inconsistent",
     "reservation_bound_to_current_code": false
   },
+  "history_integrity": "legacy_history_inconsistent",
   "gold_source": "independent_synthetic",
   "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
   "cost_usd": 0.0,
@@ -77,7 +78,9 @@
     "max_tokens": "not_applicable",
     "normalizer_sha256": "recorded",
     "source_tree_clean": "blocked",
-    "schema_sha256": "recorded"
+    "schema_sha256": "recorded",
+    "budget.reserved_usd": "blocked",
+    "budget.remaining_after_reserve_usd": "blocked"
   },
   "trace_event_coverage": {
     "timeout": {
@@ -124,12 +127,14 @@
     "preregistration_sha256": "4f4a4e405fe087b3fbdd5f3b9bb9215d8b77e8bd33ac1897b9cab986b572fe23",
     "question_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
     "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
-    "ledger_sha256": "7c968ead6026d13d670473e3942862883ae5f353c733e1eff502b5e263c6f50e",
+    "ledger_sha256": "cf8e4ffcb6227dd7ea2fd31ad6524770d0624ac6df29960f70fed42fe60460cb",
     "attempt_path": "reports/ip4-v13-attempt-manifest-2026-11-13-r3.json"
   },
-  "normalizer_sha256": "b1e3c1132ee6766271ce9c913ba2e205f48650fef1b24f6a619fa04e7f06961a",
-  "schema_sha256": "d75bd9beb4806b7e273d30e64cf3ce07f021adb87252c54220949c7fa0620f5d",
+  "normalizer_sha256": "3e4d2b366392f09c8b27aa36c3d6423c04979a8b495157c28a562f0469a5c752",
+  "schema_sha256": "9af957b8fdd527e8b184266e3e324d66edec22136fd516b9f04d2d94881622fd",
   "blocked_fields": [
+    "budget.remaining_after_reserve_usd",
+    "budget.reserved_usd",
     "completed_at",
     "environment",
     "evaluation_id",

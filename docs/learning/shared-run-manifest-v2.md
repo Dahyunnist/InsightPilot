@@ -17,6 +17,8 @@ Minimum portable fields are identity and schema version, dataset/split hashes, s
 
 ## r3 historical reservation migration
 
+The migration view preserves the three source hashes and classifies the historical reservation SHA mismatch as `legacy_history_inconsistent`. The public normalizer may emit the historical r3 view for inspection, but clears unverified reserve/balance fields and keeps the run blocked with zero model calls and zero cost. The execution preflight remains strict and rejects mismatched reservations; this compatibility path cannot authorize a new run.
+
 `reports/ip4-v13-r3-ledger-provenance-migration-v1.json` is a forward-only audit view. The r2 lock file still hashes to the SHA recorded by the r3 attempt, and question/gold hashes plus the `$0.0936672` reserve amount match. The ledger's historical reservation SHA is `9c88623226a6b8bc12f15e8113c9a2535e27d4b0839434b14e4eb32ce6c56e6d`, not the r3 attempt's `4f4a4e405fe087b3fbdd5f3ac1897b9cab986b572fe23`; result stays `legacy_history_inconsistent`. Active ledger reservation references r5. The migration tool records all three SHA values and both amounts. It is repeatable, does not alter source records, and does not relax the legacy normalizer or preregistration checks.
 
 The RulePlanner baseline has a completed run record, actual Python/platform/dependency and runner hashes, 0 model calls, and $0 model cost. Its frozen score remains 15/22; execution completed, evaluation outcome failed strict acceptance. Its legacy v1 manifest remains the source of truth for recorded run and trace IDs. No span was emitted.
