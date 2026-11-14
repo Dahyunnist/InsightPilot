@@ -105,6 +105,22 @@ class S6RuntimeTests(unittest.TestCase):
         self.assertEqual(limited.status_code, 429)
         self.assertGreaterEqual(int(limited.headers["retry-after"]), 1)
 
+    def test_idempotent_replay_does_not_consume_new_work_rate_limit(self):
+        app = create_app(self.core, run_store=self.store, api_token="secret-token",
+                         api_scopes={"refund:read"}, max_requests_per_minute=1)
+        client = TestClient(app)
+        headers = {"Authorization": "Bearer secret-token", "Idempotency-Key": "single-work"}
+        payload = {"question": "退款分析"}
+        first = client.post("/analysis", json=payload, headers=headers)
+        replay = client.post("/analysis", json=payload, headers=headers)
+        self.assertEqual(200, first.status_code)
+        self.assertEqual(200, replay.status_code)
+        self.assertEqual(first.json()["run_id"], replay.json()["run_id"])
+        self.assertEqual("true", replay.headers["idempotency-replay"])
+        limited = client.post("/analysis", json=payload,
+                              headers={"Authorization": "Bearer secret-token"})
+        self.assertEqual(429, limited.status_code)
+
     def test_api_timeout_requests_cooperative_cancel_and_worker_recovers(self):
         entered = threading.Event()
         release = threading.Event()

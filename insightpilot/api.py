@@ -160,13 +160,6 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
         if idempotency_key is not None and not re.fullmatch(r"[A-Za-z0-9._:/-]{1,128}", idempotency_key):
             return JSONResponse(status_code=422,
                 content={"status": "failed", "stage": "validation", "reason": "invalid_idempotency_key"})
-        retry_after = consume_rate_limit()
-        if retry_after is not None:
-            run_id = str(uuid.uuid4())
-            return JSONResponse(status_code=429,
-                content={"run_id": run_id, "status": "failed", "stage": "rate_limit",
-                         "reason": "requests_per_minute_limit"},
-                headers={"X-Request-ID": run_id, "Retry-After": str(int(retry_after + 0.999))})
         if idempotency_key is not None:
             try:
                 scoped_key = f"{principal_id or 'default'}:{idempotency_key}"
@@ -177,6 +170,13 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
                              "reason": "idempotency_key_question_conflict"})
             if existing_id is not None:
                 return replay_response(existing_id, principal_id)
+        retry_after = consume_rate_limit()
+        if retry_after is not None:
+            run_id = str(uuid.uuid4())
+            return JSONResponse(status_code=429,
+                content={"run_id": run_id, "status": "failed", "stage": "rate_limit",
+                         "reason": "requests_per_minute_limit"},
+                headers={"X-Request-ID": run_id, "Retry-After": str(int(retry_after + 0.999))})
         run_id = str(uuid.uuid4())
         if not capacity.acquire(blocking=False):
             return JSONResponse(status_code=429,
