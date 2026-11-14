@@ -50,7 +50,7 @@ class S2PolicyTests(unittest.TestCase):
                 validate_sql(sql)
 
     def test_sqlite_authorizer_and_readonly_uri_block_mutation(self):
-        uri = "file:" + self.db_path.resolve().as_posix() + "?mode=ro"
+        uri = self.db_path.resolve().as_uri() + "?mode=ro"
         connection = sqlite3.connect(uri, uri=True)
         try:
             connection.execute("PRAGMA query_only = ON")

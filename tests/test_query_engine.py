@@ -43,13 +43,15 @@ class FakePool:
 
 
 class MetadataConnection(FakeConnection):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, error=None):
+        super().__init__(error=error)
         self.metadata = [("data_version", "insightpilot-multidomain-v1"),
                          ("data_fingerprint", "f" * 64)]
 
     def execute(self, sql, params=()):
         self.calls.append((sql, tuple(params)))
+        if self.error and "FROM data_meta" in sql:
+            raise self.error
         return self
 
     def fetchall(self):
@@ -83,12 +85,26 @@ class QueryEngineTests(unittest.TestCase):
         self.assertEqual(engine.read_data_identity(), ("insightpilot-multidomain-v1", "f" * 64))
         self.assertIn(("SET TRANSACTION READ ONLY", ()), connection.calls)
         self.assertIn(("SET LOCAL ROLE insightpilot_reader", ()), connection.calls)
+        self.assertIn(("SELECT set_config('statement_timeout', %s, true)", ("2000ms",)), connection.calls)
         self.assertIn(("SELECT set_config('app.tenant_id', %s, true)", ("tenant-a",)), connection.calls)
 
         missing_tenant = PostgresQueryEngine("unused", pool=FakePool(MetadataConnection()))
         with self.assertRaises(QueryExecutionError) as raised:
             missing_tenant.read_data_identity()
         self.assertEqual(raised.exception.failure_code, "tenant_scope_missing")
+
+    def test_postgres_data_identity_timeout_uses_statement_budget_and_maps_timeout(self):
+        timeout = RuntimeError("canceling statement due to statement timeout")
+        timeout.sqlstate = "57014"
+        connection = MetadataConnection(error=timeout)
+        engine = PostgresQueryEngine("unused", tenant_id="tenant-a", pool=FakePool(connection),
+                                     statement_timeout_ms=75)
+
+        with self.assertRaises(QueryTimeoutError) as raised:
+            engine.read_data_identity()
+
+        self.assertEqual(raised.exception.failure_code, "statement_timeout")
+        self.assertIn(("SELECT set_config('statement_timeout', %s, true)", ("75ms",)), connection.calls)
 
     def test_postgres_requires_trusted_tenant_and_rejects_mutations_before_pool(self):
         pool = MagicMock()

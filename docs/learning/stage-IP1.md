@@ -1,5 +1,9 @@
 # IP-1：查询引擎与 PostgreSQL 适配
 
+## 2026-11-14 查询数据身份超时补强
+
+离线审查发现 PostgreSQL `read_data_identity()` 在身份查询事务内已绑定只读角色和 tenant RLS，但没有设置 `statement_timeout`；与普通查询不同，读取 `data_meta` 若被数据库锁或延迟，也可能让分析入口长时间等待。现对身份读取同样应用引擎配置的超时，并将 SQLSTATE `57014` 映射为 `QueryTimeoutError(statement_timeout)`，使运行记录准确归类。新增 75 ms 可控超时回归并核对事务设置；`tests.test_query_engine`、`tests.test_s2_policy`、`tests.test_ip1_rls_runner` 共 18 项通过。此为离线 fake connection 证据，不替代宿主 PostgreSQL 实测。
+
 ## 2026-11-13 离线前置切片
 
 当前入口使用统一 `build_core` 构造器；`QueryEngine` 明确声明后端名与 tenant scope 能力。CLI、API、MCP 默认共享 SQLite adapter 和同一 `InsightPilot` 查询/验证路径。SQLite 仍委托既有 SQL allowlist、只读 authorizer、参数绑定、100 行上限、VM 预算、超时与取消机制。

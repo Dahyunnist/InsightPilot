@@ -199,6 +199,10 @@ class PostgresQueryEngine:
                 with connection.transaction():
                     connection.execute("SET TRANSACTION READ ONLY")
                     connection.execute("SET LOCAL ROLE insightpilot_reader")
+                    connection.execute(
+                        "SELECT set_config('statement_timeout', %s, true)",
+                        (f"{self.statement_timeout_ms}ms",),
+                    )
                     connection.execute("SELECT set_config('app.tenant_id', %s, true)", (effective_tenant,))
                     cursor = connection.execute(
                         "SELECT key, value FROM data_meta WHERE key IN ('data_version','data_fingerprint')")
@@ -209,6 +213,8 @@ class PostgresQueryEngine:
         except Exception as exc:
             self._reset_pool_after_connection_error(pool, exc)
             sqlstate = getattr(exc, "sqlstate", None)
+            if sqlstate == "57014":
+                raise QueryTimeoutError("PostgreSQL 数据身份读取超过 statement_timeout 限制。") from None
             code = ("schema_error" if isinstance(sqlstate, str) and sqlstate.startswith(("42", "3F"))
                     else "database_execution")
             raise QueryExecutionError(f"PostgreSQL 数据身份读取失败：{exc.__class__.__name__}",
