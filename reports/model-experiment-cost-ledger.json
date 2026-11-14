@@ -489,7 +489,7 @@
     "model_calls": 0,
     "historical_exposure": "unknown"
   },
-  "remaining_global_cap_after_ip4_v13_model_usd": 4.54499575,
+  "remaining_global_cap_after_ip4_v13_model_usd": 4.50483355,
   "ip4_v13_model_evaluation": {
     "suite_id": "insightpilot-ip4-independent-v13",
     "evaluation_design": "single pass on frozen synthetic questions; historical exposure unknown",
@@ -510,5 +510,28 @@
     "confirmed_actual_cost_usd": null,
     "peak_price_worst_case_reserve_usd": 0.031932,
     "provider_receipt_status": "unknown; URLError with no response"
+  },
+  "ip4_retrieval_ablation_model": {
+    "status": "completed",
+    "suite_id": "insightpilot-ip4-offline-prep-v1",
+    "model_calls": 42,
+    "passed": {
+      "retrieval_on": "21/22",
+      "retrieval_off": "10/22"
+    },
+    "reserve_usd": 0.159936,
+    "peak_price_estimate_usd": 0.0401622,
+    "released_unused_reserve_usd": 0.1197738,
+    "remaining_before_usd": 4.54499575,
+    "remaining_after_usd": 4.50483355,
+    "report": "reports/ip4-retrieval-ablation-model.json",
+    "provider_balance_preflight": {
+      "status": "passed",
+      "currency_checked": "CNY",
+      "available": 9.23,
+      "required_cny": 1.19952,
+      "conservative_cny_per_usd": 7.5,
+      "checked_at_utc": "2026-11-14T12:47:21.560165+00:00"
+    }
   }
 }

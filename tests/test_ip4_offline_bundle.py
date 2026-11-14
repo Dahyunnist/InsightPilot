@@ -47,19 +47,25 @@ class IP4OfflineBundleTests(unittest.TestCase):
                              [row["case_id"] for row in
                               report["ruleplanner_without_independent_verifier_sqlite"]["failures"]])
             self.assertEqual(report["metric_retrieval_candidate_coverage"]["total_answerable"], 14)
-            self.assertEqual(report["model_ablation"]["status"],
-                             "pending_user_authorization_and_provider_transport")
+            self.assertEqual(report["model_ablation"]["status"], "completed")
             ablation = report["model_ablation"]
             self.assertEqual(ablation["planned_first_pass_requests"], 44)
             self.assertEqual(ablation["maximum_api_calls_conservative"], 88)
-            self.assertEqual(ablation["maximum_api_calls_after_current_preflight"], 76)
-            self.assertEqual(ablation["conservative_reserve_usd"], 0.1873344)
+            self.assertEqual(ablation["maximum_api_calls_after_current_preflight"], 68)
+            self.assertEqual(ablation["conservative_reserve_usd"], 0.159936)
+            self.assertEqual(ablation["authorized_worst_case_reserve_usd"], 0.1873344)
             self.assertEqual(ablation["latest_ledger_remaining_before_reserve_usd"], 4.54499575)
-            self.assertEqual(ablation["balance_after_planned_reserve_usd"], 4.35766135)
-            self.assertEqual(ablation["ledger_implied_booked_peak_estimates_and_reserves_usd"], 0.45500425)
+            self.assertEqual(ablation["post_model_evaluation_ledger_remaining_usd"], 4.50483355)
+            self.assertIsNone(ablation["balance_after_planned_reserve_usd"])
+            self.assertEqual(ablation["ledger_implied_booked_peak_estimates_and_reserves_usd"], 0.49516645)
             self.assertEqual(ablation["combined_v13_unreceipted_worst_case_usd"], 0.0787656)
             self.assertEqual(ablation["cumulative_accounting_breakdown"]["usage_backed_peak_price_estimates_usd"],
                              0.2528991)
+            self.assertEqual(ablation["cumulative_accounting_breakdown"]["retrieval_ablation_peak_price_estimate_usd"],
+                             0.0401622)
+            self.assertEqual(ablation["latest_retrieval_model_run"]["arms"]["retrieval_on"]["passed"], 21)
+            self.assertEqual(ablation["latest_retrieval_model_run"]["arms"]["retrieval_off"]["passed"], 10)
+            self.assertEqual(ablation["latest_retrieval_model_run"]["observed_api_calls"], 42)
             self.assertFalse(ablation["request_payload"]["includes_query_results_or_database_rows"])
 
 

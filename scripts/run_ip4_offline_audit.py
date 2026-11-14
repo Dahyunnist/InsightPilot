@@ -196,6 +196,9 @@ def run(bundle: Path = BUNDLE, database: Path = DEFAULT_DATABASE, output: Path |
                                 * _MAX_CALLS_PER_ANALYSIS)
     ledger = json.loads((ROOT / "reports/model-experiment-cost-ledger.json").read_text(encoding="utf-8"))
     legacy_audit = json.loads((ROOT / "reports/cost-audit-v9.json").read_text(encoding="utf-8"))
+    retrieval_eval_path = ROOT / "reports/ip4-retrieval-ablation-model.json"
+    retrieval_eval = (json.loads(retrieval_eval_path.read_text(encoding="utf-8"))
+                      if retrieval_eval_path.exists() else None)
     project_cap = float(ledger["cap_usd"])
     latest_remaining = float(ledger["remaining_global_cap_after_ip4_v13_model_usd"])
     planned_reserve = round(budgeted_max_calls * per_request_usd, 8)
@@ -206,10 +209,43 @@ def run(bundle: Path = BUNDLE, database: Path = DEFAULT_DATABASE, output: Path |
     older_unreconciled = legacy_audit["prior_reserve_or_unreconciled_usage_usd"]
     prior_v13_reserve = ledger["ip4_v13_model_evaluation"]["historical_uncertain_reserve_usd"]
     current_v13_peak_estimate = ledger["ip4_v13_model_evaluation"]["peak_list_price_estimate_usd"]
+    retrieval_ledger = ledger.get("ip4_retrieval_ablation_model", {})
+    current_retrieval_peak_estimate = retrieval_ledger.get("peak_price_estimate_usd", 0.0)
     booked_breakdown = round(usage_estimate_after_v8 + older_unreconciled + prior_v13_reserve
-                             + current_v13_peak_estimate, 8)
+                             + current_v13_peak_estimate + current_retrieval_peak_estimate, 8)
     if abs(booked_breakdown - (project_cap - latest_remaining)) > 1e-8:
         raise ValueError("Current cumulative peak/reserve breakdown does not reconcile to the ledger")
+    retrieval_status = "pending_user_authorization_and_provider_transport"
+    retrieval_summary = None
+    if retrieval_eval is not None:
+        if retrieval_eval.get("suite_id") != manifest["suite_id"]:
+            raise ValueError("Retrieval model report suite does not match the frozen IP4 bundle")
+        if retrieval_eval.get("status") == "completed":
+            report_arms = {item.get("arm"): item for item in retrieval_eval.get("arms", [])}
+            ledger_arms = retrieval_ledger.get("passed", {})
+            for arm_name in arms:
+                item = report_arms.get(arm_name)
+                if not item or len(item.get("cases", [])) != len(cases):
+                    raise ValueError(f"Completed retrieval model report is incomplete: {arm_name}")
+                observed = f"{item.get('passed')}/{item.get('total')}"
+                if ledger_arms.get(arm_name) != observed:
+                    raise ValueError(f"Retrieval model report and cost ledger differ: {arm_name}")
+            if abs(float(retrieval_eval.get("observed_peak_price_estimate_usd", -1))
+                   - float(current_retrieval_peak_estimate)) > 1e-8:
+                raise ValueError("Retrieval model report cost does not match the ledger")
+            retrieval_status = "completed"
+            retrieval_summary = {
+                "status": retrieval_status,
+                "observed_api_calls": retrieval_eval["observed_api_calls"],
+                "maximum_api_calls": retrieval_eval["maximum_api_calls"],
+                "reserve_usd": retrieval_eval["reserve_usd"],
+                "peak_price_estimate_usd": retrieval_eval["observed_peak_price_estimate_usd"],
+                "remaining_after_usd": retrieval_eval["remaining_after_usd"],
+                "arms": {name: {key: report_arms[name][key] for key in
+                                ("passed", "total", "answerable_passed", "answerable_total",
+                                 "guard_passed", "guard_total")}
+                         for name in arms},
+            }
     postgres_arms = {}
     sqlite_parity = {}
     result_parity = {}
@@ -251,31 +287,38 @@ def run(bundle: Path = BUNDLE, database: Path = DEFAULT_DATABASE, output: Path |
         "postgresql_sqlite_result_parity": result_parity,
         "interpretation": "完成状态表示双后端执行和逐题一致性检查完成；规则基线错误作为评测结果保留，不折算为执行器通过。",
         "model_ablation": {
-            "status": "pending_user_authorization_and_provider_transport",
+            "status": retrieval_status,
             "comparison": "semantic retrieval on vs off; independent verifier on vs disabled using identical model outputs",
             "model_backend_scope": "SQLite only; PostgreSQL remains covered by deterministic RulePlanner and parity arms",
             "planned_first_pass_requests": planned_first_pass_calls,
             "retrieval_arms": {arm: len(cases) for arm in arms},
             "max_attempts_per_analysis": _MAX_CALLS_PER_ANALYSIS,
             "maximum_api_calls_conservative": budgeted_max_calls,
-            "maximum_api_calls_after_current_preflight": call_cap_after_preflight,
+            "maximum_api_calls_after_current_preflight": (
+                retrieval_eval["maximum_api_calls"] if retrieval_summary else call_cap_after_preflight),
             "preflight_blocked_case_ids_per_arm": preflight_blocked_ids,
             "cases": {domain: item["case_count"] for domain, item in manifest["domains"].items()},
             "input_tokens_per_request_cap": 3000,
             "output_tokens_per_request_cap": 1024,
             "per_request_peak_price_upper_bound_usd": round(per_request_usd, 8),
-            "conservative_reserve_usd": planned_reserve,
+            "conservative_reserve_usd": (
+                retrieval_eval["reserve_usd"] if retrieval_summary else planned_reserve),
+            "authorized_worst_case_reserve_usd": planned_reserve,
             "project_cap_usd": project_cap,
-            "latest_ledger_remaining_before_reserve_usd": latest_remaining,
+            "latest_ledger_remaining_before_reserve_usd": (
+                retrieval_eval["remaining_before_usd"] if retrieval_summary else latest_remaining),
+            "post_model_evaluation_ledger_remaining_usd": latest_remaining,
             "ledger_implied_booked_peak_estimates_and_reserves_usd": round(project_cap - latest_remaining, 8),
             "cumulative_accounting_breakdown": {
                 "usage_backed_peak_price_estimates_usd": round(usage_estimate_after_v8, 8),
                 "older_reserve_or_unreconciled_usage_usd": older_unreconciled,
                 "prior_v13_unknown_exposure_reserve_usd": prior_v13_reserve,
                 "current_v13_no_response_attempts_peak_estimate_usd": current_v13_peak_estimate,
+                "retrieval_ablation_peak_price_estimate_usd": current_retrieval_peak_estimate,
                 "provider_invoice_actuals_available": False,
             },
-            "balance_after_planned_reserve_usd": round(latest_remaining - planned_reserve, 8),
+            "balance_after_planned_reserve_usd": (
+                None if retrieval_summary else round(latest_remaining - planned_reserve, 8)),
             "provider_invoice_actuals_verified": False,
             "unresolved_prior_v13_reserve_usd": ledger["ip4_v13_model_evaluation"]["historical_uncertain_reserve_usd"],
             "combined_v13_unreceipted_worst_case_usd": round(prior_v13_reserve + current_v13_peak_estimate, 8),
@@ -285,6 +328,7 @@ def run(bundle: Path = BUNDLE, database: Path = DEFAULT_DATABASE, output: Path |
                 "confirmed_actual_cost_usd": None,
                 "peak_price_estimate_usd": ledger["ip4_v13_model_evaluation"]["peak_list_price_estimate_usd"],
             },
+            "latest_retrieval_model_run": retrieval_summary,
             "price_basis": "existing IP4 v13 preregistration at $0.30/M uncached input and $1.20/M output",
             "request_payload": {
                 "common_system_prompt": "fixed planner instructions and JSON output contract",

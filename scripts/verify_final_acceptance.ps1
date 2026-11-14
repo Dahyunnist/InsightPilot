@@ -44,6 +44,11 @@ try {
     Invoke-Checked $Python @('scripts/verify_ip12_postgres_security.py', '--output', 'reports/ip1-ip2-postgres-acceptance-v1.json')
     Invoke-Checked $Python @('scripts/diagnose_ip4_r01_r02.py', '--output', $TempDiagnostic, '--require-passed')
     Invoke-Checked $Python @('scripts/verify_domain_validation.py', '--output', $TempDomain)
+    $FrozenDatabase = Join-Path $ProjectRoot 'data\insightpilot-ip4-v13.sqlite'
+    Invoke-Checked $Python @('scripts/prepare_ip4_postgres.py', '--database', $FrozenDatabase)
+    Invoke-Checked $Python @('scripts/run_ip4_offline_audit.py', '--database', $FrozenDatabase,
+                             '--postgres-dsn', $env:INSIGHTPILOT_IP4_APP_DSN,
+                             '--output', 'reports/ip4-offline-prep-v1-audit.json')
     Invoke-Checked $Python @('scripts/verify_ip4_freeze_seal.py')
     Invoke-Checked $Python @('scripts/verify_release_artifacts.py')
     Write-Output 'Final acceptance passed. No model API calls were made.'

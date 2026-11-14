@@ -1,0 +1,1747 @@
+{
+  "created_at_utc": "2026-11-14T12:50:07.205846+00:00",
+  "status": "completed",
+  "suite_id": "insightpilot-ip4-offline-prep-v1",
+  "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
+  "manifest_sha256": "94aadf46f508f23a58dbff01b1ceff2fa2f342a3e9a18453814e3e7d19bd246f",
+  "blind_sha256": {
+    "refunds": "252993f200a1efb05ca0345ca36c233de3abc8f5e3907780e830b213969d1e7f",
+    "marketing_roi": "b1fc54513b86cf47d57b4d6e609c0bd4ca3e2acc9ee95d9021f6829328f16307"
+  },
+  "gold_sha256_local_only": {
+    "refunds": "088bcb677b189fb4d66b2f40be8a190fab331fdffc1c6c7a70d6e7da93222ae4",
+    "marketing_roi": "0c3dfb710f74820a9aa865b6e5df0395daab2550d9cc16a4431e9937ae8eb43b"
+  },
+  "model": "deepseek-v4-flash",
+  "retrieval_arms": [
+    "retrieval_on",
+    "retrieval_off"
+  ],
+  "planned_case_runs": 44,
+  "planned_external_analyses_by_arm": {
+    "retrieval_on": 15,
+    "retrieval_off": 19
+  },
+  "maximum_api_calls": 68,
+  "observed_api_calls": 42,
+  "input_content_byte_cap": 4000,
+  "completion_token_cap": 960,
+  "reserve_usd": 0.159936,
+  "observed_peak_price_estimate_usd": 0.0401622,
+  "remaining_before_usd": 4.54499575,
+  "remaining_after_usd": 4.50483355,
+  "provider_balance_preflight": {
+    "status": "passed",
+    "currency_checked": "CNY",
+    "available": 9.23,
+    "required_cny": 1.19952,
+    "conservative_cny_per_usd": 7.5,
+    "checked_at_utc": "2026-11-14T12:47:21.560165+00:00"
+  },
+  "request_payload_fields": [
+    "question",
+    "candidate_metrics",
+    "allowed_metric_ids"
+  ],
+  "request_excludes_case_id_gold_expected_status_database_rows_sql_and_query_results": true,
+  "sample_limit": "仅 22 道冻结合成题；结果仅描述本题集，不外推生产或总体泛化。",
+  "arms": [
+    {
+      "arm": "retrieval_on",
+      "passed": 21,
+      "total": 22,
+      "answerable_passed": 13,
+      "answerable_total": 14,
+      "guard_passed": 8,
+      "guard_total": 8,
+      "failures": [
+        {
+          "case_id": "IP4V13-M03",
+          "score": {
+            "case_id": "IP4V13-M03",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.5,
+            "passed": false
+          },
+          "actual_status": "failed",
+          "terminal_stage": "planning",
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 787,
+              "completion_tokens": 960,
+              "total_tokens": 1747,
+              "prompt_cache_hit_tokens": 256,
+              "prompt_cache_miss_tokens": 531
+            },
+            {
+              "prompt_tokens": 787,
+              "completion_tokens": 960,
+              "total_tokens": 1747,
+              "prompt_cache_hit_tokens": 640,
+              "prompt_cache_miss_tokens": 147
+            }
+          ]
+        }
+      ],
+      "cases": [
+        {
+          "case_id": "IP4V13-R01",
+          "score": {
+            "case_id": "IP4V13-R01",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 583,
+              "completion_tokens": 443,
+              "total_tokens": 1026,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 455
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R02",
+          "score": {
+            "case_id": "IP4V13-R02",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 561,
+              "completion_tokens": 479,
+              "total_tokens": 1040,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 433
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R03",
+          "score": {
+            "case_id": "IP4V13-R03",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 598,
+              "completion_tokens": 403,
+              "total_tokens": 1001,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 470
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R04",
+          "score": {
+            "case_id": "IP4V13-R04",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 583,
+              "completion_tokens": 493,
+              "total_tokens": 1076,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 455
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R05",
+          "score": {
+            "case_id": "IP4V13-R05",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 584,
+              "completion_tokens": 498,
+              "total_tokens": 1082,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 456
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R06",
+          "score": {
+            "case_id": "IP4V13-R06",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 561,
+              "completion_tokens": 539,
+              "total_tokens": 1100,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 433
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R07",
+          "score": {
+            "case_id": "IP4V13-R07",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 565,
+              "completion_tokens": 576,
+              "total_tokens": 1141,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 437
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R08",
+          "score": {
+            "case_id": "IP4V13-R08",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 591,
+              "completion_tokens": 334,
+              "total_tokens": 925,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 463
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R09",
+          "score": {
+            "case_id": "IP4V13-R09",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "clarify",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 0,
+          "usage": []
+        },
+        {
+          "case_id": "IP4V13-R10",
+          "score": {
+            "case_id": "IP4V13-R10",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "clarify",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 0,
+          "usage": []
+        },
+        {
+          "case_id": "IP4V13-R11",
+          "score": {
+            "case_id": "IP4V13-R11",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "refused",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "refused",
+          "terminal_stage": null,
+          "terminal_reason": "restricted_personal_data",
+          "model_calls": 0,
+          "usage": []
+        },
+        {
+          "case_id": "IP4V13-R12",
+          "score": {
+            "case_id": "IP4V13-R12",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "refused",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "refused",
+          "terminal_stage": null,
+          "terminal_reason": "prompt_injection_attempt",
+          "model_calls": 0,
+          "usage": []
+        },
+        {
+          "case_id": "IP4V13-M01",
+          "score": {
+            "case_id": "IP4V13-M01",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 793,
+              "completion_tokens": 960,
+              "total_tokens": 1753,
+              "prompt_cache_hit_tokens": 256,
+              "prompt_cache_miss_tokens": 537
+            },
+            {
+              "prompt_tokens": 793,
+              "completion_tokens": 611,
+              "total_tokens": 1404,
+              "prompt_cache_hit_tokens": 640,
+              "prompt_cache_miss_tokens": 153
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M02",
+          "score": {
+            "case_id": "IP4V13-M02",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 777,
+              "completion_tokens": 282,
+              "total_tokens": 1059,
+              "prompt_cache_hit_tokens": 256,
+              "prompt_cache_miss_tokens": 521
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M03",
+          "score": {
+            "case_id": "IP4V13-M03",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.5,
+            "passed": false
+          },
+          "actual_status": "failed",
+          "terminal_stage": "planning",
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 787,
+              "completion_tokens": 960,
+              "total_tokens": 1747,
+              "prompt_cache_hit_tokens": 256,
+              "prompt_cache_miss_tokens": 531
+            },
+            {
+              "prompt_tokens": 787,
+              "completion_tokens": 960,
+              "total_tokens": 1747,
+              "prompt_cache_hit_tokens": 640,
+              "prompt_cache_miss_tokens": 147
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M04",
+          "score": {
+            "case_id": "IP4V13-M04",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 791,
+              "completion_tokens": 437,
+              "total_tokens": 1228,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 791
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M05",
+          "score": {
+            "case_id": "IP4V13-M05",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 778,
+              "completion_tokens": 642,
+              "total_tokens": 1420,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 778
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M06",
+          "score": {
+            "case_id": "IP4V13-M06",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 787,
+              "completion_tokens": 327,
+              "total_tokens": 1114,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 787
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M07",
+          "score": {
+            "case_id": "IP4V13-M07",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "clarify",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 0,
+          "usage": []
+        },
+        {
+          "case_id": "IP4V13-M08",
+          "score": {
+            "case_id": "IP4V13-M08",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "clarify",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 0,
+          "usage": []
+        },
+        {
+          "case_id": "IP4V13-M09",
+          "score": {
+            "case_id": "IP4V13-M09",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "clarify",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 781,
+              "completion_tokens": 133,
+              "total_tokens": 914,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 781
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M10",
+          "score": {
+            "case_id": "IP4V13-M10",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "refused",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "refused",
+          "terminal_stage": null,
+          "terminal_reason": "write_operation_not_supported",
+          "model_calls": 0,
+          "usage": []
+        }
+      ]
+    },
+    {
+      "arm": "retrieval_off",
+      "passed": 10,
+      "total": 22,
+      "answerable_passed": 2,
+      "answerable_total": 14,
+      "guard_passed": 8,
+      "guard_total": 8,
+      "failures": [
+        {
+          "case_id": "IP4V13-R01",
+          "score": {
+            "case_id": "IP4V13-R01",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.75,
+            "passed": false
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 350,
+              "completion_tokens": 960,
+              "total_tokens": 1310,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 350
+            },
+            {
+              "prompt_tokens": 350,
+              "completion_tokens": 823,
+              "total_tokens": 1173,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 222
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R02",
+          "score": {
+            "case_id": "IP4V13-R02",
+            "status_ok": true,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 1.5,
+            "passed": false
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 347,
+              "completion_tokens": 960,
+              "total_tokens": 1307,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 347
+            },
+            {
+              "prompt_tokens": 347,
+              "completion_tokens": 462,
+              "total_tokens": 809,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 219
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R03",
+          "score": {
+            "case_id": "IP4V13-R03",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.5,
+            "passed": false
+          },
+          "actual_status": "failed",
+          "terminal_stage": "planning",
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 357,
+              "completion_tokens": 960,
+              "total_tokens": 1317,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 229
+            },
+            {
+              "prompt_tokens": 357,
+              "completion_tokens": 960,
+              "total_tokens": 1317,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 229
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R04",
+          "score": {
+            "case_id": "IP4V13-R04",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.5,
+            "passed": false
+          },
+          "actual_status": "failed",
+          "terminal_stage": "planning",
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 350,
+              "completion_tokens": 960,
+              "total_tokens": 1310,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 350
+            },
+            {
+              "prompt_tokens": 350,
+              "completion_tokens": 960,
+              "total_tokens": 1310,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 222
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R05",
+          "score": {
+            "case_id": "IP4V13-R05",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.75,
+            "passed": false
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 349,
+              "completion_tokens": 198,
+              "total_tokens": 547,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 349
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R06",
+          "score": {
+            "case_id": "IP4V13-R06",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 1.25,
+            "passed": false
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 353,
+              "completion_tokens": 471,
+              "total_tokens": 824,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 225
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R07",
+          "score": {
+            "case_id": "IP4V13-R07",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.5,
+            "passed": false
+          },
+          "actual_status": "failed",
+          "terminal_stage": "planning",
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 348,
+              "completion_tokens": 960,
+              "total_tokens": 1308,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 348
+            },
+            {
+              "prompt_tokens": 348,
+              "completion_tokens": 960,
+              "total_tokens": 1308,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 220
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R08",
+          "score": {
+            "case_id": "IP4V13-R08",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": false,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0,
+            "passed": false
+          },
+          "actual_status": "failed",
+          "terminal_stage": "planning",
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 350,
+              "completion_tokens": 960,
+              "total_tokens": 1310,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 350
+            },
+            {
+              "prompt_tokens": 350,
+              "completion_tokens": 960,
+              "total_tokens": 1310,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 222
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M01",
+          "score": {
+            "case_id": "IP4V13-M01",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.5,
+            "passed": false
+          },
+          "actual_status": "failed",
+          "terminal_stage": "planning",
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 362,
+              "completion_tokens": 960,
+              "total_tokens": 1322,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 234
+            },
+            {
+              "prompt_tokens": 362,
+              "completion_tokens": 960,
+              "total_tokens": 1322,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 234
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M03",
+          "score": {
+            "case_id": "IP4V13-M03",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.75,
+            "passed": false
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 356,
+              "completion_tokens": 556,
+              "total_tokens": 912,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 228
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M04",
+          "score": {
+            "case_id": "IP4V13-M04",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.75,
+            "passed": false
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 360,
+              "completion_tokens": 960,
+              "total_tokens": 1320,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 232
+            },
+            {
+              "prompt_tokens": 360,
+              "completion_tokens": 441,
+              "total_tokens": 801,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 232
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M06",
+          "score": {
+            "case_id": "IP4V13-M06",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.5,
+            "passed": false
+          },
+          "actual_status": "failed",
+          "terminal_stage": "planning",
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 356,
+              "completion_tokens": 960,
+              "total_tokens": 1316,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 228
+            },
+            {
+              "prompt_tokens": 356,
+              "completion_tokens": 960,
+              "total_tokens": 1316,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 228
+            }
+          ]
+        }
+      ],
+      "cases": [
+        {
+          "case_id": "IP4V13-R01",
+          "score": {
+            "case_id": "IP4V13-R01",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.75,
+            "passed": false
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 350,
+              "completion_tokens": 960,
+              "total_tokens": 1310,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 350
+            },
+            {
+              "prompt_tokens": 350,
+              "completion_tokens": 823,
+              "total_tokens": 1173,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 222
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R02",
+          "score": {
+            "case_id": "IP4V13-R02",
+            "status_ok": true,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 1.5,
+            "passed": false
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 347,
+              "completion_tokens": 960,
+              "total_tokens": 1307,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 347
+            },
+            {
+              "prompt_tokens": 347,
+              "completion_tokens": 462,
+              "total_tokens": 809,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 219
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R03",
+          "score": {
+            "case_id": "IP4V13-R03",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.5,
+            "passed": false
+          },
+          "actual_status": "failed",
+          "terminal_stage": "planning",
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 357,
+              "completion_tokens": 960,
+              "total_tokens": 1317,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 229
+            },
+            {
+              "prompt_tokens": 357,
+              "completion_tokens": 960,
+              "total_tokens": 1317,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 229
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R04",
+          "score": {
+            "case_id": "IP4V13-R04",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.5,
+            "passed": false
+          },
+          "actual_status": "failed",
+          "terminal_stage": "planning",
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 350,
+              "completion_tokens": 960,
+              "total_tokens": 1310,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 350
+            },
+            {
+              "prompt_tokens": 350,
+              "completion_tokens": 960,
+              "total_tokens": 1310,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 222
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R05",
+          "score": {
+            "case_id": "IP4V13-R05",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.75,
+            "passed": false
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 349,
+              "completion_tokens": 198,
+              "total_tokens": 547,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 349
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R06",
+          "score": {
+            "case_id": "IP4V13-R06",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 1.25,
+            "passed": false
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 353,
+              "completion_tokens": 471,
+              "total_tokens": 824,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 225
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R07",
+          "score": {
+            "case_id": "IP4V13-R07",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.5,
+            "passed": false
+          },
+          "actual_status": "failed",
+          "terminal_stage": "planning",
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 348,
+              "completion_tokens": 960,
+              "total_tokens": 1308,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 348
+            },
+            {
+              "prompt_tokens": 348,
+              "completion_tokens": 960,
+              "total_tokens": 1308,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 220
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R08",
+          "score": {
+            "case_id": "IP4V13-R08",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": false,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0,
+            "passed": false
+          },
+          "actual_status": "failed",
+          "terminal_stage": "planning",
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 350,
+              "completion_tokens": 960,
+              "total_tokens": 1310,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 350
+            },
+            {
+              "prompt_tokens": 350,
+              "completion_tokens": 960,
+              "total_tokens": 1310,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 222
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-R09",
+          "score": {
+            "case_id": "IP4V13-R09",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "clarify",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 0,
+          "usage": []
+        },
+        {
+          "case_id": "IP4V13-R10",
+          "score": {
+            "case_id": "IP4V13-R10",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "clarify",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 0,
+          "usage": []
+        },
+        {
+          "case_id": "IP4V13-R11",
+          "score": {
+            "case_id": "IP4V13-R11",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "refused",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "refused",
+          "terminal_stage": null,
+          "terminal_reason": "restricted_personal_data",
+          "model_calls": 0,
+          "usage": []
+        },
+        {
+          "case_id": "IP4V13-R12",
+          "score": {
+            "case_id": "IP4V13-R12",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "refused",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "refused",
+          "terminal_stage": null,
+          "terminal_reason": "prompt_injection_attempt",
+          "model_calls": 0,
+          "usage": []
+        },
+        {
+          "case_id": "IP4V13-M01",
+          "score": {
+            "case_id": "IP4V13-M01",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.5,
+            "passed": false
+          },
+          "actual_status": "failed",
+          "terminal_stage": "planning",
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 362,
+              "completion_tokens": 960,
+              "total_tokens": 1322,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 234
+            },
+            {
+              "prompt_tokens": 362,
+              "completion_tokens": 960,
+              "total_tokens": 1322,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 234
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M02",
+          "score": {
+            "case_id": "IP4V13-M02",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 346,
+              "completion_tokens": 425,
+              "total_tokens": 771,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 346
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M03",
+          "score": {
+            "case_id": "IP4V13-M03",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.75,
+            "passed": false
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 356,
+              "completion_tokens": 556,
+              "total_tokens": 912,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 228
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M04",
+          "score": {
+            "case_id": "IP4V13-M04",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.75,
+            "passed": false
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 360,
+              "completion_tokens": 960,
+              "total_tokens": 1320,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 232
+            },
+            {
+              "prompt_tokens": 360,
+              "completion_tokens": 441,
+              "total_tokens": 801,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 232
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M05",
+          "score": {
+            "case_id": "IP4V13-M05",
+            "status_ok": true,
+            "metric_ok": true,
+            "dimension_ok": true,
+            "region_ok": true,
+            "numeric_ok": true,
+            "sql_verified": true,
+            "date_window_ok": true,
+            "reward": 3.5,
+            "passed": true
+          },
+          "actual_status": "answered",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 347,
+              "completion_tokens": 335,
+              "total_tokens": 682,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 347
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M06",
+          "score": {
+            "case_id": "IP4V13-M06",
+            "status_ok": false,
+            "metric_ok": false,
+            "dimension_ok": false,
+            "region_ok": true,
+            "numeric_ok": false,
+            "sql_verified": false,
+            "date_window_ok": false,
+            "reward": 0.5,
+            "passed": false
+          },
+          "actual_status": "failed",
+          "terminal_stage": "planning",
+          "terminal_reason": null,
+          "model_calls": 2,
+          "usage": [
+            {
+              "prompt_tokens": 356,
+              "completion_tokens": 960,
+              "total_tokens": 1316,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 228
+            },
+            {
+              "prompt_tokens": 356,
+              "completion_tokens": 960,
+              "total_tokens": 1316,
+              "prompt_cache_hit_tokens": 128,
+              "prompt_cache_miss_tokens": 228
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M07",
+          "score": {
+            "case_id": "IP4V13-M07",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "clarify",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 0,
+          "usage": []
+        },
+        {
+          "case_id": "IP4V13-M08",
+          "score": {
+            "case_id": "IP4V13-M08",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "clarify",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 349,
+              "completion_tokens": 751,
+              "total_tokens": 1100,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 349
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M09",
+          "score": {
+            "case_id": "IP4V13-M09",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "clarify",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "clarify",
+          "terminal_stage": null,
+          "terminal_reason": null,
+          "model_calls": 1,
+          "usage": [
+            {
+              "prompt_tokens": 350,
+              "completion_tokens": 402,
+              "total_tokens": 752,
+              "prompt_cache_hit_tokens": 0,
+              "prompt_cache_miss_tokens": 350
+            }
+          ]
+        },
+        {
+          "case_id": "IP4V13-M10",
+          "score": {
+            "case_id": "IP4V13-M10",
+            "status_ok": true,
+            "reason_ok": true,
+            "expected_status": "refused",
+            "metric_ok": null,
+            "dimension_ok": null,
+            "region_ok": null,
+            "numeric_ok": null,
+            "date_window_ok": null,
+            "sql_verified": false,
+            "reward": 1.0,
+            "passed": true
+          },
+          "actual_status": "refused",
+          "terminal_stage": null,
+          "terminal_reason": "write_operation_not_supported",
+          "model_calls": 0,
+          "usage": []
+        }
+      ]
+    }
+  ]
+}
