@@ -26,6 +26,12 @@
       "definition_version": "1.0.0",
       "effective_from": "2026-10-01",
       "business_domain": "退款分析",
+      "formula": "所选时间窗口内的批准退款金额之和",
+      "numerator_definition": "所选时间窗口内的批准退款金额之和",
+      "denominator_definition": "不适用；该指标为金额或计数聚合",
+      "time_basis": "按计划选择下单时间或退款事件时间",
+      "grain": "订单 cohort",
+      "timezone": "UTC",
       "definition_source": "docs/product-contract.md#指标字典与口径",
       "source_tables": [
         "orders",
@@ -44,7 +50,15 @@
         "refunds.amount_cents",
         "refunds.status"
       ],
-      "timezone": "UTC",
+      "valid_dimensions": [
+        "category",
+        "channel",
+        "region",
+        "month_utc"
+      ],
+      "access_scopes": [
+        "refund:read"
+      ],
       "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
       "required_data_versions": [
         "insightpilot-s0-v1",
@@ -57,6 +71,12 @@
       "definition_version": "1.0.0",
       "effective_from": "2026-10-01",
       "business_domain": "退款分析",
+      "formula": "分组批准退款金额 / 同切片全部批准退款金额",
+      "numerator_definition": "分组批准退款金额",
+      "denominator_definition": "同切片全部批准退款金额",
+      "time_basis": "下单时间（UTC）",
+      "grain": "订单 cohort",
+      "timezone": "UTC",
       "definition_source": "docs/product-contract.md#指标字典与口径",
       "source_tables": [
         "orders",
@@ -74,7 +94,15 @@
         "refunds.amount_cents",
         "refunds.status"
       ],
-      "timezone": "UTC",
+      "valid_dimensions": [
+        "category",
+        "channel",
+        "region",
+        "month_utc"
+      ],
+      "access_scopes": [
+        "refund:read"
+      ],
       "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
       "required_data_versions": [
         "insightpilot-s0-v1",
@@ -87,6 +115,12 @@
       "definition_version": "1.0.0",
       "effective_from": "2026-10-01",
       "business_domain": "退款分析",
+      "formula": "批准退款金额 / 对应订单实付金额",
+      "numerator_definition": "批准退款金额",
+      "denominator_definition": "对应订单实付金额",
+      "time_basis": "下单时间（UTC）",
+      "grain": "订单 cohort",
+      "timezone": "UTC",
       "definition_source": "docs/product-contract.md#指标字典与口径",
       "source_tables": [
         "orders",
@@ -105,7 +139,15 @@
         "refunds.amount_cents",
         "refunds.status"
       ],
-      "timezone": "UTC",
+      "valid_dimensions": [
+        "category",
+        "channel",
+        "region",
+        "month_utc"
+      ],
+      "access_scopes": [
+        "refund:read"
+      ],
       "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
       "required_data_versions": [
         "insightpilot-s0-v1",
@@ -118,6 +160,12 @@
       "definition_version": "1.0.0",
       "effective_from": "2026-10-01",
       "business_domain": "退款分析",
+      "formula": "订单批准退款金额按有效 campaign touch 权重分摊；缺失 attribution 单独列示",
+      "numerator_definition": "订单批准退款金额按有效 campaign touch 权重分摊；缺失 attribution 单独列示",
+      "denominator_definition": "不适用；该指标为金额或计数聚合",
+      "time_basis": "下单时间（UTC）",
+      "grain": "订单 × campaign attribution",
+      "timezone": "UTC",
       "definition_source": "docs/product-contract.md#多触点活动归因",
       "source_tables": [
         "orders",
@@ -135,7 +183,12 @@
         "campaign_attributions.weight",
         "campaigns.campaign_name"
       ],
-      "timezone": "UTC",
+      "valid_dimensions": [
+        "campaign"
+      ],
+      "access_scopes": [
+        "refund:read"
+      ],
       "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
       "required_data_versions": [
         "insightpilot-enterprise-v1",
@@ -147,6 +200,12 @@
       "definition_version": "1.0.0",
       "effective_from": "2026-10-01",
       "business_domain": "退款分析",
+      "formula": "批准退款金额、去重退款订单数和已支付订单数",
+      "numerator_definition": "批准退款金额、去重退款订单数和已支付订单数",
+      "denominator_definition": "不适用；该指标为金额或计数聚合",
+      "time_basis": "下单时间（UTC）",
+      "grain": "订单 cohort",
+      "timezone": "UTC",
       "definition_source": "docs/product-contract.md#指标字典与口径",
       "source_tables": [
         "orders",
@@ -162,7 +221,10 @@
         "refunds.amount_cents",
         "refunds.status"
       ],
-      "timezone": "UTC",
+      "valid_dimensions": [],
+      "access_scopes": [
+        "refund:read"
+      ],
       "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
       "required_data_versions": [
         "insightpilot-s0-v1",
@@ -175,6 +237,12 @@
       "definition_version": "1.0.0",
       "effective_from": "2026-10-01",
       "business_domain": "退款分析",
+      "formula": "退款事件日的批准退款金额之和",
+      "numerator_definition": "退款事件日的批准退款金额之和",
+      "denominator_definition": "不适用；该指标为金额或计数聚合",
+      "time_basis": "退款发生时间（UTC）",
+      "grain": "退款事件日",
+      "timezone": "UTC",
       "definition_source": "docs/product-contract.md#指标字典与口径",
       "source_tables": [
         "orders",
@@ -189,7 +257,12 @@
         "refunds.amount_cents",
         "refunds.status"
       ],
-      "timezone": "UTC",
+      "valid_dimensions": [
+        "refund_day_utc"
+      ],
+      "access_scopes": [
+        "refund:read"
+      ],
       "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
       "required_data_versions": [
         "insightpilot-s0-v1",
@@ -202,6 +275,12 @@
       "definition_version": "1.0.0",
       "effective_from": "2026-10-01",
       "business_domain": "退款分析",
+      "formula": "已支付订单数；有至少一笔批准退款的去重订单数",
+      "numerator_definition": "已支付订单数；有至少一笔批准退款的去重订单数",
+      "denominator_definition": "不适用；该指标为金额或计数聚合",
+      "time_basis": "下单时间（UTC）",
+      "grain": "订单 cohort",
+      "timezone": "UTC",
       "definition_source": "docs/product-contract.md#指标字典与口径",
       "source_tables": [
         "orders",
@@ -215,7 +294,10 @@
         "refunds.order_id",
         "refunds.status"
       ],
-      "timezone": "UTC",
+      "valid_dimensions": [],
+      "access_scopes": [
+        "refund:read"
+      ],
       "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
       "required_data_versions": [
         "insightpilot-s0-v1",
@@ -228,6 +310,12 @@
       "definition_version": "1.0.0",
       "effective_from": "2026-10-01",
       "business_domain": "退款分析",
+      "formula": "至少有一笔批准退款的已支付订单数 / 全部符合条件的已支付订单数",
+      "numerator_definition": "至少有一笔批准退款的已支付订单数",
+      "denominator_definition": "全部符合条件的已支付订单数",
+      "time_basis": "下单时间（UTC）",
+      "grain": "订单 cohort",
+      "timezone": "UTC",
       "definition_source": "docs/product-contract.md#指标字典与口径",
       "source_tables": [
         "orders",
@@ -244,7 +332,15 @@
         "refunds.order_id",
         "refunds.status"
       ],
-      "timezone": "UTC",
+      "valid_dimensions": [
+        "category",
+        "channel",
+        "region",
+        "month_utc"
+      ],
+      "access_scopes": [
+        "refund:read"
+      ],
       "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
       "required_data_versions": [
         "insightpilot-s0-v1",
@@ -257,6 +353,12 @@
       "definition_version": "1.0.0",
       "effective_from": "2026-11-01",
       "business_domain": "库存分析",
+      "formula": "期间销售成本 / 期间可用库存日账面金额均值；各自然日先汇总库存，再对有效日取均值",
+      "numerator_definition": "本地日期区间左闭右开内已记录销售成本之和",
+      "denominator_definition": "区间内每个本地日先汇总有效库存快照，再对有效日均值；NULL 日不计，零值计入",
+      "time_basis": "Asia/Shanghai 本地日期；库存按每日快照，销售成本按发生时间",
+      "grain": "商品类别 × Asia/Shanghai 自然日",
+      "timezone": "Asia/Shanghai",
       "definition_source": "docs/product-contract.md#库存周转率ip-2-离线切片",
       "source_tables": [
         "inventory_daily_snapshots",
@@ -270,7 +372,12 @@
         "inventory_cogs_events.sold_at",
         "inventory_cogs_events.cogs_cents"
       ],
-      "timezone": "Asia/Shanghai",
+      "valid_dimensions": [
+        "inventory_category"
+      ],
+      "access_scopes": [
+        "inventory:read"
+      ],
       "freshness": "只使用所选本地日期区间内记录的合成日快照；不代表实时库存",
       "required_data_versions": [
         "insightpilot-inventory-v1"
@@ -281,6 +388,12 @@
       "definition_version": "1.0.0",
       "effective_from": "2026-01-01",
       "business_domain": "营销 ROI",
+      "formula": "(按触点权重分摊的订单净收入 - 去重后活动费用) / 去重后活动费用",
+      "numerator_definition": "按 campaign touch 权重分摊的 paid_amount_cents，减批准退款，再减有效 spend_cents",
+      "denominator_definition": "spent_at 落在请求 UTC 区间、recorded_at 不晚于数据快照，按 business_event_id 取最新修订后的费用",
+      "time_basis": "订单下单时间与活动费用发生时间（UTC）；退款按发生时间并以数据快照截断",
+      "grain": "campaign × UTC 期间",
+      "timezone": "UTC",
       "definition_source": "docs/product-contract.md#营销净投资回报率",
       "source_tables": [
         "orders",
@@ -307,7 +420,12 @@
         "campaign_spend_events.event_status",
         "data_meta.snapshot_at"
       ],
-      "timezone": "UTC",
+      "valid_dimensions": [
+        "campaign"
+      ],
+      "access_scopes": [
+        "marketing:read"
+      ],
       "freshness": "使用 data_meta.snapshot_at；晚于快照入库的退款撤销或费用修订不计入",
       "required_data_versions": [
         "insightpilot-multidomain-v1"
@@ -318,6 +436,12 @@
       "definition_version": "1.0.0",
       "effective_from": "2026-10-01",
       "business_domain": "退款分析",
+      "formula": "按退款状态汇总退款记录金额；批准指标只计 approved",
+      "numerator_definition": "按退款状态汇总退款记录金额；批准指标只计 approved",
+      "denominator_definition": "不适用；该指标为金额或计数聚合",
+      "time_basis": "退款发生时间（UTC）",
+      "grain": "退款记录状态",
+      "timezone": "UTC",
       "definition_source": "docs/product-contract.md#指标字典与口径",
       "source_tables": [
         "orders",
@@ -332,7 +456,12 @@
         "refunds.amount_cents",
         "refunds.status"
       ],
-      "timezone": "UTC",
+      "valid_dimensions": [
+        "refund_status"
+      ],
+      "access_scopes": [
+        "refund:read"
+      ],
       "freshness": "固定数据契约；无生产 freshness SLA 或实时性保证",
       "required_data_versions": [
         "insightpilot-s0-v1",

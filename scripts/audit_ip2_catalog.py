@@ -130,6 +130,7 @@ def _ambiguity_probe() -> dict:
 
 def build_reports() -> tuple[dict, dict]:
     catalog = catalog_document()
+    catalog_metrics = {metric["metric_id"]: metric for metric in catalog["metrics"]}
     errors = _catalog_errors()
     ambiguity = _ambiguity_probe()
     if ambiguity["model_calls"] != 0 or ambiguity["status"] != "clarified":
@@ -144,8 +145,14 @@ def build_reports() -> tuple[dict, dict]:
         "metrics": [{
             "metric_id": metric.metric_id, "definition_version": metric.definition_version,
             "effective_from": metric.effective_from, "business_domain": metric.business_domain,
-            "definition_source": metric.definition_source, "source_tables": list(metric.source_tables),
-            "lineage": list(metric.lineage), "timezone": metric.timezone, "freshness": metric.freshness,
+            "formula": catalog_metrics[metric.metric_id]["formula"],
+            "numerator_definition": catalog_metrics[metric.metric_id]["numerator_definition"],
+            "denominator_definition": catalog_metrics[metric.metric_id]["denominator_definition"],
+            "time_basis": metric.time_basis, "grain": metric.grain,
+            "timezone": metric.timezone, "definition_source": metric.definition_source,
+            "source_tables": list(metric.source_tables), "lineage": list(metric.lineage),
+            "valid_dimensions": list(metric.valid_dimensions),
+            "access_scopes": list(metric.access_scopes), "freshness": metric.freshness,
             "required_data_versions": list(metric.required_data_versions),
         } for metric in sorted(METRICS.values(), key=lambda item: item.metric_id)],
         "boundary_manifest_sha256": _canonical_sha(boundaries),

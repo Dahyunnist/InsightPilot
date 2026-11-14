@@ -50,6 +50,17 @@ class IP2CatalogAuditTests(unittest.TestCase):
         self.assertEqual("insightpilot-semantic-catalog-v3", report["catalog_version"])
         self.assertEqual(0, report["ambiguous_refund_rate_probe"]["model_calls"])
         self.assertEqual("clarified", report["ambiguous_refund_rate_probe"]["status"])
+        audited_metrics = {row["metric_id"]: row for row in report["metrics"]}
+        inventory_metric = audited_metrics["inventory_turnover"]
+        self.assertEqual("1.0.0", inventory_metric["definition_version"])
+        self.assertIn("本地日期区间左闭右开", inventory_metric["numerator_definition"])
+        self.assertIn("Asia/Shanghai", inventory_metric["time_basis"])
+        self.assertEqual("Asia/Shanghai", inventory_metric["timezone"])
+        self.assertIn("inventory_daily_snapshots.snapshot_at", inventory_metric["lineage"])
+        refund_rate = audited_metrics["approved_refund_amount_rate"]
+        self.assertIn("实付金额", refund_rate["denominator_definition"])
+        self.assertIn("orders.paid_amount_cents", refund_rate["lineage"])
+        self.assertIn("UTC", refund_rate["time_basis"])
         self.assertEqual({"refunds", "marketing_roi", "inventory_turnover"}, set(boundaries["sources"]))
         inventory = boundaries["sources"]["inventory_turnover"]
         self.assertFalse(inventory["is_blind"])
