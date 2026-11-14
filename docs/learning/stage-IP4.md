@@ -105,3 +105,9 @@ IP4 离线盲集、独立 SQL/Python gold、SQLite 规则基线、同一 FastAPI
 PostgreSQL 使用临时 tmpfs 实例和 synthetic fixture，逐租户跑完 22 题；状态、计划、数据身份和结果行与 SQLite 逐题一致，tenant-a 与 tenant-b 均 22/22，无 mismatch。容器已移除。定向自动化测试 2/2 通过。样本仅 22 个固定合成题，不能推断生产准确率。
 
 同题集模型检索 on/off 对照现已完成，结果见[对照报告](../../reports/ip4-retrieval-ablation-model.json)。22 道题两臂共 42 次请求；峰值价格估算 `$0.0401622`，供应商账单未核。检索开启 21/22（可答 13/14、guard 8/8），关闭 10/22（可答 2/14、guard 8/8）。结果只代表冻结合成题集，不外推生产。批准最坏上限为 88 次、`$0.1873344`；执行预检推导实际最多 68 次，运行前预留 `$0.159936`。实时余额校验通过 CNY `9.23`，按 7.5 CNY/USD 预留 `1.19952` CNY。首次受限网络余额查询返回 `URLError`，未发出模型请求；联网重试仅重查余额后才开始评测。模型请求只含冻结问题、静态候选指标和允许指标 ID，不含 case ID、gold、SQL、查询结果或数据库行。账本剩余 `$4.50483355`；历史 V13 未决费用仍保留，未知账单不记为零。
+
+## 2026-11-14 最终复验
+
+运行 `scripts/verify_final_acceptance.ps1`，合成数据下的 PostgreSQL/RLS、权限拒绝、分域规则基线、IP4 冻结封存和报告哈希均通过；本次 0 模型请求，临时容器已移除。完整 `\.venv\Scripts\python.exe -m unittest discover -s tests -q` 共 206 项，通过。
+
+首次全套测试发现 R3 的公开 blocked-run manifest 仍引用旧费用账本 SHA。更新生成的只读 manifest 后，`tests.test_run_manifest` 9 项通过，全套重跑 206 项通过。R3 状态仍为 blocked；只更新当前 ledger 哈希，不改写旧题、gold 或模型运行结果。FastAPI `on_event` 弃用警告仍存在。

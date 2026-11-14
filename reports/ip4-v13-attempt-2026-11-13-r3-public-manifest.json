@@ -127,7 +127,7 @@
     "preregistration_sha256": "4f4a4e405fe087b3fbdd5f3b9bb9215d8b77e8bd33ac1897b9cab986b572fe23",
     "question_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
     "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
-    "ledger_sha256": "cf8e4ffcb6227dd7ea2fd31ad6524770d0624ac6df29960f70fed42fe60460cb",
+    "ledger_sha256": "ab00910af84bf14038790e79f350be8054b707443bdf997b82d543c2feaa6b25",
     "attempt_path": "reports/ip4-v13-attempt-manifest-2026-11-13-r3.json"
   },
   "normalizer_sha256": "3e4d2b366392f09c8b27aa36c3d6423c04979a8b495157c28a562f0469a5c752",

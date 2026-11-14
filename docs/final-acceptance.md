@@ -16,9 +16,11 @@
 .\.venv\Scripts\python.exe -m unittest discover -s tests -q
 ```
 
-全套测试当前共 97 项。MCP Streamable HTTP 回归使用 FastAPI `TestClient` 运行完整 JSON-RPC 初始化、工具枚举和工具调用，避免随机端口及手动 Uvicorn 线程的生命周期抖动。IP-1/IP-2 补充两条边界用例与一条外部连接池所有权回归。
+截至 2026-11-14，全套测试共 206 项，完整运行通过。MCP Streamable HTTP 回归使用 FastAPI `TestClient` 运行完整 JSON-RPC 初始化、工具枚举和工具调用，避免随机端口及手动 Uvicorn 线程的生命周期抖动。测试有 FastAPI `on_event` 弃用警告，不影响本轮通过结果。
 
 此前基础验收命令连续两次通过。加入 IP-1/IP-2 权限负例后的增强命令，修复发现的问题后完整通过一次：强制权限负例、R01/R02 开发诊断、分域规则基线六臂、旧 IP4 封存和模型盲评报告哈希校验均通过。全程 0 模型 API 调用，冻结评测结果未改。
+
+2026-11-14 重新运行 `scripts/verify_final_acceptance.ps1`：通过，合成 PostgreSQL 双租户验收、权限负例、R01/R02 开发诊断、分域规则基线、冻结封存与发布产物校验全部通过；模型调用 0，临时容器已清理。完整 `unittest discover -s tests -q` 为 206 项通过。首次运行发现 R3 公共 manifest 沿用旧费用账本 SHA；刷新只读 manifest 后重跑通过，旧冻结题与 gold 未修改。
 
 ## 结果索引
 
@@ -34,6 +36,7 @@
 | IP-1/IP-2 PostgreSQL 权限验收 | `reports/ip1-ip2-postgres-acceptance-v1.json` | reader 列授权、8 表 RLS、跨租户、敏感列、DDL/DML、注入、边界、上下文清理、超时与池恢复 |
 | IP-3 HTTP 压测 | `reports/ip3-http-acceptance-v1.json` | 本机真实 HTTP 合成压测；Compose 镜像拉取受网络阻断，未声称容器内通过 |
 | IP-4 独立集比较 | `reports/ip4-stage-comparison-v1.json` | 冻结哈希、双后端规则基线、历史消融、拒答/误接受与样本限制 |
+| IP-4 同题检索消融 | `reports/ip4-retrieval-ablation-model.json` | 22 道合成题；检索开 21/22、关 10/22；42 次请求，峰值估价 `$0.0401622`；不外推生产 |
 | IP-4 v8 离线预登记 | `reports/enterprise-v8-preparation-report.json` | 新 seed 题集与 gold 哈希、规则基线、模型盲区、费用上界；尚未调用模型 |
 | IP-4 v8 配对结果 | `reports/enterprise-v8-model-diff.json` | 规则与模型系统同集比较、逐题模型覆盖、usage 费用与限制 |
 | IP-4 v9 冻结预登记 | `reports/enterprise-v9-preparation-report.json` | 新 seed、blind/gold 哈希、规则基线与全轮费用上界；模型评测待执行 |
