@@ -93,3 +93,15 @@ IP4 离线盲集、独立 SQL/Python gold、SQLite 规则基线、同一 FastAPI
 语义检索关闭 10/20、独立验证关闭 9/20、主臂 17/20，来自另一份企业合成 holdout 的单轮历史消融。仅作描述，不与本轮 12 道独立题混合，也不证明因果增益。汇总见 `reports/ip4-stage-comparison-v1.json`。样本小，不能推断生产准确率或总体泛化。
 
 本轮没有模型调用，费用账本未变，预算余 $3.69709005。旧 IP4 冻结文件和报告未改；封存校验 7 项通过。
+
+## 2026-11-14 双域离线复验与隔离包
+
+审计确认原 v13 已有 22 题退款/营销 ROI 双域集、独立 Python gold 与 SQLite 交叉核验、PostgreSQL 双租户历史报告、RulePlanner 与无 verifier 离线结果。缺口是 blind 与 gold 原来并列在 `evals`，同题集没有检索候选覆盖报告；历史检索/verifier 消融来自另一套题，不能当作本集模型因果对照。
+
+新增 `benchmarks/ip4-offline-prep-v1/`：`agent-visible/` 仅含退款 12 题、营销 ROI 10 题的 `{case_id, question}`；gold 放在平级 `scoring-private/`。manifest 锁定盲题/gold 各域 SHA、SQLite 文件 SHA、数据 fingerprint、seed、快照、builder/scorer SHA。SQLite 文件由固定 seed 可重建，不提交 14 MB 数据副本。冻结数据 fingerprint `9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9`，SQLite SHA-256 `654663f4176fc4c91aa723c8d83d5f1e462ce90e0967e8b5c76cb53df5fcf311`。
+
+新增 `scripts/run_ip4_offline_audit.py` 与 `tests/test_ip4_offline_bundle.py`。没有模型/API 请求，也未读取私人数据。规则基线在 SQLite、PostgreSQL tenant-a、tenant-b 均为 15/22（可答 8/14、guard 7/8）；全部失败保留：`IP4V13-R02/R04/R05/R06/R07`、`IP4V13-M01/M09`。可答题错误拒答 4 题；明确拒答题误接受 0/3；guard 错误接受 1 题 `IP4V13-M09`。无独立 verifier 离线臂同为 15/22、失败 ID 一致；该臂仍有只读 SQL 策略保护，不代表安全 verifier 等效。metric retrieval 候选覆盖退款 8/8、营销 6/6；这是候选召回，不是模型回答准确率。
+
+PostgreSQL 使用临时 tmpfs 实例和 synthetic fixture，逐租户跑完 22 题；状态、计划、数据身份和结果行与 SQLite 逐题一致，tenant-a 与 tenant-b 均 22/22，无 mismatch。容器已移除。定向自动化测试 2/2 通过。样本仅 22 个固定合成题，不能推断生产准确率。
+
+同题集模型检索 on/off 对照仍 pending：需恢复 provider transport 并另行授权。最多 44 次请求（22 题 × 2 个检索臂，每题每臂 1 次），每次输入上限 3,000 tokens、输出上限 1,024 tokens。按既有锁价 $0.30/M 未缓存输入、$1.20/M 输出，峰值预留上限 $0.0936672；本轮实际调用 0。对照数据清单：`benchmarks/ip4-offline-prep-v1/agent-visible/{refunds,marketing_roi}-blind.jsonl`，评分 gold 位于 `scoring-private/`，数据 fingerprint 与 SQLite SHA 见 manifest。Verifier on/off 可重放同一模型计划，不增加 API 调用。旧 v13 transport 尝试有 15 次响应未知；不将其费用改写为零，也不在本轮重试。

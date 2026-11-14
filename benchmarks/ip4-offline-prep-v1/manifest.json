@@ -1,0 +1,64 @@
+{
+  "suite_id": "insightpilot-ip4-offline-prep-v1",
+  "status": "frozen_offline_preparation",
+  "created_for": "IP-4 offline baseline and SQLite/PostgreSQL consistency audit",
+  "case_count": 22,
+  "domains": {
+    "refunds": {
+      "case_count": 12,
+      "answerable_count": 8,
+      "guard_count": 4,
+      "blind_path": "agent-visible/refunds-blind.jsonl",
+      "blind_sha256": "252993f200a1efb05ca0345ca36c233de3abc8f5e3907780e830b213969d1e7f",
+      "gold_path": "scoring-private/refunds-gold.jsonl",
+      "gold_sha256": "088bcb677b189fb4d66b2f40be8a190fab331fdffc1c6c7a70d6e7da93222ae4"
+    },
+    "marketing_roi": {
+      "case_count": 10,
+      "answerable_count": 6,
+      "guard_count": 4,
+      "blind_path": "agent-visible/marketing_roi-blind.jsonl",
+      "blind_sha256": "b1fc54513b86cf47d57b4d6e609c0bd4ca3e2acc9ee95d9021f6829328f16307",
+      "gold_path": "scoring-private/marketing_roi-gold.jsonl",
+      "gold_sha256": "0c3dfb710f74820a9aa865b6e5df0395daab2550d9cc16a4431e9937ae8eb43b"
+    }
+  },
+  "data": {
+    "data_version": "insightpilot-multidomain-v1",
+    "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
+    "sqlite_sha256": "654663f4176fc4c91aa723c8d83d5f1e462ce90e0967e8b5c76cb53df5fcf311",
+    "marketing_seed": 20261112,
+    "retail_seed": 20261111,
+    "order_count": 50000,
+    "snapshot_at": "2027-03-01T00:00:00Z",
+    "builder": "data.multidomain_seed.create_multidomain_database",
+    "builder_sha256": "9c2dcad7e1ef3c6cbf25ffd4efde773ad3dba5286d9855587aee00840ac9113d",
+    "holdout_builder_sha256": "633c6630733abfa788d95ec1b38a525cfec77ff71b32d8fc762d77acc0404096"
+  },
+  "source_v13": {
+    "manifest_sha256": "c7b7875dcf01380fc6f9da32c7ad8593f9f19f5ca5fc38f32a3521236e349932",
+    "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+    "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2"
+  },
+  "agent_input_contract": {
+    "directory": "agent-visible",
+    "files": [
+      "agent-visible/refunds-blind.jsonl",
+      "agent-visible/marketing_roi-blind.jsonl"
+    ],
+    "row_fields": [
+      "case_id",
+      "question"
+    ],
+    "gold_in_agent_visible_directory": false
+  },
+  "scoring_contract": {
+    "directory": "scoring-private",
+    "gold_method": "Refund gold uses an independent Python source-row oracle cross-checked against compiled read-only SQL; marketing gold uses two independent Python event-ledger oracles cross-checked against SQL.",
+    "scorer": "insightpilot.enterprise_evaluate._compare",
+    "scorer_sha256": "d545910893f47527bde115faa7af0967869bce7c416d99802650077f76692ef6",
+    "independent_verifier_sha256": "dbe607d0a618d7c182bb4e2c1833e9e8b654826249ddb0a9a94ef6c3c0fe051c"
+  },
+  "model_calls": 0,
+  "sample_limit": "22 个固定 synthetic holdout 样本；区间和分数仅描述此集，不外推至生产或总体泛化。"
+}
