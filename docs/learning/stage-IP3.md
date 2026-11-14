@@ -4,6 +4,10 @@
 
 API 请求等待超过 `request_timeout_seconds` 时此前只设置内存取消事件，`/runs/{id}` 的持久记录仍显示 `cancel_requested=false`。现在 504 返回前先尝试写入 RunStore 取消标记，再设置协作事件；若存储暂时不可用，仍发送内存取消信号。新增不启动 ASGI/asyncio 的同步 endpoint 回归：确认 504 后记录为 `running` 且 `cancel_requested=true`，释放固定阻塞 planner 后最终落为 `cancelled`；同一幂等键随后重放返回原 run 的 409，不会二次规划。真实供应商 SDK 是否响应取消信号仍需独立宿主验证；此改动只覆盖 API 与 RunStore 的协作取消语义。
 
+## MCP 请求取消信号桥接
+
+MCP 工具此前同步调用 `core.analyze()`，没有传递取消事件。现工具改为异步入口，把分析放入 AnyIO worker thread；MCP 调度器取消工具任务时，入口设置 `threading.Event`，让分析核心在后续阶段检查并停止。离线单元测试直接驱动工具协程与 worker，覆盖正常返回和取消事件传递；API timeout、取消登记竞态及并发同键三项回归一并通过。本轮未执行完整 Streamable HTTP MCP 传输回归，因为当前 Windows Python 3.14 的 asyncio loop 初始化会卡住。取消不能中断已经在进行中的供应商 HTTP 请求；底层网络取消仍需供应商/宿主验证。
+
 ## 幂等重放与限流次序
 
 分析接口现在先认证、校验幂等键并查重，再对新工作计入每分钟限额。相同主体、幂等键与问题的重放返回原 run，不消耗新工作额度；不同问题仍返回 409。限流仍保护新建分析，超限返回 429。回归覆盖限额为每分钟 1 次时首请求和幂等重放成功、另一新请求被限流。取消、超时、容量信号量与 PostgreSQL 连接池保持原有测试边界；这些离线测试不能替代宿主 Postgres 集成。

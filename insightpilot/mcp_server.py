@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import json
 import os
+from functools import partial
 from pathlib import Path
+from threading import Event
 
+import anyio
 from mcp.server import MCPServer
 from mcp.types import CallToolResult, TextContent
 import uvicorn
@@ -20,10 +23,22 @@ def build_mcp_server(core: InsightPilot, contract_path: Path | None = None,
                      authorized_region: str | None = None) -> MCPServer:
     server = MCPServer("InsightPilot", version="0.4.0", description="Read-only evidence-backed refund analysis")
 
+    async def analyze_with_cancellation(question: str) -> dict:
+        cancel_event = Event()
+        try:
+            return await anyio.to_thread.run_sync(
+                partial(core.analyze, question, cancel_event=cancel_event,
+                        authorized_region=authorized_region),
+                abandon_on_cancel=True,
+            )
+        except BaseException:
+            cancel_event.set()
+            raise
+
     @server.tool()
-    def analyze_refund(question: str) -> CallToolResult:
+    async def analyze_refund(question: str) -> CallToolResult:
         """Analyze one refund metric with the same read-only policy as the CLI and API."""
-        result = core.analyze(question, authorized_region=authorized_region)
+        result = await analyze_with_cancellation(question)
         serialized = json.dumps(result, ensure_ascii=False)
         return CallToolResult(content=[TextContent(type="text", text=serialized)], structuredContent=result,
                               isError=result.get("status") in ("failed", "refused", "cancelled"))
