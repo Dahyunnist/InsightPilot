@@ -51,6 +51,9 @@ try {
     & (Join-Path $root '.venv\Scripts\python.exe') scripts\prepare_ip4_postgres.py
     if ($LASTEXITCODE -ne 0) { throw 'Synthetic PostgreSQL preparation failed.' }
     $python = Join-Path $root '.venv\Scripts\python.exe'
+    $canaryReport = Join-Path $artifactRoot 'ip1-tenant-rls-canary.json'
+    & $python scripts\verify_ip1_rls_canary.py --output $canaryReport
+    if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL tenant RLS canary acceptance failed.' }
     $postgresReport = Join-Path $artifactRoot 'ip1-ip2-postgres-verification.json'
     & $python scripts\verify_ip4_postgres.py --output $postgresReport
     if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL RLS acceptance failed.' }

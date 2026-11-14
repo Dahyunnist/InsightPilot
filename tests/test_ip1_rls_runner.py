@@ -71,6 +71,18 @@ class IP1RlsRunnerTests(unittest.TestCase):
         self.assertIn("recovery_engine.read_data_identity()", verifier)
         self.assertIn('"model_calls": 0', verifier)
 
+    def test_runner_executes_tenant_canary_before_query_gold_suite(self):
+        root = Path(__file__).resolve().parents[1]
+        runner = (root / "scripts/run_ip1_rls.ps1").read_text(encoding="utf-8")
+        verifier = (root / "scripts/verify_ip1_rls_canary.py").read_text(encoding="utf-8")
+        self.assertIn("ip1-tenant-rls-canary.json", runner)
+        self.assertIn("scripts\\verify_ip1_rls_canary.py --output $canaryReport", runner)
+        self.assertLess(runner.index("verify_ip1_rls_canary.py"), runner.index("verify_ip4_postgres.py"))
+        for contract in ("ENABLE ROW LEVEL SECURITY", "FORCE ROW LEVEL SECURITY",
+                         "current_setting('app.tenant_id', true)", "BYPASSRLS",
+                         "pg_backend_pid()", "tenant-unknown", '"model_calls": 0'):
+            self.assertIn(contract, verifier)
+
     def test_rls_runner_parses_with_powershell(self):
         root = Path(__file__).resolve().parents[1]
         host = shutil.which("pwsh") or shutil.which("powershell")

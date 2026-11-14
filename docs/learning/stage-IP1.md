@@ -6,6 +6,12 @@
 
 后续宿主入口增强：`scripts/run_ip1_rls.ps1` 除两租户 API/RLS 验收外，还运行 `scripts/verify_ip1_data_meta_timeout.py`。该检查用临时管理员连接锁住专用库 `public.data_meta`，用应用角色和 100 ms 引擎预算确认数据身份查询得到 `statement_timeout`，然后释放锁并确认读取恢复。3 秒 watchdog 只防止回归时脚本无限等待，watchdog 取消会判失败。报告可指定落在 `.tmp`。Runner 使用专属 Compose project，finally 仅 `down --remove-orphans`，不使用 `-v`；Compose 服务为 tmpfs，没有命名/宿主数据卷。此宿主检查尚未执行。
 
+## 2026-11-14 双租户 RLS canary
+
+旧 PostgreSQL 验收把相同合成源行复制给 tenant-a 与 tenant-b；逐题匹配 gold 无法发现跨租户串读。新增独立表 `public.ip1_rls_canary`，只在 `insightpilot_ip4` 专用一次性数据库中创建。管理员生成两枚随机 marker，分别写入两个租户；表启用并强制 RLS，策略使用与业务表相同的 `current_setting('app.tenant_id', true)`。应用 DSN 以只读事务切换 `insightpilot_reader`，按可信 tenant context 读 marker；同一个 max_size=1 pool 顺序复用 tenant-a、tenant-b、tenant-a，再测缺失和未知 tenant（预期零行）。同时检查 app 与 reader 都非 superuser、无 `BYPASSRLS`，且 app DSN 用户/数据库匹配。清理只 DROP 本次 canary 表；不会改指标表或查询结果。异常报告仅写异常类型，不输出 DSN、密码或 marker。
+
+入口：`scripts/run_ip1_ip3_host_validation.ps1`；IP-1 单独入口：`scripts/run_ip1_rls.ps1 -Execute -ConfirmDatabaseCreation`。新 canary 先于 API/gold 套件运行，报告为 `ip1-tenant-rls-canary.json`。离线 7 项确定性测试覆盖 marker 可见性失败情形、缺失/未知 tenant、入口顺序与 PowerShell 解析。它们没有启动 PostgreSQL；真实 canary、角色属性和连接复用结果仍待用户在 Docker 可用宿主执行。Postgres Compose 使用专属项目与 tmpfs，退出仅清理该项目容器/网络，不删卷。
+
 ## 2026-11-13 离线前置切片
 
 当前入口使用统一 `build_core` 构造器；`QueryEngine` 明确声明后端名与 tenant scope 能力。CLI、API、MCP 默认共享 SQLite adapter 和同一 `InsightPilot` 查询/验证路径。SQLite 仍委托既有 SQL allowlist、只读 authorizer、参数绑定、100 行上限、VM 预算、超时与取消机制。
