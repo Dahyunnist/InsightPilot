@@ -66,6 +66,7 @@ class IP4OfflineBundleTests(unittest.TestCase):
             self.assertEqual(ablation["latest_retrieval_model_run"]["arms"]["retrieval_on"]["passed"], 21)
             self.assertEqual(ablation["latest_retrieval_model_run"]["arms"]["retrieval_off"]["passed"], 10)
             self.assertEqual(ablation["latest_retrieval_model_run"]["observed_api_calls"], 42)
+            self.assertIn("No live-model verifier", ablation["replay_note"])
             self.assertFalse(ablation["request_payload"]["includes_query_results_or_database_rows"])
 
 

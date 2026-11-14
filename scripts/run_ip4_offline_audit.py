@@ -288,7 +288,7 @@ def run(bundle: Path = BUNDLE, database: Path = DEFAULT_DATABASE, output: Path |
         "interpretation": "完成状态表示双后端执行和逐题一致性检查完成；规则基线错误作为评测结果保留，不折算为执行器通过。",
         "model_ablation": {
             "status": retrieval_status,
-            "comparison": "semantic retrieval on vs off; independent verifier on vs disabled using identical model outputs",
+            "comparison": "semantic metric retrieval on vs off; verifier behavior is measured separately on deterministic RulePlanner output",
             "model_backend_scope": "SQLite only; PostgreSQL remains covered by deterministic RulePlanner and parity arms",
             "planned_first_pass_requests": planned_first_pass_calls,
             "retrieval_arms": {arm: len(cases) for arm in arms},
@@ -339,7 +339,7 @@ def run(bundle: Path = BUNDLE, database: Path = DEFAULT_DATABASE, output: Path |
                 "includes_gold_or_expected_answers": False,
                 "synthetic_only": True,
             },
-            "replay_note": "Verifier-on/off comparison reuses identical captured model plans; it adds no API calls.",
+            "replay_note": "No live-model verifier on/off replay is included. The deterministic no-verifier arm uses RulePlanner and adds no API calls.",
             "data_artifacts": {
                 "bundle_root": str(bundle),
                 "agent_visible_files": manifest["agent_input_contract"]["files"],
