@@ -18,6 +18,10 @@ Set-Location E:\job\insightpilot
 
 新增后的完整测试套件重跑超过三分钟没有输出，随后中断；该次全套结果未确认。上一轮完整套件在本评测加入前为 206 项通过。新增代码的验证范围以本页的定向测试为准。
 
+## 当前评测证据一致性
+
+另有只读审计 `scripts/audit_current_benchmark_evidence.py`，核对当前 30 题原始模型结果中的 14 个 answered case。定义来源、来源标题、公式、版本、SQL 策略和 verifier 均匹配 14/14；lineage 与现行指标目录精确匹配 0/14，因此完整证据包为 0/14，报告状态为 partial。历史结果中的 lineage 不应被静默覆盖；需确认生成时使用的目录版本或在同一冻结集重新生成证据后再重评完整性。该审计不调用模型。
+
 冻结题集：`evals/sql-safety-v1.jsonl`。逐例结果和题集 SHA-256：`reports/sql-safety-v1.json`。评测代码：`scripts/evaluate_sql_safety.py`。修改题集须使用新版本号，不能覆盖 v1 报告。
 
 ## 失败路径
