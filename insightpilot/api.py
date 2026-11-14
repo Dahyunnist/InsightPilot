@@ -253,6 +253,11 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
         try:
             result = future.result(timeout=request_timeout_seconds)
         except FutureTimeoutError:
+            try:
+                store.request_cancel(run_id, principal_id=principal_id)
+            except Exception:
+                # The in-memory signal still stops cooperative work if persistence is unavailable.
+                pass
             cancel_event.set()
             return JSONResponse(status_code=504,
                 content={"run_id": run_id, "status": "failed", "stage": "request",

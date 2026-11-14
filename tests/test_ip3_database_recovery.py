@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 
 from data.seed import create_database
 from insightpilot.agent import InsightPilot
-from insightpilot.api import _register_cancel_event, create_app
+from insightpilot.api import AnalysisRequest, _register_cancel_event, create_app
 from insightpilot.planner import PlanError, QueryPlan
 from insightpilot.query_engine import SQLiteQueryEngine
 from insightpilot.run_store import RunStore
@@ -101,6 +101,51 @@ class CountingSQLiteEngine(SQLiteQueryEngine):
 
 
 class IP3DatabaseRecoveryTests(unittest.TestCase):
+    def test_request_timeout_persists_cancel_marker_and_worker_finishes_cancelled(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            database = create_database(root / "synthetic.sqlite")
+            planner = BlockingPlanner()
+            store = RunStore(root / "runs.sqlite")
+            app = create_app(InsightPilot(planner, database), run_store=store,
+                             api_token="local-test-token", api_scopes={"refund:read"},
+                             request_timeout_seconds=0.05)
+            analysis_endpoint = next(route.endpoint for route in app.routes
+                                     if getattr(route, "path", None) == "/analysis")
+
+            try:
+                response = analysis_endpoint(
+                    AnalysisRequest(question=QUESTION),
+                    authorization="Bearer local-test-token",
+                    idempotency_key="timeout-cancel-marker",
+                )
+                self.assertEqual(response.status_code, 504)
+                run_id = response.headers["X-Request-ID"]
+                self.assertTrue(planner.entered.is_set())
+                state = store.get(run_id)
+                self.assertEqual(state["status"], "running")
+                self.assertTrue(state["cancel_requested"])
+
+                planner.release.set()
+                deadline = time.monotonic() + 2
+                while time.monotonic() < deadline and store.get(run_id)["status"] == "running":
+                    time.sleep(0.01)
+                state = store.get(run_id)
+                self.assertEqual(state["status"], "cancelled")
+                self.assertTrue(state["cancel_requested"])
+                replay = analysis_endpoint(
+                    AnalysisRequest(question=QUESTION),
+                    authorization="Bearer local-test-token",
+                    idempotency_key="timeout-cancel-marker",
+                )
+                self.assertEqual(replay.status_code, 409)
+                self.assertEqual(replay.headers["Idempotency-Replay"], "true")
+                self.assertEqual(store.get(run_id)["result"]["run_id"], run_id)
+                self.assertEqual(planner.calls, 1)
+            finally:
+                planner.release.set()
+                app.state.analysis_executor.shutdown(wait=True)
+
     def test_concurrent_same_key_reservation_creates_one_executable_run(self):
         with tempfile.TemporaryDirectory() as temp:
             store = RunStore(Path(temp) / "runs.sqlite")
