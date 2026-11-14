@@ -16,6 +16,8 @@ Set-Location E:\job\insightpilot
 
 结果：11/11 用例符合预期；危险 SQL 10/10 被拒绝，安全只读查询 1/1 通过；7 项测试和 9 个子测试通过。模型调用 0。
 
+新增后的完整测试套件重跑超过三分钟没有输出，随后中断；该次全套结果未确认。上一轮完整套件在本评测加入前为 206 项通过。新增代码的验证范围以本页的定向测试为准。
+
 冻结题集：`evals/sql-safety-v1.jsonl`。逐例结果和题集 SHA-256：`reports/sql-safety-v1.json`。评测代码：`scripts/evaluate_sql_safety.py`。修改题集须使用新版本号，不能覆盖 v1 报告。
 
 ## 失败路径
