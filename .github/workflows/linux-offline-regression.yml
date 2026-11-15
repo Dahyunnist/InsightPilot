@@ -21,6 +21,24 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-ci-linux.txt
       - run: python -m pip install -r requirements-ci-linux.txt
+      - name: Rebuild frozen synthetic database
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from data.multidomain_seed import create_multidomain_database
+          from insightpilot.runner import read_data_identity
+
+          database = Path("data/insightpilot-ip4-v13.sqlite")
+          create_multidomain_database(database, seed=20261112,
+                                      retail_seed=20261111, order_count=50000)
+          manifest = json.loads(Path("evals/ip4-v13-manifest.json").read_text())
+          identity = read_data_identity(database)
+          expected = (manifest["data_version"], manifest["data_fingerprint"])
+          if identity != expected:
+              raise SystemExit(f"synthetic database identity mismatch: {identity!r}")
+          print(f"synthetic database identity verified: {identity[0]} {identity[1]}")
+          PY
       - name: API concurrency and cancellation
         run: python -m pytest -q -p no:cacheprovider tests/test_s7_enterprise_dataset.py::S7EnterpriseDatasetTests::test_concurrency_limit_and_live_cancel_survive_request_boundary
       - name: IP-4 offline regression

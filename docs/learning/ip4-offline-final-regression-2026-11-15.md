@@ -37,3 +37,7 @@
 新增 `.github/workflows/linux-offline-regression.yml`，Ubuntu/Python 3.12 运行 API 并发取消用例和 IP-4 离线审计/载荷/manifest 测试。直接依赖见 `requirements-ci-linux.txt`（FastAPI 0.146.0、httpx 0.28.1、SQLGlot 30.23.0、psycopg 3.3.3、pytest 9.1.1）；间接依赖仍由 pip 在线解析，未实现完整 hash lock。当前环境未联网安装该文件，Linux job 结果待 CI 首次运行。
 
 本机当前 IP-4 离线集 7 passed、22 subtests passed（1.07s）。Windows 并发取消测试仍在 `planner.entered.wait(2)` 失败；修复不放宽断言，改由 Ubuntu job 验证。没有调用模型；旧评测报告未改。
+
+## 2026-11-15 CI synthetic fixture repair
+
+GitHub Actions IP-4 tests need ignored local database `data/insightpilot-ip4-v13.sqlite`. Workflow now regenerates it through `create_multidomain_database(seed=20261112, retail_seed=20261111, order_count=50000)` and verifies `read_data_identity` against the committed manifest before tests. This leaves frozen blind/gold/manifest unchanged. Local isolated-temp reproduction matched the frozen identity exactly. IP-4 offline tests: 7 passed, 22 subtests passed; no model calls.
