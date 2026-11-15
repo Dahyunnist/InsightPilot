@@ -16,6 +16,7 @@ from dataclasses import replace
 from .agent import InsightPilot, _preflight
 from .config import load_settings
 from .freeze import sha256_text
+from .ip4_evaluate import _safe_diagnostic_code, _safe_diagnostic_stage, _safe_failure_detail
 from .metrics import REGION_VALUES
 from .planner import OpenAICompatiblePlanner
 from .runner import execute_readonly, read_data_identity
@@ -80,6 +81,13 @@ def _matches(actual, expected, tolerance: float = 1e-6) -> bool:
 
 def _compare(case: dict, gold: dict, result: dict) -> dict:
     expected_status = gold.get("expected_status", "answered")
+    actual_status = _safe_diagnostic_code(result.get("status"))
+    diagnostics = {
+        "actual_status": actual_status if actual_status in {"answered", "clarify", "refused", "failed", "cancelled"} else None,
+        "actual_stage": _safe_diagnostic_stage(result.get("stage")),
+        "actual_reason": _safe_diagnostic_code(result.get("reason")),
+        "actual_failure_detail": _safe_failure_detail(result.get("failure_detail")),
+    }
     if expected_status != "answered":
         status_ok = result.get("status") == expected_status
         reason_ok = "expected_reason" not in gold or result.get("reason") == gold["expected_reason"]
@@ -88,7 +96,7 @@ def _compare(case: dict, gold: dict, result: dict) -> dict:
                 "metric_ok": None, "dimension_ok": None, "region_ok": None, "numeric_ok": None,
                 "date_window_ok": None, "sql_verified": False,
                 "reward": 1.0 if status_ok and reason_ok else 0.0,
-                "passed": status_ok and reason_ok}
+                "passed": status_ok and reason_ok, **diagnostics}
     expected_metric = gold["metric"]
     metric_ok = result.get("metric", {}).get("id") == expected_metric
     expected = gold["expected"]
@@ -121,7 +129,8 @@ def _compare(case: dict, gold: dict, result: dict) -> dict:
             "region_ok": region_ok, "numeric_ok": numeric_ok, "sql_verified": verification,
             "date_window_ok": date_window_ok,
             "reward": round(reward, 2),
-            "passed": status_ok and metric_ok and dimension_ok and numeric_ok and verification and region_ok and date_window_ok}
+            "passed": status_ok and metric_ok and dimension_ok and numeric_ok and verification and region_ok and date_window_ok,
+            **diagnostics}
 
 
 def _without_verification(planner, database_path, question: str) -> dict:

@@ -6,6 +6,7 @@ import argparse
 import json
 import math
 import random
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -13,6 +14,38 @@ from .agent import InsightPilot
 from .freeze import sha256_text
 from .rule_baseline import RulePlanner
 from .runner import read_data_identity
+
+
+_DIAGNOSTIC_TOKEN = re.compile(r"^[A-Za-z][A-Za-z0-9_.-]{0,63}$")
+_DIAGNOSTIC_SQL_SHA = re.compile(r"^[0-9a-f]{64}$")
+_FAILURE_DETAIL_FIELDS = ("layer", "category", "exception_class", "backend", "tenant_context")
+_ANALYSIS_STATUSES = {"answered", "clarify", "refused", "failed", "cancelled"}
+
+
+def _safe_failure_detail(value: object) -> dict | None:
+    """Keep only stable, non-sensitive failure metadata for evaluation reports."""
+    if not isinstance(value, dict):
+        return None
+    safe = {
+        key: item for key in _FAILURE_DETAIL_FIELDS
+        if isinstance((item := value.get(key)), str) and _DIAGNOSTIC_TOKEN.fullmatch(item)
+    }
+    sql_sha = value.get("sql_sha256")
+    if isinstance(sql_sha, str) and _DIAGNOSTIC_SQL_SHA.fullmatch(sql_sha):
+        safe["sql_sha256"] = sql_sha
+    parameter_count = value.get("parameter_count")
+    if isinstance(parameter_count, int) and not isinstance(parameter_count, bool) and parameter_count >= 0:
+        safe["parameter_count"] = parameter_count
+    return safe or None
+
+
+def _safe_diagnostic_code(value: object) -> str | None:
+    return value if isinstance(value, str) and _DIAGNOSTIC_TOKEN.fullmatch(value) else None
+
+
+def _safe_diagnostic_stage(value: object) -> str | None:
+    stages = {"preflight", "planning", "dataset", "compilation", "query", "verification", "answer"}
+    return value if isinstance(value, str) and value in stages else None
 
 
 def _wilson(successes: int, total: int, z: float = 1.96) -> list[float] | None:
@@ -72,8 +105,12 @@ def compare(case: dict, gold: dict, result: dict) -> dict:
         checks.update({"metric_ok": None, "dimension_ok": None, "region_ok": None,
                        "date_window_ok": None, "numeric_ok": None,
                        "independent_verifier_ok": None})
+    status = result.get("status")
     return {"case_id": case["case_id"], "domain": gold["domain"], "passed": passed,
-            "actual_status": result.get("status"), "actual_reason": result.get("reason"), **checks}
+            "actual_status": status if isinstance(status, str) and status in _ANALYSIS_STATUSES else None,
+            "actual_reason": _safe_diagnostic_code(result.get("reason")),
+            "actual_stage": _safe_diagnostic_stage(result.get("stage")),
+            "actual_failure_detail": _safe_failure_detail(result.get("failure_detail")), **checks}
 
 
 def evaluate(database: Path, blind_path: Path, gold_path: Path, manifest_path: Path,
