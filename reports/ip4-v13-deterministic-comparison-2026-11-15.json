@@ -1,0 +1,218 @@
+{
+  "report_id": "insightpilot-ip4-v13-deterministic-comparison-2026-11-15",
+  "evaluation_type": "deterministic_rule_policy_comparison_not_llm",
+  "suite_id": "insightpilot-ip4-independent-v13",
+  "offline_bundle_suite_id": "insightpilot-ip4-offline-prep-v1",
+  "backend": "SQLite",
+  "synthetic_only": true,
+  "model_calls": 0,
+  "model_requests_sent": 0,
+  "estimated_model_cost_usd": 0.0,
+  "case_count": 22,
+  "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
+  "frozen_hashes": {
+    "manifest_sha256": "c7b7875dcf01380fc6f9da32c7ad8593f9f19f5ca5fc38f32a3521236e349932",
+    "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+    "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2"
+  },
+  "arms": {
+    "ruleplanner_with_independent_verifier": {
+      "passed": 15,
+      "total": 22,
+      "answerable_passed": 8,
+      "answerable_total": 14,
+      "guard_passed": 7,
+      "guard_total": 8,
+      "independent_verifier_enabled": true,
+      "false_refusals": [
+        "IP4V13-R02",
+        "IP4V13-R05",
+        "IP4V13-R06",
+        "IP4V13-R07"
+      ],
+      "false_accepts": [
+        "IP4V13-M09"
+      ],
+      "failures": [
+        {
+          "case_id": "IP4V13-R02",
+          "failed_checks": [
+            "status_ok",
+            "metric_ok",
+            "dimension_ok",
+            "numeric_ok",
+            "date_window_ok",
+            "sql_verified"
+          ],
+          "actual_status": "clarify"
+        },
+        {
+          "case_id": "IP4V13-R04",
+          "failed_checks": [
+            "dimension_ok",
+            "numeric_ok"
+          ],
+          "actual_status": "answered"
+        },
+        {
+          "case_id": "IP4V13-R05",
+          "failed_checks": [
+            "status_ok",
+            "metric_ok",
+            "dimension_ok",
+            "numeric_ok",
+            "date_window_ok",
+            "sql_verified"
+          ],
+          "actual_status": "clarify"
+        },
+        {
+          "case_id": "IP4V13-R06",
+          "failed_checks": [
+            "status_ok",
+            "metric_ok",
+            "numeric_ok",
+            "date_window_ok",
+            "sql_verified"
+          ],
+          "actual_status": "clarify"
+        },
+        {
+          "case_id": "IP4V13-R07",
+          "failed_checks": [
+            "status_ok",
+            "metric_ok",
+            "dimension_ok",
+            "numeric_ok",
+            "date_window_ok",
+            "sql_verified"
+          ],
+          "actual_status": "clarify"
+        },
+        {
+          "case_id": "IP4V13-M01",
+          "failed_checks": [
+            "dimension_ok",
+            "numeric_ok"
+          ],
+          "actual_status": "answered"
+        },
+        {
+          "case_id": "IP4V13-M09",
+          "failed_checks": [
+            "status_ok",
+            "sql_verified"
+          ],
+          "actual_status": "answered"
+        }
+      ]
+    },
+    "ruleplanner_without_independent_verifier": {
+      "passed": 15,
+      "total": 22,
+      "answerable_passed": 8,
+      "answerable_total": 14,
+      "guard_passed": 7,
+      "guard_total": 8,
+      "independent_verifier_enabled": false,
+      "false_refusals": [
+        "IP4V13-R02",
+        "IP4V13-R05",
+        "IP4V13-R06",
+        "IP4V13-R07"
+      ],
+      "false_accepts": [
+        "IP4V13-M09"
+      ],
+      "failures": [
+        {
+          "case_id": "IP4V13-R02",
+          "failed_checks": [
+            "status_ok",
+            "metric_ok",
+            "dimension_ok",
+            "numeric_ok",
+            "date_window_ok"
+          ],
+          "actual_status": "clarify"
+        },
+        {
+          "case_id": "IP4V13-R04",
+          "failed_checks": [
+            "dimension_ok",
+            "numeric_ok"
+          ],
+          "actual_status": "answered"
+        },
+        {
+          "case_id": "IP4V13-R05",
+          "failed_checks": [
+            "status_ok",
+            "metric_ok",
+            "dimension_ok",
+            "numeric_ok",
+            "date_window_ok"
+          ],
+          "actual_status": "clarify"
+        },
+        {
+          "case_id": "IP4V13-R06",
+          "failed_checks": [
+            "status_ok",
+            "metric_ok",
+            "numeric_ok",
+            "date_window_ok"
+          ],
+          "actual_status": "clarify"
+        },
+        {
+          "case_id": "IP4V13-R07",
+          "failed_checks": [
+            "status_ok",
+            "metric_ok",
+            "dimension_ok",
+            "numeric_ok",
+            "date_window_ok"
+          ],
+          "actual_status": "clarify"
+        },
+        {
+          "case_id": "IP4V13-M01",
+          "failed_checks": [
+            "dimension_ok",
+            "numeric_ok"
+          ],
+          "actual_status": "answered"
+        },
+        {
+          "case_id": "IP4V13-M09",
+          "failed_checks": [
+            "status_ok"
+          ],
+          "actual_status": "answered"
+        }
+      ]
+    }
+  },
+  "metric_retrieval_candidate_coverage": {
+    "method": "retrieve_metrics candidate coverage; no planner/model call",
+    "by_domain": {
+      "marketing_roi": {
+        "metric_candidate_recall": 1.0,
+        "covered": 6,
+        "answerable": 6,
+        "misses": []
+      },
+      "refunds": {
+        "metric_candidate_recall": 1.0,
+        "covered": 8,
+        "answerable": 8,
+        "misses": []
+      }
+    },
+    "total_covered": 14,
+    "total_answerable": 14
+  },
+  "comparison_note": "Both arms use the deterministic RulePlanner and the same frozen synthetic questions/database. The no-verifier score intentionally omits verifier success; equal totals do not prove verifier equivalence. This is not a live-model result. PostgreSQL was not run in this comparison.",
+  "payload_note": "No questions, gold values, SQL, parameters, query rows, or private data are emitted."
+}
