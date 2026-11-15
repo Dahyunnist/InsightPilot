@@ -103,3 +103,11 @@ IP-1 使用 PostgreSQL/FastAPI/`PostgresQueryEngine` 与合成数据：两个 te
 最终 `ip1-ip2-postgres-verification.json` 状态 passed：tenant-a 与 tenant-b 各 12/12；每租户 6 道可答题与 6 道 guard 全通过，PG 答案经独立 Python gold 和 SQLite 交叉核对。Canary 通过同一连接池切换 tenant-a、tenant-b、missing、unknown context；缺 tenant 在应用层拒绝，unknown/missing RLS 可见行 0。只读角色 DML 与 DDL 均拒绝；statement_timeout 实测超时，池耗尽后恢复。`ip1-data-meta-timeout.json` 100ms 超时 123.31ms，随后读取恢复。0 模型调用。
 
 Artifacts 位于仓库外 `E:\job\insightpilot-ip1-acceptance-20261115-r3`。验收后专用容器和 Compose network 均无残留。边界：验证的是本地 PostgreSQL 16.15 与固定合成 fixture，不代表生产部署；首轮失败根因仍未知，不能归因于代码或容器竞态。
+
+## 2026-11-15 `data_meta` 超时宿主复验
+
+按新入口 `scripts/run_ip1_database_truth.ps1` 执行。普通权限首跑被 Docker pipe ACL 拦截，未完成数据库验收；提升权限重跑通过。脱敏汇总见 [`ip1-database-truth-host-acceptance-2026-11-15.json`](../../reports/ip1-database-truth-host-acceptance-2026-11-15.json)。
+
+真实 PostgreSQL/FastAPI/`PostgresQueryEngine` 路径通过：tenant-a、tenant-b 查询各 12/12；独立 canary 与同一池复用的 tenant-a 只见各自 marker，missing/unknown tenant 为 0 行，缺 tenant 上下文被拒。DML 与 DDL 均被拒。`data_meta` 被排他锁占用时，100 ms `statement_timeout` 实测 126.34 ms 后超时；释放锁后身份读取恢复。模型调用 0。三个源 JSON 的 SHA-256 写入脱敏汇总；只读 `.tmp/ip1-database-truth-20261115-211203-6d6d71ea`，未改动或纳入暂存。
+
+这次实测闭合了当前 `data_meta` 超时修复的 PostgreSQL 宿主复验项。证据仅适用于本机 PostgreSQL 和固定合成 fixture；不代表生产负载、真实租户数据或业务泛化。

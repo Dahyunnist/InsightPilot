@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "project": "InsightPilot",
+  "run_date": "2026-11-15",
+  "host_command": "scripts/run_ip1_database_truth.ps1",
+  "execution_note": "普通权限首跑受 Docker pipe ACL 阻止；提升权限重跑通过。",
+  "postgresql_connection": "passed",
+  "tenant_rls": {
+    "tenant_a_visible_only": true,
+    "tenant_b_visible_only": true,
+    "pooled_tenant_a_reuse_isolated": true,
+    "missing_tenant_visible_rows": 0,
+    "unknown_tenant_visible_rows": 0,
+    "missing_context": "rejected",
+    "tenant_a_cases": {"passed": 12, "total": 12},
+    "tenant_b_cases": {"passed": 12, "total": 12}
+  },
+  "read_only": {"dml_denied": true, "ddl_denied": true},
+  "data_meta_statement_timeout": {
+    "status": "timed_out",
+    "timeout_ms": 100,
+    "observed_elapsed_ms": 126.34,
+    "identity_recovery": "recovered"
+  },
+  "model_calls": 0,
+  "data_scope": "fixed synthetic fixture only",
+  "storage_scope": "dedicated Compose service with tmpfs; no named or host data volume",
+  "source_artifact_directory": ".tmp/ip1-database-truth-20261115-211203-6d6d71ea",
+  "source_artifact_sha256": {
+    "ip1-tenant-rls-canary.json": "9b0d73f8e888c0f6e14a47b5fe93641fcc0f215ef5c34f9cb4d1a6c3bc09b662",
+    "ip1-ip2-postgres-verification.json": "0ef7567621393d8f45a26a9e98a76c6d45e2703d535e69d599cacac95804509c",
+    "ip1-data-meta-timeout.json": "d917f609466588463f85bc7b1b4b45120aba67b96e1e46545727601288200548"
+  },
+  "limitations": [
+    "本机 PostgreSQL 与固定合成数据结果，不代表生产部署或真实企业数据。",
+    "逐题 PostgreSQL 与 gold 一致不构成独立业务样本或泛化结论。"
+  ]
+}
