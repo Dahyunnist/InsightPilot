@@ -1,4 +1,5 @@
 import json
+import shutil
 import sqlite3
 import tempfile
 import unittest
@@ -149,6 +150,30 @@ class MultiDomainTests(unittest.TestCase):
                     "SELECT customer_id FROM campaign_spend_events LIMIT 1"):
             with self.subTest(sql=sql), self.assertRaises(SQLPolicyError):
                 validate_sql(sql)
+
+    def test_roi_currency_and_gross_net_ambiguity_clarify_before_model_call(self):
+        planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)
+        planner._complete = lambda *_args: self.fail("unsupported ROI semantics reached model")
+        for question in (
+            "2026-10-01 到 2026-10-31 用人民币计算各活动净 ROI",
+            "2026-10-01 到 2026-10-31 各活动 gross ROI 是多少？",
+        ):
+            with self.subTest(question=question), self.assertRaises(NeedsClarification):
+                planner.plan(question)
+
+    def test_marketing_oracle_rejects_missing_required_schema_instead_of_zero(self):
+        plan = QueryPlan("marketing_net_roi", "2026-10-01", "2026-11-01", None, "campaign")
+        with tempfile.TemporaryDirectory() as directory:
+            incomplete = Path(directory) / "missing-attribution.sqlite"
+            shutil.copyfile(self.database, incomplete)
+            connection = sqlite3.connect(incomplete)
+            try:
+                connection.execute("DROP TABLE campaign_attributions")
+                connection.commit()
+            finally:
+                connection.close()
+            with self.assertRaises(sqlite3.OperationalError):
+                calculate_marketing_net_roi(plan, incomplete)
 
     def test_planner_returns_only_catalogued_marketing_metric_plan(self):
         planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)

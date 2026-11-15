@@ -32,3 +32,13 @@ fixture 覆盖 Asia/Shanghai 日期左闭右开边界（边界前一刻/恰好�
 指标版本行为回归另覆盖生效日当天允许并绑定当前 `metric_version`、生效日前拒绝、跨生效日区间澄清、反向日期拒绝。三条拒绝路径都断言 planner 的模型调用数为 0。反向日期检查已前移到模型调用前，避免无效日期消耗模型请求。
 
 当时的 IP-2 冻结只在 SQLite 上完成；该段记录了当时的限制。后续 IP-1 已集成 PostgreSQL/RLS，并把临时双租户 PostgreSQL fixture 与 IP-2 数据集一同复验。新结果及边界见 [IP-1/IP-2 数据库权限复验](stage-IP1.md#ip-1ip-2-数据库权限复验2026-10-23) 与 `reports/ip1-ip2-postgres-acceptance-v1.json`。源 SQLite 仍是未分租户的合成基线；PG 装载器在临时副本中为租户表加 `tenant_id` 并复制两租户数据。
+
+## 2026-11-15 ROI 口径与边界复核
+
+营销净 ROI 契约补明：收入按订单 `ordered_at` cohort；费用按 UTC `spent_at` 区间；批准退款从 cohort 净收入扣除，但退款日不再受查询区间筛选，退款与冲正只使用 snapshot 可见记录；费用按业务事件最新修订去重，void 排除。分母为有效费用，零费用 ROI 返回 `null`。缺 attribution 进入“未归因”。
+
+本 synthetic schema 仅有整数 `*_cents`，无 currency code/FX。绝对值不标 USD/CNY；ROI 假设三类金额使用同一记账单位，但该单位一致性未验证。模型请求币种/换算或未定义 gross ROI 时，planner 先澄清，不调用 planner completion。必需表缺失会报 schema error，不当作零值。
+
+新增确定性测试覆盖币种/gross ROI 澄清与缺失 attribution schema 失败；`tests/test_multidomain.py`：14 passed、5 subtests passed。已有 IP-1 PostgreSQL 宿主报告用同一 synthetic multidomain fixture：两租户各 12/12，含 6 道营销 ROI answerable；每题 SQL 结果与 SQLite verifier 及独立 Python gold 对齐。此次没有重新启动 PostgreSQL；跨库依据为 2026-11-15 已归档临时容器实测。
+
+未测边界：多币种/FX、production accounting currency、历史快照 point-in-time 完整性、真实数据和模型回答质量均未验收；0 模型调用。

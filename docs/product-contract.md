@@ -43,6 +43,8 @@ Fixture 使用 `inventory_daily_snapshots(category, local_date, snapshot_at, inv
 
 第二业务域 `marketing_net_roi` 需要独立合成版本 `insightpilot-multidomain-v1`。定义为 `(触点权重分摊订单净收入 - 去重活动费用) / 去重活动费用`。订单时间和 spend 时间均按 UTC 左闭右开筛选；批准退款扣除快照前已记录的撤销。Spend 按 `business_event_id` 取 `revision`、`recorded_at`、`event_id` 排序后的最新事件；`void` 修订排除。缺 attribution 汇入“未归因”；没有 spend 的组 ROI 返回 null。费用没有地区分摊，所以 ROI 地区筛选必须澄清。
 
+该 synthetic schema 的金额字段为整数 `*_cents`，没有 currency code 或汇率字段；不可声明绝对金额为 USD/CNY，也不可做跨币种换算。ROI 是无量纲比值，但仅在订单收入、退款和广告费用使用同一记账单位时有意义；当前 fixture 未独立验证该单位一致性。指标按订单 `ordered_at` 确定收入 cohort，按 `spent_at` 过滤费用；退款归属订单 cohort，不再按请求期间筛退款日期，但仅计入 `refunded_at` 与 `recorded_at` 都不晚于 `data_meta.snapshot_at` 的批准退款，撤销也按 snapshot 截断。Gross ROI 尚未定义，询问毛 ROI、币种或汇率时必须澄清。缺失 required table/column 属于 schema error，不能退化为零收入或零费用。
+
 金额用整数分计算，展示层才转元。比例用未舍入值比较，黄金集允许误差见每题 `tolerance`；零分母返回 `null`，不得写作 0%。`N01` 的“订单退款率”、`N02` 的“金额退款率”说明两种含义；`A01`、`A02` 覆盖口径/范围缺失。至少存在三种可区分口径：退款订单率、退款金额率、退款事件率。
 
 ## 固定评测集

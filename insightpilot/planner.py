@@ -220,6 +220,13 @@ class OpenAICompatiblePlanner:
             region in q for region in REGION_VALUES
         ):
             raise NeedsClarification("营销费用目前没有地区分摊；请先移除地区筛选。")
+        if candidates and candidates[0].metric_id == "marketing_net_roi":
+            lowered = q.casefold()
+            if any(term in lowered for term in
+                   ("币种", "货币", "汇率", "人民币", "美元", "欧元", "港币", "cny", "usd", "eur")):
+                raise NeedsClarification("当前合成 ROI 数据没有币种字段或汇率；不能换算或确认跨币种金额。")
+            if any(term in lowered for term in ("毛 roi", "gross roi", "毛投资回报")):
+                raise NeedsClarification("当前目录只定义营销净 ROI；毛 ROI 口径尚未定义。")
         if "退款率" in q and not any(term in q for term in ("订单率", "订单数", "金额", "实付")):
             raise NeedsClarification("请选退款订单率或退款金额率。", ["approved_refund_order_rate", "approved_refund_amount_rate"])
         if use_metric_retrieval and not candidates:
