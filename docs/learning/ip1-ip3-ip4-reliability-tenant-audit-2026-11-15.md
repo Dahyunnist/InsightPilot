@@ -17,10 +17,12 @@ Set-Location E:\job\insightpilot
 .\scripts\run_ip4_v13_postgres_parity.ps1 -Execute -ConfirmDedicatedDatabase
 ```
 
-API bearer-token 并发/伪造 `X-Tenant-ID` 用例未在本轮运行；Windows Python 3.14 的 TestClient/AnyIO Proactor 初始化此前卡在进入断言前。真实连接池复用、并发 RLS 与 PostgreSQL 清理也未在本轮验证。
+Windows Python 3.14 的 `TestClient.__enter__` 确实卡在请求前：`run_blocking_portal` 建立 Proactor loop 时进入 `socket._fallback_socketpair()` 的阻塞 `accept()`。栈未进入应用 endpoint。为保留关键租户断言且不跳过测试，现改为并发调用 FastAPI `APIRoute.endpoint`：验证 bearer token 到 tenant 映射、无效/缺失 bearer 拒绝、同 idempotency key 按 principal 隔离、运行记录不可跨 principal 读取，并检查 `/analysis` 没有 `X-Tenant-ID` header 参数。
+
+此替代证明 route 层契约，不覆盖 HTTP 字节解析、ASGI middleware/exception handler 或真正发送伪造 `X-Tenant-ID` 的网络请求。真实连接池复用、并发 RLS 与 PostgreSQL 清理仍未在本轮验证。
 
 ## 验证
 
-定向离线回归：24 项通过，覆盖 IP-3/IP-4 PowerShell 解析和 runner 静态安全约束、PostgreSQL adapter fake-pool 契约、租户上下文逐请求重绑、RLS runner 静态检查、脱敏及 run-store principal 隔离。没有启动 Docker/PostgreSQL，没有调用模型，也没有改冻结集或账单。
+定向离线回归：34 项通过，覆盖取消/超时/失败后恢复、API route 租户并发绑定、PostgreSQL adapter fake-pool 契约与逐请求 tenant scope、失败 trace 脱敏、principal 隔离、IP-3/IP-4 PowerShell 解析与 runner 清理/失败路径静态约束、RLS runner 静态检查及本地服务 bounded cleanup。没有启动 Docker/PostgreSQL，没有调用模型，也没有改冻结集或账单。
 
 IP-3 超时后的 Compose 清理若自身超过 30 秒，只能报告可能残留；操作者需检查本次固定 project。该宿主行为需要 Docker 可用时再验证。

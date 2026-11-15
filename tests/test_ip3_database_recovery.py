@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import sqlite3
+import json
 import tempfile
 import threading
 import time
 import unittest
 import uuid
 from pathlib import Path
-
-from fastapi.testclient import TestClient
 
 from data.seed import create_database
 from insightpilot.agent import InsightPilot
@@ -21,6 +20,14 @@ from insightpilot.runner import QueryExecutionError
 
 QUESTION = "2026-10-05 到 2026-10-11 华东批准退款金额率是多少？"
 PLAN = QueryPlan("approved_refund_amount_rate", "2026-10-05", "2026-10-12", "华东", None)
+
+
+def route_endpoint(app, path):
+    return next(route.endpoint for route in app.routes if getattr(route, "path", None) == path)
+
+
+def response_json(response):
+    return json.loads(response.body)
 
 
 class FailOnceSQLiteEngine(SQLiteQueryEngine):
@@ -201,38 +208,48 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
             app = create_app(InsightPilot(planner, database, query_engine=engine), run_store=store,
                              api_token="local-test-token", api_scopes={"refund:read"},
                              max_requests_per_minute=20)
-            headers = {"Authorization": "Bearer local-test-token", "Idempotency-Key": "db-outage-1"}
-            with TestClient(app) as client:
-                failed = client.post("/analysis", json={"question": QUESTION}, headers=headers)
+            analysis = route_endpoint(app, "/analysis")
+            get_run = route_endpoint(app, "/runs/{run_id}")
+            authorization = "Bearer local-test-token"
+            try:
+                failed = analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
+                                  idempotency_key="db-outage-1")
+                failed_body = response_json(failed)
                 self.assertEqual(failed.status_code, 502)
-                run_id = failed.json()["run_id"]
+                run_id = failed_body["run_id"]
                 self.assertEqual(failed.headers["X-Request-ID"], run_id)
-                self.assertEqual(failed.json()["stage"], "query")
-                self.assertEqual(failed.json()["failure_detail"]["category"], "database_execution")
-                self.assertNotIn("rows", failed.json())
-                self.assertNotIn("answer", failed.json())
+                self.assertEqual(failed_body["stage"], "query")
+                self.assertEqual(failed_body["failure_detail"]["category"], "database_execution")
+                self.assertNotIn("rows", failed_body)
+                self.assertNotIn("answer", failed_body)
                 self.assertEqual(planner.calls, 1)  # one plan call; no automatic retry budget consumed
                 self.assertEqual(engine.calls, 1)
-                self.assertEqual(client.get(f"/runs/{run_id}", headers=headers).json()["status"], "failed")
+                self.assertEqual(get_run(run_id, authorization=authorization)["status"], "failed")
 
-                replay = client.post("/analysis", json={"question": QUESTION}, headers=headers)
+                replay = analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
+                                  idempotency_key="db-outage-1")
+                replay_body = response_json(replay)
                 self.assertEqual(replay.status_code, 502)
-                self.assertEqual(replay.json()["run_id"], run_id)
+                self.assertEqual(replay_body["run_id"], run_id)
                 self.assertEqual(replay.headers.get("Idempotency-Replay"), "true")
                 self.assertEqual(planner.calls, 1)
                 self.assertEqual(engine.calls, 1)
 
-                conflict = client.post("/analysis", json={"question": QUESTION + " 按渠道"}, headers=headers)
+                conflict = analysis(AnalysisRequest(question=QUESTION + " 按渠道"),
+                                    authorization=authorization, idempotency_key="db-outage-1")
                 self.assertEqual(conflict.status_code, 409)
                 self.assertEqual(planner.calls, 1)
                 self.assertEqual(engine.calls, 1)
 
-                recovered = client.post("/analysis", json={"question": QUESTION}, headers={
-                    **headers, "Idempotency-Key": "db-recovered-1"})
+                recovered = analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
+                                     idempotency_key="db-recovered-1")
+                recovered_body = response_json(recovered)
                 self.assertEqual(recovered.status_code, 200)
-                self.assertEqual(recovered.json()["status"], "answered")
+                self.assertEqual(recovered_body["status"], "answered")
                 self.assertEqual(planner.calls, 2)
                 self.assertEqual(engine.calls, 2)
+            finally:
+                app.state.analysis_executor.shutdown(wait=True)
 
     def test_cancelled_run_persists_cancel_state_and_idempotent_replay(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -243,32 +260,42 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
             app = create_app(InsightPilot(planner, database), run_store=store,
                              api_token="local-test-token", api_scopes={"refund:read", "refund:cancel"},
                              max_requests_per_minute=20)
-            headers = {"Authorization": "Bearer local-test-token", "Idempotency-Key": "cancel-run-1"}
+            analysis = route_endpoint(app, "/analysis")
+            cancel_run = route_endpoint(app, "/runs/{run_id}/cancel")
+            get_run = route_endpoint(app, "/runs/{run_id}")
+            authorization = "Bearer local-test-token"
             response_box = []
-            with TestClient(app) as client:
-                request_thread = threading.Thread(target=lambda: response_box.append(
-                    client.post("/analysis", json={"question": QUESTION}, headers=headers)))
-                request_thread.start()
+            request_thread = threading.Thread(target=lambda: response_box.append(
+                analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
+                         idempotency_key="cancel-run-1")))
+            request_thread.start()
+            try:
                 self.assertTrue(planner.entered.wait(timeout=3), "planner did not start")
                 run_id = store.find_idempotent("default:cancel-run-1", QUESTION)
                 self.assertIsNotNone(run_id)
-                cancelled = client.post(f"/runs/{run_id}/cancel", headers=headers)
+                cancelled = cancel_run(run_id, authorization=authorization)
                 self.assertEqual(cancelled.status_code, 202)
                 planner.release.set()
                 request_thread.join(timeout=5)
                 self.assertFalse(request_thread.is_alive(), "analysis request did not finish")
 
                 result = response_box[0]
+                result_body = response_json(result)
                 self.assertEqual(result.status_code, 409)
-                self.assertEqual(result.json()["status"], "cancelled")
-                state = client.get(f"/runs/{run_id}", headers=headers).json()
+                self.assertEqual(result_body["status"], "cancelled")
+                state = get_run(run_id, authorization=authorization)
                 self.assertEqual(state["status"], "cancelled")
                 self.assertTrue(state["cancel_requested"])
-                replay = client.post("/analysis", json={"question": QUESTION}, headers=headers)
+                replay = analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
+                                  idempotency_key="cancel-run-1")
                 self.assertEqual(replay.status_code, 409)
-                self.assertEqual(replay.json()["run_id"], run_id)
+                self.assertEqual(response_json(replay)["run_id"], run_id)
                 self.assertEqual(replay.headers.get("Idempotency-Replay"), "true")
                 self.assertEqual(planner.calls, 1)
+            finally:
+                planner.release.set()
+                request_thread.join(timeout=2)
+                app.state.analysis_executor.shutdown(wait=True)
 
     def test_cancel_between_persisted_start_and_event_registration_is_reconciled(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -332,61 +359,56 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
             app = create_app(InsightPilot(planner, database), run_store=store,
                              api_token="local-test-token", api_scopes={"refund:read"},
                              max_requests_per_minute=20, request_timeout_seconds=0.15)
-            headers = {"Authorization": "Bearer local-test-token", "Idempotency-Key": "slow-model-timeout-1"}
-            response_box = []
-            with TestClient(app) as client:
-                request_thread = threading.Thread(target=lambda: response_box.append(
-                    client.post("/analysis", json={"question": QUESTION}, headers=headers)))
-                request_thread.start()
-                try:
-                    self.assertTrue(planner.entered.wait(timeout=2), "fake model request did not start")
-                    request_thread.join(timeout=2)
-                    self.assertFalse(request_thread.is_alive(), "HTTP request did not time out")
-                    timeout_response = response_box[0]
-                    self.assertEqual(timeout_response.status_code, 504)
-                    run_id = timeout_response.json()["run_id"]
-                    self.assertEqual(store.get(run_id)["status"], "running")
+            analysis = route_endpoint(app, "/analysis")
+            authorization = "Bearer local-test-token"
+            try:
+                timeout_response = analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
+                                            idempotency_key="slow-model-timeout-1")
+                timeout_body = response_json(timeout_response)
+                self.assertTrue(planner.entered.is_set(), "fake model request did not start")
+                self.assertEqual(timeout_response.status_code, 504)
+                run_id = timeout_body["run_id"]
+                self.assertEqual(store.get(run_id)["status"], "running")
 
-                    active_replay = client.post("/analysis", json={"question": QUESTION}, headers=headers)
-                    self.assertEqual(active_replay.status_code, 202)
-                    self.assertEqual(active_replay.json()["run_id"], run_id)
-                    self.assertEqual(active_replay.headers.get("Idempotency-Replay"), "true")
-                    self.assertEqual(planner.calls, 1)
+                active_replay = analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
+                                         idempotency_key="slow-model-timeout-1")
+                self.assertEqual(active_replay.status_code, 202)
+                self.assertEqual(response_json(active_replay)["run_id"], run_id)
+                self.assertEqual(active_replay.headers.get("Idempotency-Replay"), "true")
+                self.assertEqual(planner.calls, 1)
 
-                    planner.release.set()
-                    deadline = time.monotonic() + 3
-                    while time.monotonic() < deadline and store.get(run_id)["status"] == "running":
-                        time.sleep(0.01)
-                    state = store.get(run_id)
-                    self.assertEqual(state["status"], "failed")
-                    self.assertEqual(state["result"]["status"], "failed")
-                    self.assertEqual(state["result"]["stage"], "planning")
-                    self.assertEqual(state["result"]["message"], "synthetic model request timed out")
-                    self.assertNotIn("plan", state["result"])
-                    self.assertNotIn("rows", state["result"])
+                planner.release.set()
+                deadline = time.monotonic() + 3
+                while time.monotonic() < deadline and store.get(run_id)["status"] == "running":
+                    time.sleep(0.01)
+                state = store.get(run_id)
+                self.assertEqual(state["status"], "failed")
+                self.assertEqual(state["result"]["status"], "failed")
+                self.assertEqual(state["result"]["stage"], "planning")
+                self.assertEqual(state["result"]["message"], "synthetic model request timed out")
+                self.assertNotIn("plan", state["result"])
+                self.assertNotIn("rows", state["result"])
 
-                    retry = client.post("/analysis", json={"question": QUESTION}, headers=headers)
-                    self.assertEqual(retry.status_code, 502)
-                    self.assertEqual(retry.json()["run_id"], run_id)
-                    self.assertEqual(retry.json()["status"], "failed")
-                    self.assertEqual(retry.headers.get("Idempotency-Replay"), "true")
-                    self.assertEqual(planner.calls, 1)
+                retry = analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
+                                 idempotency_key="slow-model-timeout-1")
+                self.assertEqual(retry.status_code, 502)
+                self.assertEqual(response_json(retry)["run_id"], run_id)
+                self.assertEqual(response_json(retry)["status"], "failed")
+                self.assertEqual(retry.headers.get("Idempotency-Replay"), "true")
+                self.assertEqual(planner.calls, 1)
 
-                    recovered = client.post("/analysis", json={"question": QUESTION}, headers={
-                        "Authorization": "Bearer local-test-token",
-                        "Idempotency-Key": "slow-model-timeout-recovered-1",
-                    })
-                    self.assertEqual(recovered.status_code, 200)
-                    self.assertEqual(recovered.json()["status"], "answered")
-                    self.assertEqual(planner.calls, 2)
-                    recovered_state = client.get(
-                        f"/runs/{recovered.json()['run_id']}",
-                        headers={"Authorization": "Bearer local-test-token"},
-                    ).json()
-                    self.assertEqual(recovered_state["status"], "answered")
-                finally:
-                    planner.release.set()
-                    request_thread.join(timeout=2)
+                recovered = analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
+                                     idempotency_key="slow-model-timeout-recovered-1")
+                recovered_body = response_json(recovered)
+                self.assertEqual(recovered.status_code, 200)
+                self.assertEqual(recovered_body["status"], "answered")
+                self.assertEqual(planner.calls, 2)
+                recovered_state = route_endpoint(app, "/runs/{run_id}")(
+                    recovered_body["run_id"], authorization=authorization)
+                self.assertEqual(recovered_state["status"], "answered")
+            finally:
+                planner.release.set()
+                app.state.analysis_executor.shutdown(wait=True)
 
 
 if __name__ == "__main__":

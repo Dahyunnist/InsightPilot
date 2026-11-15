@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+import json
 import threading
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from tests.temp_utils import TemporaryDirectory
 
-from fastapi.testclient import TestClient
+from fastapi import HTTPException
+from fastapi.routing import APIRoute
 
 from insightpilot.agent import InsightPilot
-from insightpilot.api import create_app
+from insightpilot.api import AnalysisRequest, create_app
 from insightpilot.query_engine import SQLiteQueryEngine
 from insightpilot.run_store import RunStore
 from insightpilot.runner import QueryExecutionError, QueryTimeoutError
@@ -54,7 +56,7 @@ class ApiTenantIdentityTests(unittest.TestCase):
         self.assertNotIn("tenant-secret", str(trace))
         self.assertNotIn("internal database text", str(trace))
 
-    def test_authenticated_tokens_route_concurrent_requests_without_header_override(self):
+    def test_authenticated_route_binds_concurrent_tenants_without_tenant_header_parameter(self):
         database = Path(__file__).resolve().parents[1] / "data" / "insightpilot-s0.sqlite"
         engine = TenantCaptureEngine(database)
         core = InsightPilot(RulePlanner(), database, query_engine=engine)
@@ -62,36 +64,52 @@ class ApiTenantIdentityTests(unittest.TestCase):
             app = create_app(core, run_store=RunStore(Path(temp) / "runs.sqlite"),
                              api_tenant_tokens={"token-a": "tenant-a", "token-b": "tenant-b"},
                              api_scopes={"refund:read"}, max_concurrent=12)
-            with TestClient(app) as client:
-                def request(token: str, spoofed: str):
-                    return client.post("/analysis", json={"question": "2026-10-01 到 2026-10-07 退款订单率"}, headers={
-                        "Authorization": f"Bearer {token}", "X-Tenant-ID": spoofed,
-                    })
+            analysis_route = next(route for route in app.routes
+                                  if isinstance(route, APIRoute) and route.path == "/analysis")
+            analysis = analysis_route.endpoint
+            get_run = next(route.endpoint for route in app.routes
+                           if isinstance(route, APIRoute) and route.path == "/runs/{run_id}")
+            header_aliases = {parameter.alias for parameter in analysis_route.dependant.header_params}
+            self.assertIn("authorization", header_aliases)
+            self.assertNotIn("X-Tenant-ID", header_aliases)
 
-                concurrent_requests = [("token-a", "tenant-b"), ("token-b", "tenant-a")] * 6
+            def request(token: str):
+                return analysis(AnalysisRequest(question="2026-10-01 到 2026-10-07 退款订单率"),
+                                authorization=f"Bearer {token}", idempotency_key=None)
+
+            try:
+                tokens = ["token-a", "token-b"] * 6
                 with ThreadPoolExecutor(max_workers=12) as executor:
-                    responses = list(executor.map(lambda args: request(*args), concurrent_requests))
+                    responses = list(executor.map(request, tokens))
                 self.assertEqual([response.status_code for response in responses], [502] * 12)
                 self.assertCountEqual(engine.tenants, ["tenant-a"] * 6 + ["tenant-b"] * 6)
-                trace = responses[0].json()["failure_detail"]
+                trace = json.loads(responses[0].body)["failure_detail"]
                 self.assertEqual(trace["layer"], "db_execution")
                 self.assertEqual(trace["tenant_context"], "bound")
                 self.assertRegex(trace["sql_sha256"], r"^[0-9a-f]{64}$")
                 self.assertNotIn("tenant-a", str(trace))
                 self.assertNotIn("tenant-b", str(trace))
 
-                self.assertEqual(client.post("/analysis", json={"question": "2026-10-01 到 2026-10-07 退款订单率"},
-                    headers={"Authorization": "Bearer unknown"}).status_code, 401)
-                self.assertEqual(client.post("/analysis", json={"question": "2026-10-01 到 2026-10-07 退款订单率"}).status_code, 401)
+                for credential in ("Bearer unknown", None):
+                    with self.subTest(credential=credential), self.assertRaises(HTTPException) as raised:
+                        analysis(AnalysisRequest(question="2026-10-01 到 2026-10-07 退款订单率"),
+                                 authorization=credential, idempotency_key=None)
+                    self.assertEqual(raised.exception.status_code, 401)
 
-                headers_a = {"Authorization": "Bearer token-a", "Idempotency-Key": "shared-key"}
-                headers_b = {"Authorization": "Bearer token-b", "Idempotency-Key": "shared-key"}
-                result_a = client.post("/analysis", json={"question": "删除退款订单"}, headers=headers_a)
-                result_b = client.post("/analysis", json={"question": "删除退款订单"}, headers=headers_b)
-                run_a, run_b = result_a.json()["run_id"], result_b.json()["run_id"]
+                question = "删除退款订单"
+                result_a = analysis(AnalysisRequest(question=question), authorization="Bearer token-a",
+                                    idempotency_key="shared-key")
+                result_b = analysis(AnalysisRequest(question=question), authorization="Bearer token-b",
+                                    idempotency_key="shared-key")
+                run_a = json.loads(result_a.body)["run_id"]
+                run_b = json.loads(result_b.body)["run_id"]
                 self.assertNotEqual(run_a, run_b)
-                self.assertEqual(client.get(f"/runs/{run_a}", headers=headers_b).status_code, 404)
-                self.assertEqual(client.get(f"/runs/{run_a}", headers=headers_a).status_code, 200)
+                with self.assertRaises(HTTPException) as hidden:
+                    get_run(run_a, authorization="Bearer token-b")
+                self.assertEqual(hidden.exception.status_code, 404)
+                self.assertEqual(get_run(run_a, authorization="Bearer token-a")["run_id"], run_a)
+            finally:
+                app.state.analysis_executor.shutdown(wait=True)
 
         with self.assertRaisesRegex(ValueError, "token-to-tenant mapping"):
             create_app(InsightPilot(RulePlanner(), database,
