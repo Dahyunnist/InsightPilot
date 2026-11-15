@@ -54,6 +54,8 @@
 
 事件覆盖保留两组字段：公共标准事件词汇与 InsightPilot 原生事件词汇。映射应在 validator 中版本化并由测试覆盖；改动仅追加兼容字段，不回写旧的 v1/v2 证据。
 
+IP-1/2/3/4 已有报告的真实字段覆盖、run/trace/span 关联及费用确定性，见[离线运行证据审计](ip1-ip4-run-evidence-audit-2026-11-15.md)和机器可读[审计结果](../../reports/ip1-ip4-run-evidence-audit.json)。该投影不重写历史报告；旧的派生 trace ID 不计作实际遥测。
+
 ## 复现入口
 
 - 本地启动、API/MCP 演示和当前 benchmark：`docs/quickstart-evaluation.md`。

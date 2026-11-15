@@ -137,6 +137,7 @@ def main() -> None:
             response = _send_analysis()
             report["analysis_http_status"] = response["status"]
             report["analysis_status"] = response["body"].get("status")
+            report["analysis_run_id"] = response["body"].get("run_id")
             report["analysis_model_call_count"] = response["body"].get("model_call_count")
             compose("stop", "api")  # Lifespan shutdown flushes the batch processor.
             logs = compose("logs", "--no-color", "collector", timeout=30).stdout

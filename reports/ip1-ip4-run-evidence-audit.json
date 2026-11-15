@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "audit_scope": [
+    "IP-1",
+    "IP-2",
+    "IP-3",
+    "IP-4"
+  ],
+  "offline_only": true,
+  "minimum_fields": [
+    "project",
+    "git_sha",
+    "dataset_id",
+    "dataset_sha256",
+    "split",
+    "model_id",
+    "prompt_sha",
+    "tool_schema_sha",
+    "runtime_digest",
+    "max_steps",
+    "max_tokens",
+    "scorer_sha",
+    "gold_source",
+    "cost_usd_estimate"
+  ],
+  "records": [
+    {
+      "project": "InsightPilot",
+      "git_sha": "ec2fec941b29992a99bfab57ed9ac31617864b83",
+      "dataset_id": "bundled synthetic IP1 PostgreSQL/RLS and IP3 HTTP/MCP cases",
+      "dataset_sha256": null,
+      "split": "host-validation",
+      "model_id": "none",
+      "prompt_sha": null,
+      "tool_schema_sha": null,
+      "runtime_digest": null,
+      "max_steps": null,
+      "max_tokens": null,
+      "scorer_sha": null,
+      "gold_source": "IP1 independent Python gold and SQLite parity verifier; synthetic only",
+      "cost_usd_estimate": 0,
+      "run_id": "ip1-ip3-host-2026-11-15-090505-0ce3b8a2",
+      "trace_id": null,
+      "span_id": null,
+      "provider_requests_attempted": 0,
+      "provider_responses_received": 0,
+      "cost_status": "not_applicable",
+      "delivery_status": "not_attempted",
+      "record_id": "ip1-ip3-host-validation",
+      "record_kind": "completed_run",
+      "stages": [
+        "IP-1",
+        "IP-2",
+        "IP-3"
+      ],
+      "status": "passed",
+      "source_runtime": {
+        "ip3_probe_image": "sha256:877070d7e897d1e8799b4a5520048c028c1668aa5737df7f8bf64c77bb0896c1",
+        "python_base": "python:3.12-slim@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704",
+        "docker_server": "29.1.3"
+      },
+      "missing_fields": [
+        "dataset_sha256",
+        "prompt_sha",
+        "tool_schema_sha",
+        "scorer_sha",
+        "PostgreSQL image digest"
+      ]
+    },
+    {
+      "project": "InsightPilot",
+      "git_sha": null,
+      "dataset_id": "ip2-cross-domain-boundary-development-v1",
+      "dataset_sha256": null,
+      "split": "development_only",
+      "model_id": "none",
+      "prompt_sha": null,
+      "tool_schema_sha": null,
+      "runtime_digest": null,
+      "max_steps": null,
+      "max_tokens": null,
+      "scorer_sha": null,
+      "gold_source": "independent_python_or_hand_calculated; source-specific",
+      "cost_usd_estimate": 0,
+      "run_id": null,
+      "trace_id": null,
+      "span_id": null,
+      "provider_requests_attempted": 0,
+      "provider_responses_received": 0,
+      "cost_status": "not_applicable",
+      "delivery_status": "not_attempted",
+      "record_id": "ip2-boundary-development-v1",
+      "record_kind": "development_manifest",
+      "stages": [
+        "IP-2"
+      ],
+      "status": "not_run",
+      "source_model_calls": 0,
+      "missing_fields": [
+        "git_sha",
+        "dataset_sha256",
+        "run_id",
+        "trace_id",
+        "span_id",
+        "runtime_digest",
+        "prompt_sha",
+        "tool_schema_sha",
+        "scorer_sha"
+      ]
+    },
+    {
+      "project": "InsightPilot",
+      "git_sha": null,
+      "dataset_id": null,
+      "dataset_sha256": null,
+      "split": "synthetic_otel_acceptance",
+      "model_id": "none",
+      "prompt_sha": null,
+      "tool_schema_sha": null,
+      "runtime_digest": null,
+      "max_steps": null,
+      "max_tokens": null,
+      "scorer_sha": null,
+      "gold_source": null,
+      "cost_usd_estimate": 0,
+      "run_id": null,
+      "trace_id": "fd7d77f37052870d603aaceaa04a92b7",
+      "span_id": "0573c423078c3ff6",
+      "provider_requests_attempted": 0,
+      "provider_responses_received": 0,
+      "cost_status": "not_applicable",
+      "delivery_status": "not_attempted",
+      "record_id": "ip3-otel-acceptance-2026-11-11",
+      "record_kind": "completed_run",
+      "stages": [
+        "IP-3"
+      ],
+      "status": "passed",
+      "related_span_ids": [
+        "3a61425a49bfbd89"
+      ],
+      "missing_fields": [
+        "git_sha",
+        "dataset_id",
+        "dataset_sha256",
+        "run_id",
+        "runtime_digest",
+        "prompt_sha",
+        "tool_schema_sha",
+        "scorer_sha",
+        "gold_source"
+      ]
+    },
+    {
+      "project": "InsightPilot",
+      "git_sha": "ae470c51d7dceae3fd6c5feb500ab6460457d026",
+      "dataset_id": "insightpilot-ip4-independent-v13",
+      "dataset_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+      "split": "frozen_synthetic",
+      "model_id": "none",
+      "prompt_sha": null,
+      "tool_schema_sha": null,
+      "runtime_digest": "70c28918f8108677b701b8fcdc55d0a2154fbc3797d0d475de11b78588546c2a",
+      "max_steps": 1,
+      "max_tokens": null,
+      "scorer_sha": "d545910893f47527bde115faa7af0967869bce7c416d99802650077f76692ef6",
+      "gold_source": "independent",
+      "cost_usd_estimate": 0.0,
+      "run_id": "2096b84c7548eb00110dd0911a4834ad",
+      "trace_id": null,
+      "span_id": null,
+      "provider_requests_attempted": 0,
+      "provider_responses_received": 0,
+      "cost_status": "not_applicable",
+      "delivery_status": "not_attempted",
+      "record_id": "ip4-v13-rule-baseline",
+      "record_kind": "completed_run",
+      "stages": [
+        "IP-4"
+      ],
+      "legacy_source_derived_trace_id": "c6e6ec988d17b645f1b75886d5097a39",
+      "status": "completed",
+      "missing_fields": [
+        "actual_trace_id"
+      ]
+    },
+    {
+      "project": "InsightPilot",
+      "git_sha": null,
+      "dataset_id": "insightpilot-ip4-independent-v13",
+      "dataset_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+      "split": "frozen_synthetic_development",
+      "model_id": "none",
+      "prompt_sha": null,
+      "tool_schema_sha": null,
+      "runtime_digest": null,
+      "max_steps": 1,
+      "max_tokens": 1024,
+      "scorer_sha": "d545910893f47527bde115faa7af0967869bce7c416d99802650077f76692ef6",
+      "gold_source": "independent_sealed_gold",
+      "cost_usd_estimate": null,
+      "run_id": null,
+      "trace_id": null,
+      "span_id": null,
+      "provider_requests_attempted": 15,
+      "provider_responses_received": 0,
+      "cost_status": "unconfirmed",
+      "delivery_status": "unknown",
+      "record_id": "ip4-v13-r5-transport",
+      "record_kind": "attempted_run",
+      "stages": [
+        "IP-4"
+      ],
+      "planned_model_id": "deepseek-v4-flash",
+      "status": "partial_transport_blocked",
+      "peak_price_estimate_usd": 0.031932,
+      "missing_fields": [
+        "git_sha",
+        "run_id",
+        "trace_id",
+        "span_id",
+        "runtime_digest",
+        "prompt_sha",
+        "tool_schema_sha"
+      ],
+      "source_semantics": "unknown; URLError before provider response; do not interpret as zero cost or proven non-delivery"
+    }
+  ],
+  "summary": {
+    "record_count": 5,
+    "minimum_field_coverage": {
+      "project": 5,
+      "git_sha": 2,
+      "dataset_id": 4,
+      "dataset_sha256": 2,
+      "split": 5,
+      "model_id": 5,
+      "prompt_sha": 0,
+      "tool_schema_sha": 0,
+      "runtime_digest": 1,
+      "max_steps": 2,
+      "max_tokens": 1,
+      "scorer_sha": 2,
+      "gold_source": 4,
+      "cost_usd_estimate": 4
+    },
+    "real_trace_records": [
+      "ip3-otel-acceptance-2026-11-11"
+    ],
+    "unconfirmed_cost_records": [
+      "ip4-v13-r5-transport"
+    ]
+  }
+}
