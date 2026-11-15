@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "project": "InsightPilot",
+  "suite_id": "insightpilot-ip4-independent-v13",
+  "audit_date": "2026-11-15",
+  "source_report": "reports/ip4-v13-model-evaluation-r5.json",
+  "status": "partial_transport_blocked",
+  "evaluation_design": "single pass on frozen synthetic questions; historical exposure unknown",
+  "case_count": 22,
+  "attempted_provider_requests": 15,
+  "provider_responses_received": 0,
+  "usage_receipts_missing": 15,
+  "aggregate_passed": null,
+  "aggregate_total": null,
+  "answerable_model_outputs": "0/14",
+  "actual_cost_usd": null,
+  "peak_price_estimate_usd": 0.031932,
+  "historical_uncertain_reserve_usd": 0.0468336,
+  "cap_usd": 5.0,
+  "remaining_cap_at_run_snapshot_usd": 4.54499575,
+  "delivery": "unknown; URLError before provider response; do not interpret as zero cost or proven non-delivery",
+  "retry": "not performed; preserve single-pass preregistration and possible request delivery",
+  "payload_contract": "source and local contract test pass: planner input contains question, candidate_metrics, allowed_metric_ids; gold is loaded by evaluator for post-run scoring; provider-side receipt/payload was unavailable",
+  "new_model_calls": 0,
+  "hashes": {
+    "preregistration_sha256": {
+      "actual": "06d3afff9616d23715e0b156e752e5b733f11e23522187f801b4f448b08f38c7",
+      "expected": "06d3afff9616d23715e0b156e752e5b733f11e23522187f801b4f448b08f38c7"
+    },
+    "manifest_sha256": {
+      "actual": "c7b7875dcf01380fc6f9da32c7ad8593f9f19f5ca5fc38f32a3521236e349932",
+      "expected": "c7b7875dcf01380fc6f9da32c7ad8593f9f19f5ca5fc38f32a3521236e349932"
+    },
+    "blind_sha256": {
+      "sealed": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+      "expected": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+      "actual": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66"
+    },
+    "gold_sha256": {
+      "sealed": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+      "expected": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+      "actual": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2"
+    },
+    "gold_seal_sha256": {
+      "actual": "70246d8a3fdc3d8539839093b682358be361c3dda58ce29f5582d37f507cadd9",
+      "expected": "70246d8a3fdc3d8539839093b682358be361c3dda58ce29f5582d37f507cadd9"
+    },
+    "scorer_sha256": {
+      "actual": "d545910893f47527bde115faa7af0967869bce7c416d99802650077f76692ef6",
+      "expected": "d545910893f47527bde115faa7af0967869bce7c416d99802650077f76692ef6"
+    },
+    "runner_sha256": {
+      "actual": "5db06caee9e25bbc9fae290868e2f9c5dbb7f73a77a0d30f7ad548a3780733aa",
+      "expected": "5db06caee9e25bbc9fae290868e2f9c5dbb7f73a77a0d30f7ad548a3780733aa"
+    },
+    "preregistered_holdout_test_sha256": {
+      "actual": "66ed820aabda32e79d2a0113cb915db20a99acf255024f3dee3af800f2226806",
+      "expected": "66ed820aabda32e79d2a0113cb915db20a99acf255024f3dee3af800f2226806"
+    },
+    "payload_contract_test_sha256": {
+      "actual": "7d65d5b8916932fd9bea3c82a485b0ce4ab25fa579cc18814848bbd9c38c0d65",
+      "result": "2 passed, 22 subtests passed"
+    }
+  }
+}

@@ -2,7 +2,7 @@
 
 ## 状态
 
-此摘要只核对本地冻结 manifest、成本 ledger、预注册和 prompt 构造代码。未访问 balance/API，未调用模型，也未读取私人数据。模型检索 on/off 对照仍 pending，本文不是调用授权。
+本文原始状态为授权前离线摘要；授权后的 R5 执行与当前审计记录在文末补记。旧预算快照不替代新的 provider 余额或实际账单。
 
 ## 预算口径
 
@@ -39,4 +39,4 @@
 - 退款 blind/gold SHA-256：`252993f200a1efb05ca0345ca36c233de3abc8f5e3907780e830b213969d1e7f` / `088bcb677b189fb4d66b2f40be8a190fab331fdffc1c6c7a70d6e7da93222ae4`
 - 营销 ROI blind/gold SHA-256：`b1fc54513b86cf47d57b4d6e609c0bd4ca3e2acc9ee95d9021f6829328f16307` / `0c3dfb710f74820a9aa865b6e5df0395daab2550d9cc16a4431e9937ae8eb43b`
 
-调用仍 pending，直到用户单独授权；供应商 transport 也须可用。不得把 `$0.18733440` 写成实际消费或已登记 reserve。
+用户已授权冻结的 22 道合成题，限定只发送问题、静态候选指标与允许指标 ID。R5 运行尝试 15 次请求，但收到 0 个 provider response，15 次均缺 usage；汇总 passed/total 为 null，不能形成质量分数。URLError 不证明请求未送达；实际费用未知，`$0.031932` 是峰价上界估算，不是账单。R5 为 single-pass 且历史曝光未知，不重发同题。哈希与预算审计见 `reports/ip4-r5-transport-audit-2026-11-15.json`。本次审计新增模型调用 0。
