@@ -9,6 +9,25 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CODE_LOCK_PATHS = {
+    "scorer_sha256": "insightpilot/enterprise_evaluate.py",
+    "planner_sha256": "insightpilot/planner.py",
+    "model_runner_sha256": "scripts/run_ip4_v13_model_blind.py",
+    "rule_baseline_sha256": "reports/ip4-v13-rule-baseline.json",
+    "rule_verifier_sha256": "scripts/verify_ip4_v13_rule.py",
+    "holdout_builder_sha256": "data/build_ip4_v13_holdout.py",
+    "dataset_builder_sha256": "data/multidomain_seed.py",
+    "test_sha256": "tests/test_ip4_v13_holdout.py",
+    "preregistration_script_sha256": "scripts/preregister_ip4_v13_model.py",
+    "agent_runtime_sha256": "insightpilot/agent.py",
+    "metric_runtime_sha256": "insightpilot/metrics.py",
+    "query_runtime_sha256": "insightpilot/query_engine.py",
+    "sql_runtime_sha256": "insightpilot/sql.py",
+    "sql_policy_runtime_sha256": "insightpilot/sql_policy.py",
+    "verification_runtime_sha256": "insightpilot/verification.py",
+    "config_runtime_sha256": "insightpilot/config.py",
+    "requirements_sha256": "requirements.txt",
+}
 
 
 def _read_json(path: str) -> dict:
@@ -38,6 +57,12 @@ def audit() -> dict:
     prior_model = _read_json("reports/ip4-v13-model-evaluation-r5.json")
     pg = _read_json("reports/ip4-postgres-verification.json")
     ledger = _read_json("reports/model-experiment-cost-ledger.json")
+    code_mismatches = {
+        key: {"path": path, "locked_sha256": lock.get("artifacts", {}).get(key),
+              "current_sha256": _sha(path)}
+        for key, path in CODE_LOCK_PATHS.items()
+        if _sha(path) != lock.get("artifacts", {}).get(key)
+    }
 
     blind_sha, gold_sha, manifest_sha = _sha(blind_path), _sha(gold_path), _sha(manifest_path)
     blind_ids = [row.get("case_id") for row in blind]
@@ -90,6 +115,7 @@ def audit() -> dict:
     postgres_v13_match = (pg.get("case_count_per_tenant") == 22
                           and pg.get("blind_sha256") == blind_sha
                           and pg.get("gold_sha256") == gold_sha)
+    code_lock_match = not code_mismatches
     checks = {
         "frozen_v13_hashes_match_manifest_seal_and_lock": hashes_match,
         "blind_gold_case_ids_and_blind_schema_match": id_sets_match and blind_schema_ok,
@@ -97,6 +123,7 @@ def audit() -> dict:
         "sqlite_rule_baseline_matches_frozen_hashes_and_dataset": baseline_ok,
         "prior_transport_failures_are_unscored": failure_classification_ok,
         "budget_caps_and_zero_call_preflight_hold": budget_hard_gate_ok,
+        "execution_code_lock_matches": code_lock_match,
         "postgres_22_case_v13_gold_parity": postgres_v13_match,
     }
     blockers = [name for name, passed in checks.items() if not passed]
@@ -115,6 +142,9 @@ def audit() -> dict:
                    "manifest_sha256": manifest_sha},
         "sqlite_rule_baseline": {"passed": baseline.get("passed"), "total": baseline.get("total"),
                                  "gold_hash_matched": baseline_ok},
+        "execution_code_lock": {"matches": code_lock_match, "mismatches": code_mismatches,
+                                "relock_allowed_without_rebaseline": not code_lock_match and
+                                set(code_mismatches) <= {"model_runner_sha256"}},
         "postgres_evidence": {"legacy_case_count_per_tenant": pg.get("case_count_per_tenant"),
                               "v13_same_hash_parity": postgres_v13_match,
                               "blocker": None if postgres_v13_match else

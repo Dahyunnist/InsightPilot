@@ -30,6 +30,27 @@
     "total": 22,
     "gold_hash_matched": true
   },
+  "execution_code_lock": {
+    "matches": false,
+    "mismatches": {
+      "planner_sha256": {
+        "path": "insightpilot/planner.py",
+        "locked_sha256": "4712d4ef7ed234ac8129453275e00cb0395d49d5c2d40597bb346e939a0f3489",
+        "current_sha256": "60f56f057f5226d26e7359aff135c723dcf6b093ecc65f9bae3ff5b619bc9c33"
+      },
+      "model_runner_sha256": {
+        "path": "scripts/run_ip4_v13_model_blind.py",
+        "locked_sha256": "5db06caee9e25bbc9fae290868e2f9c5dbb7f73a77a0d30f7ad548a3780733aa",
+        "current_sha256": "a2ec91fc24c7369c372670400d1d2532e5e8cc19462eb72738cf29e6ffb50449"
+      },
+      "query_runtime_sha256": {
+        "path": "insightpilot/query_engine.py",
+        "locked_sha256": "b23602ecae947e55700ff334c61667a3306a950544eb6a15ae39946c60463d63",
+        "current_sha256": "052a758e1561bc37e26a247111aeaad793d01f01a8960e37642eeca46bfbc355"
+      }
+    },
+    "relock_allowed_without_rebaseline": false
+  },
   "postgres_evidence": {
     "legacy_case_count_per_tenant": 12,
     "v13_same_hash_parity": false,
@@ -67,9 +88,11 @@
     "sqlite_rule_baseline_matches_frozen_hashes_and_dataset": true,
     "prior_transport_failures_are_unscored": true,
     "budget_caps_and_zero_call_preflight_hold": true,
+    "execution_code_lock_matches": false,
     "postgres_22_case_v13_gold_parity": false
   },
   "blockers": [
+    "execution_code_lock_matches",
     "postgres_22_case_v13_gold_parity"
   ],
   "v14_model_run": "not_started_pending_owner_review_and_live_balance_preflight"

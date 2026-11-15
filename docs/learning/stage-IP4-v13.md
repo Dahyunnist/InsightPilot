@@ -44,6 +44,14 @@ RulePlanner 基线为 15/22：可答 8/14、guard 7/8。四个错误拒答是 R0
 
 定向离线回归 28 passed、41 subtests passed。扩展 dry-run 锁状态测试，覆盖 `partial_transport_blocked`、`blocked_by_review`、`blocked_pre_model_balance_unverified`、`blocked`，逐项确认不读 blind/gold、不联网、0 请求；冻结审计命令会写出 `blocked` 报告并返回退出码 2。Windows 临时路径短/长名比较也改为先 resolve 再比较，回归通过。
 
+## 2026-11-15 已授权评测预检
+
+按所有者指示仅访问供应商只读余额端点，未发送模型请求。当前余额 ¥9.08；按本次最多 88 次请求预留 `$0.1873344`，另保留历史未确认暴露 `$0.0468336`，合计需 ¥1.75626；余额通过。账本总 cap `$5`，累计剩余 `$4.50483355`；新授权预算与历史不确定预留合计 `$0.234168`，仍在 cap 内。历史 v13 有 15 次请求尝试、0 次 provider response；确认实际费用仍为 null，保留峰价估算 `$0.031932` 与不确定预留。
+
+执行锁未通过：blind/gold/manifest/seal 哈希均匹配；但 `insightpilot/planner.py`、`scripts/run_ip4_v13_model_blind.py`、`insightpilot/query_engine.py` 与锁定哈希不一致。planner 新增币种/毛 ROI 的确定性澄清，会改变冻结 M09 的执行路径，并使历史 RulePlanner 基线不再与当前运行时同版；runner 更新运行编号、报告覆盖保护、预检与余额证据路径；query engine 变更仅落在 PostgreSQL 身份读取超时分支，但整体文件哈希已变化。离线门禁回归通过 18 项、27 子断言；其中 payload allowlist 专项为 2 项、22 子断言。旧锁会在余额检查和模型请求前因代码哈希不符而 fail closed。
+
+这些变化不只是本地审计/测试，因此不生成新锁、不重跑模型。详情见 `reports/ip4-v13-authorized-preflight-2026-11-15.json`。新授权仍待 planner 行为差异复审、当前基线重新确认和锁版本审阅；没有触碰冻结题或 gold，也没有使用 v14。
+
 失败分类审计确认历史 r5 为 15 次请求尝试、0 provider response；15 条均标 `not_scored_transport_error`，score 为 null，不计作模型失败分或成功分。runner 另将错误澄清、错误拒答、数值错、guard 错误响应、拒答题被接受分开记录；本次没有可评分模型响应。预算测试覆盖逐请求先预留、调用数/成本超限即停；新增 dry-run 回归验证超出 `$0.1873344` reserve 上限时在请求前拒绝。离线预检状态仍为 `blocked_pre_model_balance_unverified`，余额未查询。模型 runner 的 22 次计划、单题单次上限、$5 总 cap 和已登记预留硬门禁通过静态/离线审查。
 
 **阻塞项：**本机 Docker Engine 权限不可用。现有 PostgreSQL 报告仅有旧 12 题套件且无 v13 hash，不能证明这份 22 题 v13 gold 的 PostgreSQL 一致性或双租户逐题覆盖；审计明确标记 `postgres_22_case_v13_gold_parity` blocked。通用 API 跨租户读取/取消测试存在，但不能替代 v13 双租户全套验收。v14 仍是候选，未运行模型；所有者审题与实时余额预检未完成。审计结论为 blocked，不得宣称 IP-4 双后端验收完成。

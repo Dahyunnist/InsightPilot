@@ -1,0 +1,93 @@
+{
+  "checked_at_utc": "2026-11-15T05:36:37.871861+00:00",
+  "suite_id": "insightpilot-ip4-independent-v13",
+  "status": "blocked_code_lock_mismatch",
+  "model_requests_sent_this_turn": 0,
+  "provider_balance_read_only_get": {
+    "status": "passed",
+    "available_currency": "CNY",
+    "available": 9.08,
+    "required_including_historical_uncertainty": 1.75626,
+    "sufficient": true
+  },
+  "cumulative_usage_and_budget": {
+    "global_cap_usd": 5.0,
+    "global_remaining_before_new_reserve_usd": 4.50483355,
+    "historical_attempts": 15,
+    "historical_provider_responses": 0,
+    "historical_confirmed_actual_cost_usd": null,
+    "historical_peak_price_estimate_usd": 0.031932,
+    "historical_uncertain_reserve_usd": 0.0468336,
+    "authorized_new_max_calls": 88,
+    "authorized_new_worst_case_reserve_usd": 0.1873344,
+    "combined_new_and_historical_uncertainty_reserve_usd": 0.234168,
+    "global_remaining_after_combined_reserve_usd": 4.27066555,
+    "within_global_cap": true
+  },
+  "frozen_artifacts": {
+    "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+    "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+    "manifest_sha256": "c7b7875dcf01380fc6f9da32c7ad8593f9f19f5ca5fc38f32a3521236e349932",
+    "artifact_hashes_match_lock": true,
+    "artifacts_modified": false
+  },
+  "code_lock": {
+    "status": "failed",
+    "mismatched_artifacts": {
+      "planner_sha256": {
+        "path": "insightpilot/planner.py",
+        "locked_sha256": "4712d4ef7ed234ac8129453275e00cb0395d49d5c2d40597bb346e939a0f3489",
+        "current_sha256": "60f56f057f5226d26e7359aff135c723dcf6b093ecc65f9bae3ff5b619bc9c33"
+      },
+      "model_runner_sha256": {
+        "path": "scripts/run_ip4_v13_model_blind.py",
+        "locked_sha256": "5db06caee9e25bbc9fae290868e2f9c5dbb7f73a77a0d30f7ad548a3780733aa",
+        "current_sha256": "a2ec91fc24c7369c372670400d1d2532e5e8cc19462eb72738cf29e6ffb50449"
+      },
+      "query_runtime_sha256": {
+        "path": "insightpilot/query_engine.py",
+        "locked_sha256": "b23602ecae947e55700ff334c61667a3306a950544eb6a15ae39946c60463d63",
+        "current_sha256": "052a758e1561bc37e26a247111aeaad793d01f01a8960e37642eeca46bfbc355"
+      }
+    },
+    "change_impact": {
+      "planner": "Adds currency/FX and gross ROI preflight clarifications. This changes v13 M09's decision path and can skip its model request; historical RulePlanner baseline predates this behavior.",
+      "model_runner": "Adds run identity, report overwrite protection, earlier dry-run, and sanitized balance evidence handling. Payload allowlist tests still pass, but runner hash is stale.",
+      "query_engine": "Adds PostgreSQL data-identity statement timeout handling. v13 is locked to SQLite, but the whole module hash differs."
+    },
+    "relock_allowed": false,
+    "reason": "Planner behavior changes evaluation outcomes; this is not only a local audit/test change. Re-baselining and reviewed lock revision are required. No lock was rewritten.",
+    "freeze_commit_is_ancestor": true,
+    "python_runtime_matches": true
+  },
+  "offline_preflight_regressions": {
+    "status": "passed",
+    "tests_passed": 18,
+    "subtests_passed": 27,
+    "scope": [
+      "blind payload field allowlist",
+      "cost/call hard cap",
+      "all blocked-lock dry-run statuses",
+      "stale runtime lock stops before balance check"
+    ],
+    "model_calls": 0
+  },
+  "payload_allowlist": {
+    "status": "passed",
+    "confirmed_fields": [
+      "question",
+      "candidate_metrics",
+      "allowed_metric_ids"
+    ],
+    "forbidden_fields": [
+      "gold",
+      "SQL",
+      "query_results",
+      "database_rows",
+      "private_data"
+    ]
+  },
+  "decision": "No model call. Balance, budget, frozen data hashes, and payload allowlist pass; runtime code lock fails. Planner behavior change prevents a test-only relock.",
+  "v14_used": false,
+  "api_key_recorded": false
+}

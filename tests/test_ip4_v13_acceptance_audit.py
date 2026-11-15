@@ -1,12 +1,14 @@
 import contextlib
 import io
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from scripts.audit_ip4_v13_acceptance import audit, main as run_audit
-from scripts.run_ip4_v13_model_blind import build_dry_run_summary
+from scripts.run_ip4_v13_model_blind import build_dry_run_summary, main as run_model
 
 
 class IP4V13AcceptanceAuditTests(unittest.TestCase):
@@ -40,6 +42,10 @@ class IP4V13AcceptanceAuditTests(unittest.TestCase):
         self.assertFalse(report["checks"]["postgres_22_case_v13_gold_parity"])
         self.assertEqual(report["status"], "blocked")
         self.assertIn("postgres_22_case_v13_gold_parity", report["blockers"])
+        self.assertIn("execution_code_lock_matches", report["blockers"])
+        self.assertEqual({"planner_sha256", "model_runner_sha256", "query_runtime_sha256"},
+                         set(report["execution_code_lock"]["mismatches"]))
+        self.assertFalse(report["execution_code_lock"]["relock_allowed_without_rebaseline"])
         self.assertEqual(report["v14_model_run"],
                          "not_started_pending_owner_review_and_live_balance_preflight")
 
@@ -63,9 +69,23 @@ class IP4V13AcceptanceAuditTests(unittest.TestCase):
             self.assertEqual(2, raised.exception.code)
             report = json.loads(report_path.read_text(encoding="utf-8"))
             self.assertEqual("blocked", report["status"])
-            self.assertEqual(["postgres_22_case_v13_gold_parity"], report["blockers"])
+            self.assertIn("postgres_22_case_v13_gold_parity", report["blockers"])
+            self.assertIn("execution_code_lock_matches", report["blockers"])
             self.assertEqual(0, report["model_calls_this_audit"])
             self.assertNotIn("question", report)
+
+    def test_stale_runtime_lock_stops_before_balance_or_model_request(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report_path = Path(directory) / "must-not-exist.json"
+            argv = ["runner", "--run-id", "locked-audit", "--report", str(report_path),
+                    "--preregistration", "reports/ip4-v13-model-preregistration-20261114-r5.json"]
+            with patch.object(sys, "argv", argv), \
+                    patch("scripts.run_ip4_v13_model_blind.check_provider_balance",
+                          side_effect=AssertionError("stale lock must stop before balance check")), \
+                    self.assertRaisesRegex(SystemExit,
+                                           "registered scorer, planner, runner, builder, or baseline changed"):
+                run_model()
+            self.assertFalse(report_path.exists())
 
 
 if __name__ == "__main__":
