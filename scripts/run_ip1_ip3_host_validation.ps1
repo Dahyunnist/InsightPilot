@@ -77,8 +77,34 @@ try {
         Write-Summary
         exit 2
     }
-    $dockerInfo = @(& docker info --format '{{.ServerVersion}}' 2>&1)
-    if ($LASTEXITCODE -ne 0 -or -not $dockerInfo) {
+    $dockerCommand = (Get-Command docker -ErrorAction Stop).Source
+    $dockerInfoOut = Join-Path $ArtifactRoot 'docker-info.stdout.raw'
+    $dockerInfoErr = Join-Path $ArtifactRoot 'docker-info.stderr.raw'
+    $dockerInfoProcess = Start-Process -FilePath $dockerCommand `
+        -ArgumentList @('info', '--format', '{{.ServerVersion}}') -PassThru -WindowStyle Hidden `
+        -RedirectStandardOutput $dockerInfoOut -RedirectStandardError $dockerInfoErr
+    if (-not $dockerInfoProcess.WaitForExit(15000)) {
+        try {
+            $dockerInfoProcess.Kill()
+            $dockerInfoProcess.WaitForExit(5000) | Out-Null
+        } catch { }
+        $dockerInfoText = ''
+        if (Test-Path -LiteralPath $dockerInfoOut) { $dockerInfoText += [IO.File]::ReadAllText($dockerInfoOut) }
+        if (Test-Path -LiteralPath $dockerInfoErr) { $dockerInfoText += [Environment]::NewLine + [IO.File]::ReadAllText($dockerInfoErr) }
+        (Redact-Text $dockerInfoText) | Set-Content -LiteralPath $LogPath -Encoding UTF8
+        Remove-Item -LiteralPath $dockerInfoOut, $dockerInfoErr -Force -ErrorAction SilentlyContinue
+        $Summary.status = 'blocked_docker_preflight_timeout'
+        $Summary.docker = 'unavailable'
+        Write-Summary
+        Write-Output ('Docker daemon preflight timed out after 15 seconds; no stage was started. Artifacts: ' + $ArtifactRoot)
+        exit 2
+    }
+    $dockerInfoText = ''
+    if (Test-Path -LiteralPath $dockerInfoOut) { $dockerInfoText += [IO.File]::ReadAllText($dockerInfoOut) }
+    if (Test-Path -LiteralPath $dockerInfoErr) { $dockerInfoText += [Environment]::NewLine + [IO.File]::ReadAllText($dockerInfoErr) }
+    Remove-Item -LiteralPath $dockerInfoOut, $dockerInfoErr -Force -ErrorAction SilentlyContinue
+    $dockerInfo = @($dockerInfoText -split '\r?\n' | Where-Object { $_ })
+    if ($dockerInfoProcess.ExitCode -ne 0 -or -not $dockerInfo) {
         $Summary.status = 'blocked_docker_daemon_unavailable'
         $Summary.docker = 'unavailable'
         $sanitized = Redact-Text ($dockerInfo -join [Environment]::NewLine)
