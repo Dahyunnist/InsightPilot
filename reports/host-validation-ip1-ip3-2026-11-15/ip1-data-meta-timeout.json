@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "check": "data_meta_access_exclusive_lock_statement_timeout",
+  "statement_timeout_ms": 100,
+  "timeout_result": "timed_out",
+  "timeout_elapsed_ms": 134.58,
+  "recovery_result": "recovered",
+  "model_calls": 0,
+  "synthetic_data_only": true
+}

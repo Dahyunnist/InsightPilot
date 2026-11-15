@@ -77,3 +77,13 @@ PostgreSQL 16.15 经真实 FastAPI → InsightPilot → `PostgresQueryEngine` �
 ## 2026-11-13 宿主 PostgreSQL/RLS 复验通过
 
 后续宿主运行 `scripts/run_ip1_rls.ps1 -Execute -ConfirmDatabaseCreation` 通过；tenant-a、tenant-b 各 12/12，含 FastAPI 查询、RLS 隔离、只读约束、statement timeout、连接池恢复与 SQLite gold 核验。runner stop 发出警告，但专用测试容器状态为 `Exited (0)`，之后已精确移除；未删卷。完整汇总见 `reports/ip3-host-integration-20261113.json`，逐题记录见 `reports/ip4-postgres-verification.json`。此前 pending 记录描述的是较早失败尝试，不代表本次结果。
+
+## 2026-11-15 当前宿主验收复核
+
+本次运行 `scripts/run_ip1_ip3_host_validation.ps1`，结果 `status=passed`、`IP-1=passed`、`IP-3=passed`、`model_calls=0`。Docker 29.1.3。专用 Compose 测试结束后，没有残留 InsightPilot 容器。
+
+IP-1 使用 PostgreSQL/FastAPI/`PostgresQueryEngine` 与合成数据：两个 tenant 各 12/12 用例通过；缺失租户上下文、跨租户 JOIN、DML、个人信息、prompt injection 负例均按预期拒绝或隔离；Python gold 与 SQLite 独立核验一致。独立 RLS canary 验证 reader 非 superuser 且无 `BYPASSRLS`，池连接复用时 tenant 上下文隔离；`data_meta` 100 ms statement timeout 后成功恢复。本次记录见 `reports/host-validation-ip1-ip3-2026-11-15/`，manifest SHA-256 为 `23f6b264ad119315dc68321e0cce7afa71a2380e4bddced6809fb006bab7d738`。只归档了脱敏 JSON 摘要；没有复制临时日志或绝对路径。
+
+这是本机固定合成语料的宿主集成验收，不代表外部客户数据或生产部署。历史 pending 段落记录的是当时失败尝试；本节是 2026-11-15 当前复验。
+
+附加本轮复现的离线回归：`tests/test_ip1_rls_canary.py tests/test_ip1_rls_runner.py` 为 7/7；`tests/test_ip1_ip3_host_entrypoint.py tests/test_ip3_compose_runner.py` 为 6/6。此次宿主 runner 本身也报告 IP-1 passed。

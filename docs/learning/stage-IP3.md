@@ -144,3 +144,11 @@ PowerShell Parser 与 UTF-8 BOM 检查通过。首次 runner 强制刷新基础�
 本次 `tests.test_ip3_database_recovery` 5/5 通过，含取消事件登记竞态、并发同键只保留一个可执行 run、取消/超时重放和数据库失败恢复。Compose 负载仅为合成 SQLite 上最多 20 个短 burst，不是持续并发验收；PostgreSQL RLS corpus 固定为每租户 12 题、顺序执行。
 
 首次 registry token 超时与宿主权限边界、Compose HTTP、RLS、清理及负载限制汇总见 `reports/ip3-host-integration-20261113.json`。此前“TestClient 无法初始化”的默认沙箱尝试已由宿主权限 API 回归通过覆盖。
+
+## 2026-11-15 当前 Compose / MCP 宿主复验
+
+统一入口 `scripts/run_ip1_ip3_host_validation.ps1` 报告 IP-3 passed，`model_calls=0`，结束后没有残留 InsightPilot 容器。HTTP 测试使用固定 synthetic planner（150 ms）和 synthetic SQLite，不调用模型：并发 1 为 1/1 个 200；并发 5 为 5/5 个 200；并发 20 为 8 个 200、12 个预期 429、0 个 503。幂等重放返回同一 run_id，冲突返回 409。P95 包含 429 请求；这是一组短突发，不是持续吞吐或生产 SLA。
+
+MCP Streamable HTTP 取消测试确认 client cancel 到达核心、取消事件被观察、worker 正常结束。宿主摘要和逐项 JSON 见 `reports/host-validation-ip1-ip3-2026-11-15/`；manifest SHA-256 为 `23f6b264ad119315dc68321e0cce7afa71a2380e4bddced6809fb006bab7d738`。旧 pending 条目描述较早的网络失败；当前复验通过，但生产 Collector、真实模型中断和持续负载仍未验收。
+
+附加本轮复现的离线回归：`tests/test_ip3_mcp_cancellation.py tests/test_ip3_database_recovery.py` 为 8/8，另两组共 13/13；合计 21/21，出现 10 条 FastAPI `on_event` 弃用警告。受限执行首次停在 Windows 本地 socket 初始化，未计通过；提权后同组 8 项全部通过。宿主 runner 本身也报告 IP-3 passed。
