@@ -8,6 +8,11 @@ jobs:
   offline-regression:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      # Import-time placeholders only; target tests use fake planners and mocked transport.
+      LLM_API_KEY: offline-placeholder
+      LLM_BASE_URL: https://offline.invalid
+      LLM_MODEL: offline-placeholder
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
