@@ -1,0 +1,76 @@
+{
+  "suite_id": "insightpilot-ip4-independent-v13",
+  "status": "blocked",
+  "model_calls_this_audit": 0,
+  "blind_questions_emitted": false,
+  "blind_or_gold_modified": false,
+  "case_count": 22,
+  "domain_counts": {
+    "marketing_roi": 10,
+    "refunds": 12
+  },
+  "expected_status_counts": {
+    "answered": 14,
+    "clarify": 5,
+    "refused": 3
+  },
+  "refusal_reason_counts": {
+    "prompt_injection_attempt": 1,
+    "restricted_personal_data": 1,
+    "write_operation_not_supported": 1
+  },
+  "ambiguity_guard_count": 5,
+  "hashes": {
+    "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+    "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2",
+    "manifest_sha256": "c7b7875dcf01380fc6f9da32c7ad8593f9f19f5ca5fc38f32a3521236e349932"
+  },
+  "sqlite_rule_baseline": {
+    "passed": 15,
+    "total": 22,
+    "gold_hash_matched": true
+  },
+  "postgres_evidence": {
+    "legacy_case_count_per_tenant": 12,
+    "v13_same_hash_parity": false,
+    "blocker": "没有本次 22 题 v13 的 PostgreSQL 同哈希验收证据；当前会话无权连接本机 Docker Engine。"
+  },
+  "failure_classification": {
+    "prior_status": "partial_transport_blocked",
+    "attempted": 15,
+    "provider_responses": 0,
+    "transport_attempts_not_scored": 15,
+    "scored_failure_classes_supported_by_runner": [
+      "wrong_clarifications",
+      "wrong_refusals",
+      "numeric_errors",
+      "guard_wrong_responses",
+      "unauthorized_accepts"
+    ],
+    "observed_scored_model_failures": 0
+  },
+  "budget_gate": {
+    "checks_passed": true,
+    "planned_calls": 22,
+    "reserved_usd": 0.0936672,
+    "global_cap_usd": 5.0,
+    "live_balance_preflight": "blocked_pending_owner_review"
+  },
+  "tenant_isolation": {
+    "generic_api_regression_exists": true,
+    "v13_22_case_postgres_tenant_run": "blocked_with_postgres_parity"
+  },
+  "checks": {
+    "frozen_v13_hashes_match_manifest_seal_and_lock": true,
+    "blind_gold_case_ids_and_blind_schema_match": true,
+    "22_case_domain_and_status_strata_match": true,
+    "sqlite_rule_baseline_matches_frozen_hashes_and_dataset": true,
+    "prior_transport_failures_are_unscored": true,
+    "budget_caps_and_zero_call_preflight_hold": true,
+    "postgres_22_case_v13_gold_parity": false
+  },
+  "blockers": [
+    "postgres_22_case_v13_gold_parity"
+  ],
+  "v14_model_run": "not_started_pending_owner_review_and_live_balance_preflight"
+}

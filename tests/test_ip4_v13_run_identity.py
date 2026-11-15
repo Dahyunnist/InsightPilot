@@ -36,7 +36,9 @@ class RunIdentityTests(unittest.TestCase):
                 resolve_run_identity("../unsafe", None, Path(directory))
 
     def test_dry_run_stale_lock_stops_before_evaluation_files_or_network(self):
-        for status in ("partial_transport_blocked", "frozen_pre_model"):
+        blocked_statuses = ("partial_transport_blocked", "blocked_by_review",
+                            "blocked_pre_model_balance_unverified", "blocked")
+        for status in (*blocked_statuses, "frozen_pre_model"):
             with self.subTest(status=status), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 lock = {
@@ -65,8 +67,8 @@ class RunIdentityTests(unittest.TestCase):
                 result = json.loads(stdout.getvalue())
                 self.assertEqual(0, result["model_requests_sent"])
                 self.assertEqual("offline-run", result["run_id"])
-                self.assertEqual(os.path.normcase(str(report_path)),
-                                 os.path.normcase(result["report_path"]))
+                self.assertEqual(os.path.normcase(str(report_path.resolve())),
+                                 os.path.normcase(str(Path(result["report_path"]).resolve())))
                 self.assertFalse(report_path.exists())
                 if status == "frozen_pre_model":
                     self.assertEqual("dry_preflight_passed", result["status"])
@@ -76,6 +78,7 @@ class RunIdentityTests(unittest.TestCase):
                     self.assertIn("gold", result["excludes"])
                 else:
                     self.assertEqual("blocked_stale_lock", result["status"])
+                    self.assertEqual(0, result["model_requests_sent"])
 
 
 if __name__ == "__main__":

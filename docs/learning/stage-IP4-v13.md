@@ -37,3 +37,13 @@ RulePlanner 基线为 15/22：可答 8/14、guard 7/8。四个错误拒答是 R0
 ## 2026-11-14 Gold 与 Agent 输入隔离离线回归
 
 盘点确认 IP-2 已有营销 ROI 与库存周转业务域，因此不重复新增指标或合成数据。为 IP-4 v13 补充 `tests.test_ip4_v13_blind_payload_contract`：静态检查执行器只把盲题 `question` 交给 `InsightPilot.analyze`；在 mock HTTP 的生产 planner 请求中逐题检查 user payload 仅有 `question`、`candidate_metrics`、`allowed_metric_ids`，不含 case ID、gold 判定状态或期望值。测试读取现有合成冻结题与 gold，但网络调用全部 mock，模型调用为 0；冻结 blind/gold、manifest、评分器与预注册没有变更。此项验证当前代码路径的隔离契约，不证明第三方模型服务端或未记录的外部上下文隔离。
+
+## 2026-11-15 确定性验收审计
+
+新增 `scripts/audit_ip4_v13_acceptance.py`、`tests/test_ip4_v13_acceptance_audit.py` 与 `reports/ip4-v13-acceptance-audit-2026-11-15.json`。审计只读冻结文件，输出哈希、字段形状和计数，不输出题面，不改 blind/gold。v13 仍为 22 题：退款 12、营销 ROI 10；14 可答、5 澄清、3 拒答；5 道歧义 guard。blind/gold case ID 对齐，盲题 schema 仅 `case_id` 与 `question`。manifest、gold seal、预登记锁和 SQLite RulePlanner baseline 哈希一致。SQLite baseline 15/22 是规则结果；gold builder 的源行/事件 oracle 与只读 SQL 一致性由 `tests/test_ip4_v13_holdout.py` 覆盖。
+
+定向离线回归 28 passed、41 subtests passed。扩展 dry-run 锁状态测试，覆盖 `partial_transport_blocked`、`blocked_by_review`、`blocked_pre_model_balance_unverified`、`blocked`，逐项确认不读 blind/gold、不联网、0 请求；冻结审计命令会写出 `blocked` 报告并返回退出码 2。Windows 临时路径短/长名比较也改为先 resolve 再比较，回归通过。
+
+失败分类审计确认历史 r5 为 15 次请求尝试、0 provider response；15 条均标 `not_scored_transport_error`，score 为 null，不计作模型失败分或成功分。runner 另将错误澄清、错误拒答、数值错、guard 错误响应、拒答题被接受分开记录；本次没有可评分模型响应。预算测试覆盖逐请求先预留、调用数/成本超限即停；新增 dry-run 回归验证超出 `$0.1873344` reserve 上限时在请求前拒绝。离线预检状态仍为 `blocked_pre_model_balance_unverified`，余额未查询。模型 runner 的 22 次计划、单题单次上限、$5 总 cap 和已登记预留硬门禁通过静态/离线审查。
+
+**阻塞项：**本机 Docker Engine 权限不可用。现有 PostgreSQL 报告仅有旧 12 题套件且无 v13 hash，不能证明这份 22 题 v13 gold 的 PostgreSQL 一致性或双租户逐题覆盖；审计明确标记 `postgres_22_case_v13_gold_parity` blocked。通用 API 跨租户读取/取消测试存在，但不能替代 v13 双租户全套验收。v14 仍是候选，未运行模型；所有者审题与实时余额预检未完成。审计结论为 blocked，不得宣称 IP-4 双后端验收完成。
