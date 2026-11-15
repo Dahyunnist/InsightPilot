@@ -36,12 +36,22 @@
       "planner_sha256": {
         "path": "insightpilot/planner.py",
         "locked_sha256": "4712d4ef7ed234ac8129453275e00cb0395d49d5c2d40597bb346e939a0f3489",
-        "current_sha256": "60f56f057f5226d26e7359aff135c723dcf6b093ecc65f9bae3ff5b619bc9c33"
+        "current_sha256": "78f3d980309ab7048b2c2b1fcfa7a4a4fd11a530f494119b5baa8bb14678aecc"
       },
       "model_runner_sha256": {
         "path": "scripts/run_ip4_v13_model_blind.py",
         "locked_sha256": "5db06caee9e25bbc9fae290868e2f9c5dbb7f73a77a0d30f7ad548a3780733aa",
         "current_sha256": "a2ec91fc24c7369c372670400d1d2532e5e8cc19462eb72738cf29e6ffb50449"
+      },
+      "agent_runtime_sha256": {
+        "path": "insightpilot/agent.py",
+        "locked_sha256": "e41ea97f0a02123d295e0867995455d98d28442592d52e03984dba16e928e60a",
+        "current_sha256": "fa134158cec40e38f0fdc7d4403faf46be286755d96d6ec111fe16c54ce761ed"
+      },
+      "metric_runtime_sha256": {
+        "path": "insightpilot/metrics.py",
+        "locked_sha256": "8b4f089d62b4be61006f4c4592477022c6c5fe0a0a3a14092094c78196adf026",
+        "current_sha256": "c6841bf22b9e2c20236fc0e3a0d1a47b5674406749a3a582675cf40399b53a1b"
       },
       "query_runtime_sha256": {
         "path": "insightpilot/query_engine.py",
