@@ -1,14 +1,30 @@
+import ast
 import contextlib
+import hashlib
 import io
 import json
 import sys
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from insightpilot.planner import NeedsClarification, OpenAICompatiblePlanner
 from scripts.audit_ip4_v13_acceptance import audit, main as run_audit
 from scripts.run_ip4_v13_model_blind import build_dry_run_summary, main as run_model
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def _method_sha(source: str, name: str) -> str:
+    module = ast.parse(source)
+    owner = next(node for node in module.body
+                 if isinstance(node, ast.ClassDef) and node.name == "OpenAICompatiblePlanner")
+    method = next(node for node in owner.body
+                  if isinstance(node, ast.FunctionDef) and node.name == name)
+    return hashlib.sha256(ast.get_source_segment(source, method).encode("utf-8")).hexdigest()
 
 
 class IP4V13AcceptanceAuditTests(unittest.TestCase):
@@ -75,10 +91,12 @@ class IP4V13AcceptanceAuditTests(unittest.TestCase):
             self.assertNotIn("question", report)
 
     def test_stale_runtime_lock_stops_before_balance_or_model_request(self):
+        lock_path = Path("reports/ip4-v13-model-preregistration-20261114-r5.json")
+        lock_before = hashlib.sha256(lock_path.read_bytes()).hexdigest()
         with tempfile.TemporaryDirectory() as directory:
             report_path = Path(directory) / "must-not-exist.json"
             argv = ["runner", "--run-id", "locked-audit", "--report", str(report_path),
-                    "--preregistration", "reports/ip4-v13-model-preregistration-20261114-r5.json"]
+                    "--preregistration", str(lock_path)]
             with patch.object(sys, "argv", argv), \
                     patch("scripts.run_ip4_v13_model_blind.check_provider_balance",
                           side_effect=AssertionError("stale lock must stop before balance check")), \
@@ -86,6 +104,29 @@ class IP4V13AcceptanceAuditTests(unittest.TestCase):
                                            "registered scorer, planner, runner, builder, or baseline changed"):
                 run_model()
             self.assertFalse(report_path.exists())
+        self.assertEqual(lock_before, hashlib.sha256(lock_path.read_bytes()).hexdigest())
+
+    def test_m09_new_preflight_clarifies_before_any_model_call(self):
+        planner = OpenAICompatiblePlanner.__new__(OpenAICompatiblePlanner)
+        question = "2026-10-01 至 2026-10-31 营销净 ROI 和毛 ROI 分别是多少？"
+        with patch.object(OpenAICompatiblePlanner, "_complete",
+                          side_effect=AssertionError("M09 must stop before model call")) as complete:
+            with self.assertRaisesRegex(NeedsClarification, "只定义营销净 ROI"):
+                planner.plan(question)
+        self.assertEqual(complete.call_count, 0)
+        self.assertEqual(planner.last_call_count, 0)
+
+    def test_r5_prompt_builder_and_scorer_are_stable_while_plan_path_changed(self):
+        lock_path = ROOT / "reports/ip4-v13-model-preregistration-20261114-r5.json"
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        frozen_source = subprocess.check_output(
+            ["git", "show", f"{lock['freeze_commit_sha']}:insightpilot/planner.py"],
+            cwd=ROOT, text=True, encoding="utf-8")
+        current_source = (ROOT / "insightpilot/planner.py").read_text(encoding="utf-8")
+        self.assertEqual(_method_sha(frozen_source, "_complete"), _method_sha(current_source, "_complete"))
+        self.assertNotEqual(_method_sha(frozen_source, "plan"), _method_sha(current_source, "plan"))
+        scorer_sha = hashlib.sha256((ROOT / "insightpilot/enterprise_evaluate.py").read_bytes()).hexdigest()
+        self.assertEqual(lock["artifacts"]["scorer_sha256"], scorer_sha)
 
 
 if __name__ == "__main__":
