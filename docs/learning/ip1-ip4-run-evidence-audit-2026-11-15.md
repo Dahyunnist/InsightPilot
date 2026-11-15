@@ -58,3 +58,11 @@ IP-1/IP-2/IP-3 宿主验收是一条合并运行记录，不能拆成三个虚�
 ## 边界
 
 最低字段覆盖仍不完整，尤其 prompt/tool schema 哈希、IP-3 运行 ID 与若干数据/运行时哈希。补采只应来自后续真实 runner 记录；历史报告不做猜测性回填。冻结评测数据保持不变。
+
+## 后续 IP-3 记录与历史费用旁证
+
+后续 OTel runner 会从容器内实际生成的 SQLite fixture 读取 SHA-256，从本地 image inspection 和容器 Python/platform 获取运行信息，并保存 API 返回的 `run_id` 与 Collector 的 API root `trace_id`/`span_id`。runner/probe/seed/compose/依赖和 API/planner 源文件各自记录哈希。该固定 planner 无 prompt、tool schema 或 scorer；对应字段仍是 `null`，并标为 `not_applicable`。若来源不可读，字段保留 `null` 并写明原因。旧的 2026-11-11 报告不会被回写。
+
+用户提供的历史账单仅作人民币用量旁证：InsightPilot 别名历史 538 次、¥1.84931692；全量导出 4,402 次、¥10.91277486，金额合计一致。另一个别名 1,471 次无法归属。它们不分摊到具体 run、不与美元预算相加，也不表示当前余额。原始 CSV 与身份/密钥字段未复制到仓库。
+
+本次离线增量验证 `8/8` 通过，未运行 22 题评测。新 OTel 报告使用带时间戳的独立文件名，投影器会发现并纳入这些新记录；原有 `ip3-otel-collector.json` 保持不变。

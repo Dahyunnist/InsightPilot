@@ -11,10 +11,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 COMPOSE = ROOT / "docker-compose.ip3-otel-local.yml"
 PROJECT = "insightpilot-ip3-otel-localtest"
 COLLECTOR_IMAGE = "otel/opentelemetry-collector-contrib:0.138.0"
 OUTPUT = ROOT / "reports/ip3-otel-collector.json"
+API_IMAGE = "insightpilot-api-probe:latest"
 API_TOKEN = "ip3-otel-local-test-token"
 QUESTION = "2026-10-05 至 2026-10-11 华东批准退款金额率是多少？ marker-sensitive-question-ip3"
 
@@ -77,6 +79,59 @@ def _send_analysis() -> dict:
     return json.loads(result.stdout.strip().splitlines()[-1])
 
 
+def _image_id(image_name: str) -> str | None:
+    try:
+        result = subprocess.run(["docker", "image", "inspect", image_name, "--format", "{{.Id}}"],
+                                cwd=ROOT, text=True, capture_output=True, timeout=20)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return result.stdout.strip() if result.returncode == 0 and result.stdout.strip() else None
+
+
+def _runtime_snapshot() -> tuple[dict | None, str | None]:
+    code = (
+        "import hashlib,json,os,platform,sys; from pathlib import Path; "
+        "p=os.environ.get('INSIGHTPILOT_DATABASE_PATH'); "
+        "print(json.dumps({'python':sys.version,'platform':platform.platform(),"
+        "'dataset_sha256':hashlib.sha256(Path(p).read_bytes()).hexdigest() if p and os.path.isfile(p) else None}))"
+    )
+    try:
+        result = compose("exec", "-T", "api", "python", "-c", code, check=False, timeout=10)
+    except (OSError, RuntimeError, subprocess.TimeoutExpired):
+        return None, None
+    if result.returncode != 0:
+        return None, None
+    try:
+        container = json.loads(result.stdout.strip().splitlines()[-1])
+    except (IndexError, json.JSONDecodeError):
+        return None, None
+    dataset_sha = container.pop("dataset_sha256", None)
+    container.update({"api_image_id": _image_id(API_IMAGE),
+                      "collector_image_id": _image_id(COLLECTOR_IMAGE)})
+    return container, dataset_sha
+
+
+def _git_sha() -> str | None:
+    try:
+        result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
+                                text=True, capture_output=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def _new_report_path(base: Path, created_at_utc: str) -> Path:
+    if not base.exists():
+        return base
+    stamp = datetime.fromisoformat(created_at_utc).strftime("%Y%m%dT%H%M%S")
+    candidate = base.with_name(f"{base.stem}-run-{stamp}{base.suffix}")
+    index = 1
+    while candidate.exists():
+        candidate = base.with_name(f"{base.stem}-run-{stamp}-{index}{base.suffix}")
+        index += 1
+    return candidate
+
+
 def _trace_summary(logs: str) -> dict:
     wanted = {"insightpilot.api.analysis", "insightpilot.agent.run"}
     normalized = "\n".join(re.sub(r"^[^|]*\|\s?", "", line) for line in logs.splitlines())
@@ -119,6 +174,10 @@ def main() -> None:
               "profile": "otel-acceptance", "collector_image": COLLECTOR_IMAGE,
               "external_model_calls": 0, "network": "isolated internal Compose network",
               "compose_cleanup": False}
+    analysis_response = None
+    trace_summary = None
+    runtime_facts = None
+    dataset_sha256 = None
     started = time.perf_counter()
     opspilot_before = _opspilot_snapshot()
     report["opspilot_container_count_before"] = len(opspilot_before)
@@ -135,13 +194,16 @@ def main() -> None:
             _wait_collector()
             _wait_api()
             response = _send_analysis()
+            analysis_response = response
             report["analysis_http_status"] = response["status"]
             report["analysis_status"] = response["body"].get("status")
             report["analysis_run_id"] = response["body"].get("run_id")
             report["analysis_model_call_count"] = response["body"].get("model_call_count")
+            runtime_facts, dataset_sha256 = _runtime_snapshot()
             compose("stop", "api")  # Lifespan shutdown flushes the batch processor.
             logs = compose("logs", "--no-color", "collector", timeout=30).stdout
-            report["collector"] = _trace_summary(logs)
+            trace_summary = _trace_summary(logs)
+            report["collector"] = trace_summary
             report["status"] = "passed" if (
                 response["status"] == 200 and response["body"].get("status") == "answered" and
                 response["body"].get("model_call_count") == 0 and
@@ -170,8 +232,15 @@ def main() -> None:
         report["opspilot_containers_unchanged"] = (
             opspilot_before == _opspilot_snapshot())
         report["elapsed_seconds"] = round(time.perf_counter() - started, 3)
-        OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-        OUTPUT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        from insightpilot.run_evidence import build_ip3_otel_run_evidence
+        report["run_evidence"] = build_ip3_otel_run_evidence(
+            ROOT, git_sha=_git_sha(), analysis_response=analysis_response,
+            trace_summary=trace_summary, runtime_facts=runtime_facts,
+            dataset_sha256=dataset_sha256)
+        output_path = _new_report_path(OUTPUT, report["created_at_utc"])
+        report["report_path"] = str(output_path.relative_to(ROOT))
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))
     if report["status"] != "passed" or not report["compose_cleanup"] or not report["opspilot_containers_unchanged"]:
         raise SystemExit(1)
