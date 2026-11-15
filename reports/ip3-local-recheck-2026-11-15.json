@@ -1,0 +1,39 @@
+{
+  "manifest_version": 1,
+  "run_date": "2026-11-15",
+  "status": "partial_blocked",
+  "scope": "IP-3 local synthetic HTTP and Compose recheck",
+  "model_calls": 0,
+  "real_data_used": false,
+  "container": {
+    "status": "not_run",
+    "reason": "Docker daemon access denied",
+    "diagnostic": "permission denied while trying to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine",
+    "local_image_availability": "unknown",
+    "image_pull_attempted": false,
+    "container_started": false
+  },
+  "offline_static_regression": {
+    "status": "passed",
+    "command": ".venv\\Scripts\\python.exe -m pytest -p no:cacheprovider tests/test_ip3_compose_runner.py tests/test_ip1_ip3_host_entrypoint.py tests/test_ip3_docker_smoke_report.py -q",
+    "passed": 9
+  },
+  "synthetic_load": {
+    "status": "incomplete_timeout",
+    "script": "scripts/load_api.py",
+    "configuration": "fixed synthetic planner, synthetic temporary SQLite, no model calls",
+    "observation": "The 20-concurrency in-process TestClient run produced no report or output before it was interrupted after 30 seconds.",
+    "result_claimed": false
+  },
+  "historical_evidence": {
+    "compose_http_report": "reports/host-validation-ip1-ip3-2026-11-15/ip3-compose-http.json",
+    "compose_http_status": "passed in the recorded host run; not rerun in this attempt",
+    "docker_smoke_report": "reports/ip3-docker-smoke-20261113.json",
+    "docker_smoke_status": "blocked_before_container_start"
+  },
+  "limitations": [
+    "This attempt does not establish container or TCP HTTP behavior.",
+    "The local TestClient load attempt did not complete, so it provides no new load measurements.",
+    "The existing host Compose report is prior evidence and is not represented as a new run."
+  ]
+}

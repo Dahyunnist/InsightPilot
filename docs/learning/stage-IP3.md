@@ -160,3 +160,22 @@ MCP Streamable HTTP 取消测试确认 client cancel 到达核心、取消事件
 本轮强化 `test_sqlite_disconnect_is_terminal_idempotent_and_new_run_recovers`：注入一次 SQLite 执行断连，断言 502 可诊断、`X-Request-ID` 与 `run_id` 一致、错误类别明确且无答案/行数据；失败同键重放和换题冲突不再规划或执行查询；新键恢复成功，执行计数只增加一次。租户越权读取/取消仍由 `tests/test_api_tenant_identity.py` 覆盖。故障报告为 `reports/ip3-reliability-fault-audit-2026-11-15.json`。
 
 本机定向回归通过 2/2。第一次受限执行停在 Windows asyncio socketpair 初始化；在本机授权运行后测试进入断言并通过。没有启动 Docker、模型、外部服务，也没有读取 `.env`。本轮未覆盖真实供应商 HTTP 取消、长时间持续负载、真实生产 Collector 配置或生产数据；连接池耗尽结论引用既有隔离合成 PostgreSQL 报告，不代表生产容量或 SLA。
+
+## 2026-11-15 IP-3 本地复核边界
+
+Compose runner、宿主入口和 Docker smoke 报告解析的离线测试通过 9/9。尝试运行 `scripts/load_api.py` 的固定合成负载时，20 并发 `TestClient` 测试在 30 秒内没有输出或报告；进程已中断，该次没有负载结果。该脚本走进程内 TestClient，不是 TCP HTTP 测试。
+
+本轮 Docker daemon 返回 `permission denied while trying to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine`，所以未能检查本地镜像，也未启动容器或拉取镜像。镜像可用性未知。既有 `reports/host-validation-ip1-ip3-2026-11-15/ip3-compose-http.json` 记录了 Compose 真实 HTTP 合成验收通过，但不是本轮新跑的结果；本轮记录见 `reports/ip3-local-recheck-2026-11-15.json`。模型调用 0，未使用真实数据。
+
+在有权限访问 Docker Desktop 的项目根目录，可用以下命令先检查 daemon 和本地基础镜像；任一检查失败都会停止，不会拉取镜像：
+
+```powershell
+$ErrorActionPreference = 'Stop'
+& docker version --format '{{.Server.Version}}'
+if ($LASTEXITCODE -ne 0) { throw 'Docker daemon unavailable; stopped without pulling images.' }
+& docker image inspect python:3.12-slim --format '{{.Id}}' 2>$null
+if ($LASTEXITCODE -ne 0) { throw 'python:3.12-slim is not cached locally; stopped without pulling images.' }
+.\scripts\run_ip3_compose.ps1 -ArtifactDirectory ('.tmp\ip3-compose-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+```
+
+runner 的构建仍可能访问 Python 包源，除非所需构建层已缓存。此门禁只保证 Docker 基础镜像缺失时不会自动拉取。
