@@ -87,3 +87,9 @@ IP-1 使用 PostgreSQL/FastAPI/`PostgresQueryEngine` 与合成数据：两个 te
 这是本机固定合成语料的宿主集成验收，不代表外部客户数据或生产部署。历史 pending 段落记录的是当时失败尝试；本节是 2026-11-15 当前复验。
 
 附加本轮复现的离线回归：`tests/test_ip1_rls_canary.py tests/test_ip1_rls_runner.py` 为 7/7；`tests/test_ip1_ip3_host_entrypoint.py tests/test_ip3_compose_runner.py` 为 6/6。此次宿主 runner 本身也报告 IP-1 passed。
+
+## 2026-11-15 PostgreSQL/RLS 宿主验收尝试
+
+命令：` .\scripts\run_ip1_rls.ps1 -Execute -ConfirmDatabaseCreation -ArtifactDirectory 'E:\job\insightpilot-ip1-acceptance-20261115' `。Docker Engine 29.1.3；镜像 `postgres:16-alpine` digest `sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36`。临时凭据由 runner 生成，PostgreSQL data dir 使用 Compose tmpfs；未用生产凭据、未调用模型。
+
+容器创建并报告 Started，但 `scripts/prepare_ip4_postgres.py` 的首次 psycopg 连接失败，runner exit 1：`connection to server at "127.0.0.1", port 55432 failed: server closed the connection unexpectedly`。因此双租户实际查询、越权、DDL/DML、超时和行预算本轮均未验收，不能称通过。Runner finally 已清理专用容器与 Compose 网络；无容器日志或校验报告生成。后续需先查 PostgreSQL 初始化/启动日志，再按相同命令重跑；本轮不自动重试。
