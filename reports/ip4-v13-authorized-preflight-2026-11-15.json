@@ -1,8 +1,31 @@
 {
   "checked_at_utc": "2026-11-15T05:36:37.871861+00:00",
   "suite_id": "insightpilot-ip4-independent-v13",
-  "status": "blocked_code_lock_mismatch",
+  "status": "blocked_run_lock_and_cost_attribution",
   "model_requests_sent_this_turn": 0,
+  "provider_export_review": {
+    "amount_file": {
+      "file": "amount-2026-10-17_2026-11-15.csv",
+      "filter": "api_key_name=insightpilot",
+      "rows": 32,
+      "coverage_start": "2026-10-19T00:00:00+08:00",
+      "coverage_end": "2026-11-15T00:00:00+08:00",
+      "request_count": 538,
+      "input_cache_hit_tokens": 83781,
+      "input_cache_miss_tokens": 168202,
+      "output_tokens": 312926,
+      "amount_times_price_sum": 1.84931692,
+      "amount_times_price_currency": "not present in this export; not treated as confirmed CNY billing"
+    },
+    "cost_file": {
+      "file": "cost-2026-10-17_2026-11-15.csv",
+      "api_key_name_column_present": false,
+      "user_id_values_read_or_emitted": false,
+      "per_key_cny_cost": null,
+      "status": "blocked_unattributable_without_api_key_name"
+    },
+    "date_gap_from_filename_start": "No matching usage rows before 2026-10-19T00:00:00+08:00; 2026-10-17 through 2026-10-18 are absent."
+  },
   "provider_balance_read_only_get": {
     "status": "passed",
     "available_currency": "CNY",
@@ -87,7 +110,7 @@
       "private_data"
     ]
   },
-  "decision": "No model call. Balance, budget, frozen data hashes, and payload allowlist pass; runtime code lock fails. Planner behavior change prevents a test-only relock.",
+  "decision": "No model call. Balance, budget, frozen data hashes, and payload allowlist pass. Exact per-key CNY billing is unavailable from cost export; planner behavior change prevents a test-only relock.",
   "v14_used": false,
   "api_key_recorded": false
 }
