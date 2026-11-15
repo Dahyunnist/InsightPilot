@@ -25,3 +25,9 @@
 ## 2026-11-15 容器内 API 并发诊断
 
 使用本机 `insightpilot-ip3-compose-api-probe:latest`，仓库只读挂载、`--network none`、`--rm`；`INSIGHTPILOT_DATABASE_PATH` 指向容器 `/tmp`。执行 `scripts/load_api.py --delay-ms 25`，exit 0，0 模型调用。结果：并发 1 为 1/1 HTTP 200；并发 5 为 5/5 HTTP 200；并发 20 为 8 HTTP 200、12 HTTP 429。该脚本是固定 planner + 合成 SQLite 的 in-process HTTP load probe，不是 pytest，也不证明真实 PostgreSQL、MCP 或完整服务部署行为。第一次只读文件系统探针未设可写 DB 路径，失败于 SQLite 文件创建；本次临时 DB 路径修正后通过。
+
+## 2026-11-15 并发取消测试失败归因
+
+复跑命令：`python -m pytest -vv -x --tb=long -p no:cacheprovider tests/test_s7_enterprise_dataset.py::S7EnterpriseDatasetTests::test_concurrency_limit_and_live_cancel_survive_request_boundary`。失败断言在 `tests/test_s7_enterprise_dataset.py:140`：`planner.entered.wait(2)` 返回 false。该断言发生于取消/并发逻辑之前；请求线程未在 2 秒内进入 planner。
+
+同一 Windows 环境 API 并发用例已有 faulthandler 证据：`socket.accept`、`socket._fallback_socketpair`、`asyncio.proactor_events._make_self_pipe`，卡在 AnyIO `run_blocking_portal` 启动。两条证据都指向 Windows asyncio socketpair/事件循环环境阻塞；当前没有实现缺陷证据，不改生产代码，也不放宽 2 秒语义。历史 Linux 容器 HTTP 探针结果另见本学习文档上节，不能当 pytest 等价证明。
