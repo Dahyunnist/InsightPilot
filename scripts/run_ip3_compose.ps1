@@ -73,26 +73,37 @@ try {
     $McpRawOut = Join-Path $ArtifactRoot 'ip3-mcp-cancellation.stdout.raw'
     $McpRawErr = Join-Path $ArtifactRoot 'ip3-mcp-cancellation.stderr.raw'
     $DockerPath = (Get-Command docker -ErrorAction Stop).Source
-    $McpProcess = Start-Process -FilePath $DockerPath `
-        -ArgumentList @('compose', '--project-name', $ComposeProject, '-f', $ComposeFile,
-                        'exec', '-T', 'api-probe', 'python', 'scripts/probe_ip3_mcp_cancel.py') `
-        -WorkingDirectory $ProjectRoot -PassThru -Wait -WindowStyle Hidden `
-        -RedirectStandardOutput $McpRawOut -RedirectStandardError $McpRawErr
-    $McpExitCode = $McpProcess.ExitCode
-    $McpStdout = if (Test-Path -LiteralPath $McpRawOut) { [IO.File]::ReadAllText($McpRawOut) } else { '' }
-    $McpStderr = if (Test-Path -LiteralPath $McpRawErr) { [IO.File]::ReadAllText($McpRawErr) } else { '' }
-    $McpOutputText = ($McpStdout + [Environment]::NewLine + $McpStderr) -replace '(?i)Bearer\s+[A-Za-z0-9._~+/-]+', 'Bearer [REDACTED]'
-    $McpOutputText | Set-Content -LiteralPath (Join-Path $ArtifactRoot 'ip3-mcp-cancellation.log') -Encoding UTF8
-    Remove-Item -LiteralPath $McpRawOut, $McpRawErr -Force -ErrorAction SilentlyContinue
-    if ($McpExitCode -ne 0) {
-        throw "IP-3 MCP cancellation smoke failed (exit code $McpExitCode); see ip3-mcp-cancellation.log."
+    try {
+        $McpProcess = Start-Process -FilePath $DockerPath `
+            -ArgumentList @('compose', '--project-name', $ComposeProject, '-f', $ComposeFile,
+                            'exec', '-T', 'api-probe', 'python', 'scripts/probe_ip3_mcp_cancel.py') `
+            -WorkingDirectory $ProjectRoot -PassThru -WindowStyle Hidden `
+            -RedirectStandardOutput $McpRawOut -RedirectStandardError $McpRawErr
+        $McpFinished = $McpProcess.WaitForExit(120000)
+        if (-not $McpFinished) {
+            try { $McpProcess.Kill(); $McpProcess.WaitForExit(5000) | Out-Null } catch { }
+        }
+        $McpExitCode = if ($McpFinished) { $McpProcess.ExitCode } else { 124 }
+        $McpStdout = if (Test-Path -LiteralPath $McpRawOut) { [IO.File]::ReadAllText($McpRawOut) } else { '' }
+        $McpStderr = if (Test-Path -LiteralPath $McpRawErr) { [IO.File]::ReadAllText($McpRawErr) } else { '' }
+        $McpOutputText = ($McpStdout + [Environment]::NewLine + $McpStderr) -replace '(?i)Bearer\s+[A-Za-z0-9._~+/-]+', 'Bearer [REDACTED]'
+        $McpOutputText | Set-Content -LiteralPath (Join-Path $ArtifactRoot 'ip3-mcp-cancellation.log') -Encoding UTF8
+        if (-not $McpFinished) {
+            throw 'IP-3 MCP cancellation smoke timed out after 120 seconds; Compose cleanup will run.'
+        }
+        if ($McpExitCode -ne 0) {
+            throw "IP-3 MCP cancellation smoke failed (exit code $McpExitCode); see ip3-mcp-cancellation.log."
+        }
+        $McpResult = $McpStdout | ConvertFrom-Json
+        if ($McpResult.status -ne 'passed' -or -not $McpResult.core_cancel_event_observed -or
+            -not $McpResult.worker_finished -or $McpResult.model_calls -ne 0) {
+            throw 'IP-3 MCP cancellation smoke returned an unexpected result.'
+        }
+        $McpResult | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $McpReport -Encoding UTF8
     }
-    $McpResult = $McpStdout | ConvertFrom-Json
-    if ($McpResult.status -ne 'passed' -or -not $McpResult.core_cancel_event_observed -or
-        -not $McpResult.worker_finished -or $McpResult.model_calls -ne 0) {
-        throw 'IP-3 MCP cancellation smoke returned an unexpected result.'
+    finally {
+        Remove-Item -LiteralPath $McpRawOut, $McpRawErr -Force -ErrorAction SilentlyContinue
     }
-    $McpResult | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $McpReport -Encoding UTF8
 }
 catch {
     Write-Error -Message $_.Exception.Message -ErrorAction Continue
@@ -100,8 +111,27 @@ catch {
 }
 finally {
     if ($ComposeStarted) {
-        & docker compose --project-name $ComposeProject -f $ComposeFile down
-        if ($LASTEXITCODE -ne 0) { Write-Warning '无法清理 IP-3 Compose 容器。' }
+        $CleanupRawOut = Join-Path $ArtifactRoot 'ip3-compose-cleanup.stdout.raw'
+        $CleanupRawErr = Join-Path $ArtifactRoot 'ip3-compose-cleanup.stderr.raw'
+        try {
+            $DockerPath = (Get-Command docker -ErrorAction Stop).Source
+            $CleanupProcess = Start-Process -FilePath $DockerPath `
+                -ArgumentList @('compose', '--project-name', $ComposeProject, '-f', $ComposeFile,
+                                'down', '--remove-orphans', '--timeout', '10') `
+                -WorkingDirectory $ProjectRoot -PassThru -WindowStyle Hidden `
+                -RedirectStandardOutput $CleanupRawOut -RedirectStandardError $CleanupRawErr
+            $CleanupFinished = $CleanupProcess.WaitForExit(30000)
+            if (-not $CleanupFinished) {
+                try { $CleanupProcess.Kill(); $CleanupProcess.WaitForExit(5000) | Out-Null } catch { }
+                Write-Warning 'IP-3 Compose 清理超过 30 秒；本次项目可能仍有容器或网络。'
+            } elseif ($CleanupProcess.ExitCode -ne 0) {
+                Write-Warning '无法清理 IP-3 Compose 容器或网络。'
+            }
+        } catch {
+            Write-Warning '无法清理 IP-3 Compose 容器或网络。'
+        } finally {
+            Remove-Item -LiteralPath $CleanupRawOut, $CleanupRawErr -Force -ErrorAction SilentlyContinue
+        }
     }
     if ($PushedLocation) { Pop-Location }
 }

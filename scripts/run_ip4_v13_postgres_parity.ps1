@@ -24,6 +24,7 @@ $Stage = 'confirmation'
 $Status = 'dry_run'
 $CleanupStatus = 'not_started'
 $ComposeOwned = $false
+$ReportGenerated = $false
 $EnvironmentNames = @('INSIGHTPILOT_IP4_ADMIN_PASSWORD', 'INSIGHTPILOT_IP4_ADMIN_DSN',
     'INSIGHTPILOT_IP4_APP_DSN', 'INSIGHTPILOT_IP4_APP_ROLE', 'INSIGHTPILOT_IP4_APP_PASSWORD')
 $PreviousEnvironment = @{}
@@ -68,7 +69,7 @@ function Get-SafeSummary {
         model_calls = 0
         cleanup = $CleanupStatus
     }
-    if (Test-Path -LiteralPath $ReportPath) {
+    if ($ReportGenerated -and (Test-Path -LiteralPath $ReportPath)) {
         try {
             $report = Get-Content -LiteralPath $ReportPath -Raw | ConvertFrom-Json
             $summary.case_count = $report.case_count
@@ -98,6 +99,7 @@ if (-not $ConfirmDedicatedDatabase) {
 $Status = 'blocked'
 try {
     $null = New-Item -ItemType Directory -Path $TempRoot -Force
+    if (Test-Path -LiteralPath $ReportPath) { throw 'report_path_already_exists' }
     $Stage = 'frozen_artifacts'
     foreach ($path in @($ComposeSource, $Python, $Database, $BundleManifestPath,
                         $V13ManifestPath, $V13BlindPath, $V13GoldPath)) {
@@ -178,12 +180,13 @@ try {
     if (-not $audit.finished -or $audit.exit_code -ne 0 -or -not (Test-Path -LiteralPath $ReportPath)) {
         throw 'offline_parity_audit_failed'
     }
+    $ReportGenerated = $true
     $report = Get-Content -LiteralPath $ReportPath -Raw | ConvertFrom-Json
     if ($report.model_calls -ne 0 -or $report.model_requests_sent -ne 0 -or
         $report.database_parity.status -ne 'passed') { throw 'sqlite_postgresql_parity_failed' }
     $Status = 'passed'
 } catch {
-    $Status = if ($_.Exception.Message -match '^(docker_|postgres_image|project_dependencies|frozen_|isolated_compose|compose_)') {
+    $Status = if ($_.Exception.Message -match '^(docker_|postgres_image|project_dependencies|frozen_|isolated_compose|compose_|report_path_)') {
         'blocked'
     } else { 'failed' }
 } finally {

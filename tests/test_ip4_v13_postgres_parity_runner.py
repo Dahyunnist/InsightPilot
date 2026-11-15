@@ -38,6 +38,11 @@ class IP4V13PostgresParityRunnerTests(unittest.TestCase):
         self.assertIn("--pull', 'never'", self.script)
         self.assertIn("--wait-timeout', '60'", self.script)
         self.assertIn("90000 'compose-up'", self.script)
+        self.assertIn("30000 'compose-cleanup'", self.script)
+        self.assertLess(self.script.index("$ComposeOwned = $true"), self.script.index("'up', '-d'"))
+        self.assertIn("foreach ($name in $EnvironmentNames)", self.script)
+        self.assertIn("if (Test-Path -LiteralPath $ReportPath) { throw 'report_path_already_exists' }", self.script)
+        self.assertIn("if ($ReportGenerated -and (Test-Path -LiteralPath $ReportPath))", self.script)
 
     def test_report_path_uses_only_ids_categories_and_status(self):
         self.assertIn("$summary.postgres_parity_status = $report.database_parity.status", self.script)

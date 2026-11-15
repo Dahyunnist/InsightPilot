@@ -79,6 +79,29 @@ class QueryEngineTests(unittest.TestCase):
         self.assertIn("LIMIT 100", statement)
         self.assertEqual(params, query.params)
 
+    def test_reused_pool_rebinds_local_tenant_scope_for_each_request(self):
+        connection = FakeConnection([("全部", 0.25)])
+        engine = PostgresQueryEngine("unused", pool=FakePool(connection))
+        query = compile_query(QueryPlan("approved_refund_order_rate", "2026-10-01", "2026-10-08", None, None))
+
+        engine.execute_readonly(query, tenant_id="tenant-a")
+        engine.execute_readonly(query, tenant_id="tenant-b")
+
+        scope_calls = [call for call in connection.calls
+                       if call[0] == "SELECT set_config('app.tenant_id', %s, true)"]
+        self.assertEqual(scope_calls, [
+            ("SELECT set_config('app.tenant_id', %s, true)", ("tenant-a",)),
+            ("SELECT set_config('app.tenant_id', %s, true)", ("tenant-b",)),
+        ])
+        query_calls = [index for index, (sql, _params) in enumerate(connection.calls)
+                       if "FROM orders" in sql and "LIMIT 100" in sql]
+        scope_indexes = [index for index, (sql, _params) in enumerate(connection.calls)
+                         if sql == "SELECT set_config('app.tenant_id', %s, true)"]
+        self.assertEqual(len(query_calls), 2)
+        self.assertEqual(len(scope_indexes), 2)
+        self.assertTrue(all(scope_index < query_index
+                            for scope_index, query_index in zip(scope_indexes, query_calls)))
+
     def test_postgres_reads_dataset_identity_inside_tenant_scoped_readonly_transaction(self):
         connection = MetadataConnection()
         engine = PostgresQueryEngine("unused", tenant_id="tenant-a", pool=FakePool(connection))
