@@ -59,7 +59,8 @@ class IP4V13AcceptanceAuditTests(unittest.TestCase):
         self.assertEqual(report["status"], "blocked")
         self.assertIn("postgres_22_case_v13_gold_parity", report["blockers"])
         self.assertIn("execution_code_lock_matches", report["blockers"])
-        self.assertEqual({"planner_sha256", "model_runner_sha256", "query_runtime_sha256"},
+        self.assertEqual({"planner_sha256", "model_runner_sha256", "query_runtime_sha256",
+                          "agent_runtime_sha256", "metric_runtime_sha256"},
                          set(report["execution_code_lock"]["mismatches"]))
         self.assertFalse(report["execution_code_lock"]["relock_allowed_without_rebaseline"])
         self.assertEqual(report["v14_model_run"],

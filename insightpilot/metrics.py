@@ -191,7 +191,7 @@ def retrieve_metrics(question: str) -> list[Metric]:
     """Rank metrics by explicit business-language cues; never pick vague refund rate."""
     q = question.lower()
     scores = {key: 0 for key in METRICS}
-    if any(term in q for term in ("roi", "投资回报率", "广告回报率")):
+    if any(term in q for term in ("roi", "投资回报", "投资回报率", "广告回报率", "净回报率")):
         scores["marketing_net_roi"] = 20
     if any(term in q for term in ("库存周转率", "库存周转", "存货周转率", "存货周转")):
         scores["inventory_turnover"] = 20
@@ -203,8 +203,9 @@ def retrieve_metrics(question: str) -> list[Metric]:
                                   "退款发生日", "退款发生时间", "退款实际发生", "实际发生的批准退款",
                                   "退款入账日", "退款入账日期")):
         scores["approved_refund_event_amount"] = 10
-    if any(term in q for term in ("退款状态", "退款处理状态", "退款处理结果", "待处理金额", "批准和待处理", "按状态")):
-        scores["refund_amount_by_status"] = 10
+    if any(term in q for term in ("退款状态", "退款处理状态", "退款处理结果", "处理状态",
+                                  "待处理金额", "批准和待处理", "按状态")):
+        scores["refund_amount_by_status"] = 20
     if any(term in q for term in ("已支付订单和批准退款订单", "已付款订单和发生批准退款的订单",
                                   "订单数和批准退款", "退款订单数量")):
         scores["approved_refund_order_counts"] = 10

@@ -34,9 +34,10 @@ class PlanError(ValueError):
 
 
 class NeedsClarification(ValueError):
-    def __init__(self, message: str, choices: list[str] | None = None):
+    def __init__(self, message: str, choices: list[str] | None = None, reason: str | None = None):
         super().__init__(message)
         self.choices = choices or []
+        self.reason = reason
 
 
 class OpenAICompatiblePlanner:
@@ -142,8 +143,15 @@ class OpenAICompatiblePlanner:
         if any(term in q for term in ("按下单日期汇总", "按订单创建日期", "订单创建日期按日")) and any(
                 term in q for term in ("退款订单数", "退款订单数量", "退款订单")):
             raise NeedsClarification("当前指标目录不支持按下单日期逐日分组；请改为整体 cohort 汇总或按已支持维度查询。")
-        if "订单率" in q and "金额率" in q:
-            raise NeedsClarification("S1 一次处理一个指标；请分别询问批准退款订单率或金额率。")
+        order_metric_terms = ("订单率", "订单比例", "订单占比")
+        amount_metric_terms = ("金额率", "金额比例", "金额占比", "退款金额")
+        asks_order_metric = any(term in q for term in order_metric_terms)
+        asks_amount_metric = any(term in q for term in amount_metric_terms)
+        if "退款率" in q and asks_order_metric and asks_amount_metric and "还是" in q:
+            raise NeedsClarification("请明确选择退款订单率或退款金额率。", reason="ambiguous_metric")
+        if asks_order_metric and asks_amount_metric:
+            raise NeedsClarification("S1 一次处理一个指标；请分别询问批准退款订单率或金额率。",
+                                     reason="multiple_metrics")
         if re.search(r"截至.{0,12}(?:当时|当日).{0,12}(?:可见|入库|记录)|(?:当时|当日).{0,12}(?:可见|入库|记录)", q):
             raise NeedsClarification("当前数据没有历史入库快照；请改问退款发生时间或当前口径。")
         if (any(term in q for term in ("各地区", "按地区", "地区维度", "地区")) and "渠道" in q):
@@ -151,7 +159,8 @@ class OpenAICompatiblePlanner:
         if sum(region in q for region in ("华东", "华南", "华北", "西南")) > 1:
             raise NeedsClarification("当前一次只支持一个地区筛选；请分开查询。")
         if re.search(r"上周|本周|昨天|今天|最近\s*\d+\s*天", q):
-            raise NeedsClarification("请提供明确的起止日期；S1 不猜测相对时间的业务时区。")
+            raise NeedsClarification("请提供明确的起止日期；S1 不猜测相对时间的业务时区。",
+                                     reason="missing_time_range")
         if "退款率" in q and any(term in q for term in ("贡献", "贡献度")):
             raise NeedsClarification("S1 一次处理一个指标；请先分别询问退款率或品类贡献度。")
         date_strings = re.findall(r"\d{4}-\d{2}-\d{2}", q)
@@ -200,7 +209,8 @@ class OpenAICompatiblePlanner:
         except ValueError:
             raise NeedsClarification("日期无效，请提供正确的日历日期。") from None
         if not source_periods:
-            raise NeedsClarification("请提供明确日期；对比问题需提供两个日期区间。")
+            raise NeedsClarification("请提供明确日期；对比问题需提供两个日期区间。",
+                                     reason="missing_time_range")
         if any(date.fromisoformat(period_start) >= date.fromisoformat(period_end)
                for period_start, period_end in source_periods):
             raise NeedsClarification("结束日期必须晚于开始日期。")
@@ -219,16 +229,22 @@ class OpenAICompatiblePlanner:
         if candidates and candidates[0].metric_id == "marketing_net_roi" and any(
             region in q for region in REGION_VALUES
         ):
-            raise NeedsClarification("营销费用目前没有地区分摊；请先移除地区筛选。")
+            raise NeedsClarification("营销费用目前没有地区分摊；请先移除地区筛选。",
+                                     reason="unsupported_region_dimension")
         if candidates and candidates[0].metric_id == "marketing_net_roi":
             lowered = q.casefold()
             if any(term in lowered for term in
                    ("币种", "货币", "汇率", "人民币", "美元", "欧元", "港币", "cny", "usd", "eur")):
                 raise NeedsClarification("当前合成 ROI 数据没有币种字段或汇率；不能换算或确认跨币种金额。")
             if any(term in lowered for term in ("毛 roi", "gross roi", "毛投资回报")):
-                raise NeedsClarification("当前目录只定义营销净 ROI；毛 ROI 口径尚未定义。")
+                reason = ("multiple_metric_definitions" if
+                          any(term in lowered for term in ("净 roi", "net roi", "净投资回报", "净回报率"))
+                          else "unsupported_metric_definition")
+                raise NeedsClarification("当前目录只定义营销净 ROI；毛 ROI 口径尚未定义。", reason=reason)
         if "退款率" in q and not any(term in q for term in ("订单率", "订单数", "金额", "实付")):
-            raise NeedsClarification("请选退款订单率或退款金额率。", ["approved_refund_order_rate", "approved_refund_amount_rate"])
+            reason = "ambiguous_metric" if "退款率" in q else "unsupported_metric"
+            raise NeedsClarification("请选退款订单率或退款金额率。",
+                                     ["approved_refund_order_rate", "approved_refund_amount_rate"], reason)
         if use_metric_retrieval and not candidates:
             raise NeedsClarification("未识别到当前目录支持的指标；请明确业务指标与口径。")
         if candidates and all(any(period[0] < metric.effective_from for period in source_periods)

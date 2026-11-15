@@ -186,7 +186,10 @@ class InsightPilot:
             with start_span(self.tracer, "insightpilot.agent.planning"):
                 plan = self.planner.plan(question)
         except NeedsClarification as exc:
-            return {"run_id": run_id, "status": "clarify", "message": str(exc), "choices": exc.choices}
+            result = {"run_id": run_id, "status": "clarify", "message": str(exc), "choices": exc.choices}
+            if exc.reason is not None:
+                result["reason"] = exc.reason
+            return result
         except PlanError as exc:
             return {"run_id": run_id, "status": "failed", "stage": "planning", "message": str(exc),
                     "failure_detail": self._failure_detail(exc, stage="planning", tenant_id=tenant_id)}

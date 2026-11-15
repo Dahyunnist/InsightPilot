@@ -16,6 +16,8 @@ from data.build_ip4_v14_candidate import (
     build_candidate,
     generate_cases,
 )
+from insightpilot.metrics import retrieve_metrics
+from insightpilot.planner import OpenAICompatiblePlanner
 
 
 def test_ip4_v14_catalog_has_independent_22_case_coverage():
@@ -45,6 +47,30 @@ def test_ip4_v14_payload_contains_only_approved_planner_fields():
         serialized = json.dumps(payload, ensure_ascii=False).casefold()
         for forbidden in ("gold", "sql", "query_result", "database_rows", "expected_status", "expected_reason"):
             assert forbidden not in serialized
+
+
+def test_ip4_v14_answerable_prompts_retrieve_their_locked_metric_without_model_calls():
+    for case in generate_cases(20261115):
+        if "metric" not in case:
+            continue
+        actual = [metric.metric_id for metric in retrieve_metrics(case["question"])]
+        assert actual == case["candidate_metric_ids"], case["case_id"]
+
+
+def test_ip4_v14_answerable_prompts_pass_current_planner_validation_offline():
+    for case in generate_cases(20261115):
+        if "metric" not in case:
+            continue
+        planner = OpenAICompatiblePlanner(None)
+        planner._complete = lambda _question, _candidates, _allowed, row=case: {
+            "clarify": False, "metric_id": row["metric"], "dimension": row["dimension"],
+            "region": row["region"],
+        }
+        plan = planner.plan(case["question"])
+        assert (plan.metric_id, plan.start_date, plan.end_date, plan.dimension) == (
+            case["metric"], case["start"], case["end"], case["dimension"]
+        ), case["case_id"]
+        assert planner.last_call_count == 0
 
 
 def test_ip4_v14_private_candidate_build_cross_checks_gold_and_never_overwrites():
