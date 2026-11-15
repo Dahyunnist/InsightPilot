@@ -13,3 +13,11 @@
 - 本轮没有执行全量前 20 项；因此没有定位卡点用例。没有触网、启动 Docker 或调用模型。
 
 已有 pytest 临时目录未访问或修改。以上结果仅记录可核验的命令输出。
+
+## 2026-11-15 前 20 项挂起定位
+
+`pytest --collect-only` 确认全套共 213 项。按收集顺序运行前 20 项：30 秒到期，无 pytest 终止摘要；最后停在 `tests/test_api_tenant_identity.py::ApiTenantIdentityTests::test_authenticated_tokens_route_concurrent_requests_without_header_override`。
+
+单独复跑该测试并设置 `-o faulthandler_timeout=10`：10 秒堆栈显示 `socket.accept` → `socket._fallback_socketpair` → `asyncio.proactor_events._make_self_pipe`，线程位于 AnyIO `run_blocking_portal`，等待事件循环启动。此证据支持 Windows asyncio socketpair 环境挂起，不支持测试断言失败结论。命令在 15 秒执行窗口内只产生超时堆栈，未获最终 pytest 退出摘要；不计通过。
+
+此前两份离线测试分别通过：`tests/test_ip4_v13_offline_audit.py` 3 passed（0.78s，exit 0）；`tests/test_ip4_v13_blind_payload_contract.py` 2 passed、22 subtests passed（0.06s，exit 0）。全量依旧中断，原因以单测堆栈证据记录；未改生产代码，未触网、未运行 Docker/模型。
