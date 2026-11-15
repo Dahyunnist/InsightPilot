@@ -152,3 +152,11 @@ PowerShell Parser 与 UTF-8 BOM 检查通过。首次 runner 强制刷新基础�
 MCP Streamable HTTP 取消测试确认 client cancel 到达核心、取消事件被观察、worker 正常结束。宿主摘要和逐项 JSON 见 `reports/host-validation-ip1-ip3-2026-11-15/`；manifest SHA-256 为 `23f6b264ad119315dc68321e0cce7afa71a2380e4bddced6809fb006bab7d738`。旧 pending 条目描述较早的网络失败；当前复验通过，但生产 Collector、真实模型中断和持续负载仍未验收。
 
 附加本轮复现的离线回归：`tests/test_ip3_mcp_cancellation.py tests/test_ip3_database_recovery.py` 为 8/8，另两组共 13/13；合计 21/21，出现 10 条 FastAPI `on_event` 弃用警告。受限执行首次停在 Windows 本地 socket 初始化，未计通过；提权后同组 8 项全部通过。宿主 runner 本身也报告 IP-3 passed。
+
+## 2026-11-15 服务可靠性故障审计
+
+审查 API 请求超时/协作取消、RunStore 持久失败、同键并发幂等、重放不重复执行、租户隔离、request ID、速率/并发上限；SQLite 查询有只读连接、2 秒超时、VM 指令预算与 100 行限制。PostgreSQL 池上限为 8，获取连接超时 5 秒，语句超时默认 2 秒；池耗尽、statement timeout、服务停机及恢复已有合成 PostgreSQL 验收证据，见 `reports/ip4-postgres-verification.json`、`reports/ip3-postgres-service-outage.json`。
+
+本轮强化 `test_sqlite_disconnect_is_terminal_idempotent_and_new_run_recovers`：注入一次 SQLite 执行断连，断言 502 可诊断、`X-Request-ID` 与 `run_id` 一致、错误类别明确且无答案/行数据；失败同键重放和换题冲突不再规划或执行查询；新键恢复成功，执行计数只增加一次。租户越权读取/取消仍由 `tests/test_api_tenant_identity.py` 覆盖。故障报告为 `reports/ip3-reliability-fault-audit-2026-11-15.json`。
+
+本机定向回归通过 2/2。第一次受限执行停在 Windows asyncio socketpair 初始化；在本机授权运行后测试进入断言并通过。没有启动 Docker、模型、外部服务，也没有读取 `.env`。本轮未覆盖真实供应商 HTTP 取消、长时间持续负载、真实生产 Collector 配置或生产数据；连接池耗尽结论引用既有隔离合成 PostgreSQL 报告，不代表生产容量或 SLA。

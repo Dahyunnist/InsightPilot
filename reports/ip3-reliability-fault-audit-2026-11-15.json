@@ -1,0 +1,47 @@
+{
+  "audit_date": "2026-11-15",
+  "status": "passed_with_boundaries",
+  "scope": "local synthetic failure injection and review of prior isolated PostgreSQL acceptance",
+  "external_model_calls": 0,
+  "production_credentials_or_data": false,
+  "external_writes": false,
+  "new_test": {
+    "path": "tests/test_ip3_database_recovery.py",
+    "name": "test_sqlite_disconnect_is_terminal_idempotent_and_new_run_recovers",
+    "injection": "single synthetic SQLite query disconnect",
+    "assertions": [
+      "failure is persisted and classified at query stage",
+      "X-Request-ID equals run_id",
+      "failure response contains no answer or rows",
+      "same-key replay and changed-question conflict do not replan or execute another query",
+      "new idempotency key succeeds after the one-shot fault and executes once"
+    ]
+  },
+  "targeted_regression": {
+    "tests": 2,
+    "passed": 2,
+    "failed": 0,
+    "command_scope": [
+      "SQLite disconnect, correlation, and idempotent recovery",
+      "cross-principal run visibility and cancellation guard"
+    ],
+    "environment_note": "initial restricted Windows run stalled during asyncio socketpair initialization; authorized local rerun completed assertions"
+  },
+  "reviewed_existing_controls": {
+    "request_timeout_and_cooperative_cancel": "covered by synthetic planner tests",
+    "partial_database_failure_and_terminal_replay": "covered by SQLite failure injection; no business query retry",
+    "same_key_concurrent_reservation": "covered by RunStore thread race test",
+    "tenant_scoped_run_reads_and_cancel": "covered by API tenant identity tests",
+    "rate_and_concurrency_limits": "covered by API tests and 2026-11-15 host burst report",
+    "sqlite_query_limits": "read-only connection, 2 second timeout, VM instruction budget, 100 row cap",
+    "postgres_pool_limits": "max 8 connections, 5 second acquisition timeout, default 2 second statement timeout",
+    "postgres_pool_exhaustion_and_recovery": "prior isolated synthetic PostgreSQL evidence in reports/ip4-postgres-verification.json",
+    "postgres_service_outage_and_recovery": "prior isolated synthetic PostgreSQL evidence in reports/ip3-postgres-service-outage.json"
+  },
+  "not_covered": [
+    "vendor HTTP client cancellation at the transport layer",
+    "sustained production load or SLA",
+    "production PostgreSQL credentials, data, or topology",
+    "production OpenTelemetry Collector configuration"
+  ]
+}

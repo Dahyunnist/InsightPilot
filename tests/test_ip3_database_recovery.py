@@ -27,8 +27,10 @@ class FailOnceSQLiteEngine(SQLiteQueryEngine):
     def __init__(self, path: Path):
         super().__init__(path)
         self.fail_next = True
+        self.calls = 0
 
     def execute_readonly(self, query, *, tenant_id=None, cancel_event=None):
+        self.calls += 1
         if self.fail_next:
             self.fail_next = False
             raise QueryExecutionError("injected SQLite disconnect", failure_code="database_execution")
@@ -204,8 +206,13 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
                 failed = client.post("/analysis", json={"question": QUESTION}, headers=headers)
                 self.assertEqual(failed.status_code, 502)
                 run_id = failed.json()["run_id"]
+                self.assertEqual(failed.headers["X-Request-ID"], run_id)
                 self.assertEqual(failed.json()["stage"], "query")
+                self.assertEqual(failed.json()["failure_detail"]["category"], "database_execution")
+                self.assertNotIn("rows", failed.json())
+                self.assertNotIn("answer", failed.json())
                 self.assertEqual(planner.calls, 1)  # one plan call; no automatic retry budget consumed
+                self.assertEqual(engine.calls, 1)
                 self.assertEqual(client.get(f"/runs/{run_id}", headers=headers).json()["status"], "failed")
 
                 replay = client.post("/analysis", json={"question": QUESTION}, headers=headers)
@@ -213,16 +220,19 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
                 self.assertEqual(replay.json()["run_id"], run_id)
                 self.assertEqual(replay.headers.get("Idempotency-Replay"), "true")
                 self.assertEqual(planner.calls, 1)
+                self.assertEqual(engine.calls, 1)
 
                 conflict = client.post("/analysis", json={"question": QUESTION + " 按渠道"}, headers=headers)
                 self.assertEqual(conflict.status_code, 409)
                 self.assertEqual(planner.calls, 1)
+                self.assertEqual(engine.calls, 1)
 
                 recovered = client.post("/analysis", json={"question": QUESTION}, headers={
                     **headers, "Idempotency-Key": "db-recovered-1"})
                 self.assertEqual(recovered.status_code, 200)
                 self.assertEqual(recovered.json()["status"], "answered")
                 self.assertEqual(planner.calls, 2)
+                self.assertEqual(engine.calls, 2)
 
     def test_cancelled_run_persists_cancel_state_and_idempotent_replay(self):
         with tempfile.TemporaryDirectory() as temp:
