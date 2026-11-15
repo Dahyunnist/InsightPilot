@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "report_id": "insightpilot-ip4-v14-postgres-parity-summary-2026-11-15",
+  "synthetic_only": true,
+  "redacted_summary": true,
+  "source_report": {
+    "filename": "postgres-parity.json",
+    "sha256": "f3777d3407a0f470734b6226c128830e625453e6b60b8a5af88dd390b373812b",
+    "source_location": "external v14 v5 candidate directory; local path omitted"
+  },
+  "candidate": {
+    "suite_id": "insightpilot-ip4-v14-private-candidate",
+    "status": "candidate_pending_owner_review",
+    "manifest_sha256": "060cbdf6e17563d3873b934819c79538b0d74d1c88a01bc58ce905136e02835d",
+    "blind_sha256": "aecba9db0a9c977fa7f95378815965218707b53b68b705530673ad3aeed4e080",
+    "gold_sha256": "8c01a8cb71f38c4c1885cb8ef59cb4ce7defaa01848d4c9efb09b6cf6e9558c3",
+    "synthetic_sqlite_sha256": "50ae1d417a72c20699ab2c53775b3e530010f7e7f51a2cf66ef6ffcebd041b34"
+  },
+  "evaluation": {
+    "mode": "offline_rule_baseline_no_model_calls",
+    "model_calls": 0,
+    "case_count": 22,
+    "rule_baseline_passed": 8,
+    "rule_baseline_by_domain": {
+      "marketing_roi": {"passed": 5, "total": 11},
+      "refunds": {"passed": 3, "total": 11}
+    },
+    "database_parity": {
+      "status": "passed",
+      "postgresql_server_version": "PostgreSQL 16.15",
+      "postgresql_tenants_checked": 2,
+      "all_case_score_vectors_match_sqlite": true
+    }
+  },
+  "original_container_log_sha256": "d15e3f6c5b09fae09164df553959d1866d5029fc32c6259dc55c6a1bea22c052",
+  "reproduction": {
+    "compose_setup": "Use docker-compose.ip4.yml with a unique project name and a temporary isolated copy that removes its fixed container_name and changes the published port to 127.0.0.1::5432. Keep PostgreSQL data on the compose tmpfs; do not mount a volume.",
+    "prepare_synthetic_postgresql_copy": ".venv/Scripts/python.exe scripts/prepare_ip4_postgres.py --database <V14_CANDIDATE>/synthetic.sqlite",
+    "evaluate_sqlite_and_both_postgresql_tenants": ".venv/Scripts/python.exe scripts/evaluate_ip4_v14_all_backends.py --candidate <V14_CANDIDATE> --output <V14_CANDIDATE>/postgres-parity.json",
+    "required_process_environment_names": [
+      "INSIGHTPILOT_IP4_ADMIN_DSN",
+      "INSIGHTPILOT_IP4_ADMIN_PASSWORD",
+      "INSIGHTPILOT_IP4_APP_DSN",
+      "INSIGHTPILOT_IP4_APP_ROLE",
+      "INSIGHTPILOT_IP4_APP_PASSWORD"
+    ],
+    "shutdown": "Stop only the container for the unique compose project; do not run compose down or remove volumes."
+  }
+}
