@@ -69,6 +69,18 @@ class IP4OfflineBundleTests(unittest.TestCase):
             self.assertIn("No live-model verifier", ablation["replay_note"])
             self.assertFalse(ablation["request_payload"]["includes_query_results_or_database_rows"])
 
+    def test_offline_audit_rejects_bundle_with_stale_v13_source_hash(self):
+        with TemporaryDirectory(prefix="insightpilot-ip4-stale-provenance-") as temp:
+            root = Path(temp)
+            bundle = root / "bundle"
+            manifest = build(bundle)
+            manifest["source_v13"]["gold_sha256"] = "0" * 64
+            (bundle / "manifest.json").write_text(
+                json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "repository v13 frozen artifact"):
+                run(bundle=bundle, database=root / "v13.sqlite")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -36,6 +36,17 @@ def _sha(path: Path) -> str:
 
 
 def _load_cases(manifest: dict, bundle: Path) -> tuple[list[dict], dict[str, dict]]:
+    source_v13 = manifest.get("source_v13")
+    if not isinstance(source_v13, dict):
+        raise ValueError("Offline bundle is missing source_v13 frozen-artifact provenance")
+    source_paths = {
+        "manifest_sha256": ROOT / "evals/ip4-v13-manifest.json",
+        "blind_sha256": ROOT / "evals/ip4-v13-blind.jsonl",
+        "gold_sha256": ROOT / "evals/ip4-v13-gold.jsonl",
+    }
+    for key, path in source_paths.items():
+        if not path.exists() or _sha(path) != source_v13.get(key):
+            raise ValueError(f"Offline bundle does not match the repository v13 frozen artifact: {key}")
     cases, gold_by_id = [], {}
     for domain, paths in manifest["domains"].items():
         blind_path = bundle / paths["blind_path"]
