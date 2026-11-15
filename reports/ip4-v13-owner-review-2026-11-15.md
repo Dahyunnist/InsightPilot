@@ -32,7 +32,7 @@ M09 题目要求同一时间段内分别提供营销净 ROI 与毛 ROI。v13 gol
 
 用户已授权 v13 最多 88 次请求、最坏预留 `$0.1873344`，总 cap `$5`。加上历史未确认暴露预留 `$0.0468336`，合计 `$0.234168`；账本当时剩余 `$4.50483355`，预算足够。余额只读查询于 2026-11-15 05:36:37 UTC 返回 ¥9.08；按保守汇率 7.5 CNY/USD，含历史预留需 ¥1.75626。
 
-历史 r5 有 15 次请求尝试、0 次 provider response；确认实际费用仍为 null。用量 CSV 中，`insightpilot` key 在 2026-10-19 至 2026-11-15 零点有 538 次请求，但这不是 v13 单独请求数。`amount × price` 合计 1.84931692，币种无法从该表确认；cost CSV 缺少 `api_key_name`，无法按此 key 核实 CNY 实际费用。该费用归属不确定性已保留。
+历史 r5 有 15 次请求尝试、0 次 provider response；该 run 确认实际费用仍为 null。用量 CSV 中，`insightpilot` key 538 次请求分布在 27 天跨度的 6 个观察日期，不代表 v13 单独请求数。排除 `request_count` 后，按该 key 汇总 `price × amount` 得 ¥1.84931692；amount 全表同算法得 ¥10.91277486，与 cost CSV 6 条 CNY 记录合计 ¥10.91277486 精确相等。因此 ¥1.84931692 可作为按 key 派生并经全表对账的 CNY 用量。cost CSV 自身没有 `api_key_name`，不能直接按 key 列账；日期稀疏，且本地 USD ledger 与 provider CNY 费用的汇率/历史 run 归属仍需保留边界。
 
 ## v13 与 v14
 

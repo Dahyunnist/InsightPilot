@@ -1,30 +1,40 @@
 {
   "checked_at_utc": "2026-11-15T05:36:37.871861+00:00",
   "suite_id": "insightpilot-ip4-independent-v13",
-  "status": "blocked_run_lock_and_cost_attribution",
+  "status": "blocked_code_lock_and_m09_behavior",
   "model_requests_sent_this_turn": 0,
   "provider_export_review": {
     "amount_file": {
       "file": "amount-2026-10-17_2026-11-15.csv",
       "filter": "api_key_name=insightpilot",
+      "all_key_rows": 96,
       "rows": 32,
       "coverage_start": "2026-10-19T00:00:00+08:00",
       "coverage_end": "2026-11-15T00:00:00+08:00",
+      "observed_dates": 6,
+      "unobserved_days_inside_coverage_span": 21,
       "request_count": 538,
       "input_cache_hit_tokens": 83781,
       "input_cache_miss_tokens": 168202,
       "output_tokens": 312926,
       "amount_times_price_sum": 1.84931692,
-      "amount_times_price_currency": "not present in this export; not treated as confirmed CNY billing"
+      "amount_times_price_currency": "CNY, reconciled to cost export all-key CNY total",
+      "cost_derivation": "sum(price × amount) over rows filtered to api_key_name=insightpilot, excluding type=request_count"
     },
     "cost_file": {
       "file": "cost-2026-10-17_2026-11-15.csv",
       "api_key_name_column_present": false,
-      "user_id_values_read_or_emitted": false,
-      "per_key_cny_cost": null,
-      "status": "blocked_unattributable_without_api_key_name"
+      "user_id_values_emitted_or_saved": false,
+      "cny_rows": 6,
+      "all_key_cny_total": 10.91277486,
+      "all_key_amount_price_total": 10.91277486,
+      "totals_equal": true,
+      "per_key_cny_cost": 1.84931692,
+      "per_key_cost_is_derived_from_amount_export": true,
+      "direct_per_key_cost_column_available": false,
+      "status": "all_key_total_reconciled_per_key_derived"
     },
-    "date_gap_from_filename_start": "No matching usage rows before 2026-10-19T00:00:00+08:00; 2026-10-17 through 2026-10-18 are absent."
+    "date_coverage_note": "Only 6 observed dates in a 27-day span; no matching usage rows before 2026-10-19T00:00:00+08:00, and 2026-10-17 through 2026-10-18 are absent."
   },
   "provider_balance_read_only_get": {
     "status": "passed",
@@ -110,7 +120,7 @@
       "private_data"
     ]
   },
-  "decision": "No model call. Balance, budget, frozen data hashes, and payload allowlist pass. Exact per-key CNY billing is unavailable from cost export; planner behavior change prevents a test-only relock.",
+  "decision": "No model call. Balance, budget, frozen data hashes, payload allowlist, and derived CNY usage reconcile. Planner behavior change prevents a test-only relock.",
   "v14_used": false,
   "api_key_recorded": false
 }
