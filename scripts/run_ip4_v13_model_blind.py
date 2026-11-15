@@ -85,6 +85,25 @@ def resolve_run_identity(run_id: str | None, report_arg: Path | None, root: Path
     return resolved_id, report
 
 
+def build_dry_run_summary(run_id: str, report_path: Path, lock: dict) -> dict:
+    if lock.get("status") != "frozen_pre_model":
+        return {"status": "blocked_stale_lock", "reason": "v13 preregistration is not pre-model",
+                "model_requests_sent": 0, "run_id": run_id, "report_path": str(report_path)}
+    case_count = lock.get("case_count")
+    max_calls = lock.get("planned_max_api_calls")
+    reserve = lock.get("worst_case_reserve_usd")
+    if (case_count != 22 or max_calls != case_count or
+            not isinstance(reserve, (int, float)) or reserve > 0.1873344 or
+            lock.get("global_cap_usd") != 5.0):
+        raise SystemExit("dry-run plan exceeds approved question or budget limits")
+    return {"status": "dry_preflight_passed", "model_requests_sent": 0,
+            "run_id": run_id, "report_path": str(report_path),
+            "case_count": case_count, "max_actual_model_calls": max_calls,
+            "reserved_worst_case_usd": reserve, "global_cap_usd": 5.0,
+            "input_fields": ["question", "candidate_metrics", "allowed_metric_ids"],
+            "excludes": ["gold", "SQL", "query_results", "private_data"]}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="verify all gates and send no model requests")
@@ -98,6 +117,9 @@ def main() -> None:
     run_id, report_path = resolve_run_identity(args.run_id, args.report, ROOT)
     lock_path = (ROOT / args.preregistration).resolve()
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    if args.dry_run:
+        print(json.dumps(build_dry_run_summary(run_id, report_path, lock), ensure_ascii=False, indent=2))
+        return
     blind_path, gold_path = ROOT / "evals/ip4-v13-blind.jsonl", ROOT / "evals/ip4-v13-gold.jsonl"
     manifest_path = ROOT / "evals/ip4-v13-manifest.json"
     seal_path = ROOT / lock.get("gold_seal_file", "reports/ip4-v13-gold-seal.json")
@@ -198,29 +220,6 @@ def main() -> None:
                               max_calls=lock["planned_max_api_calls"],
                               prompt_tokens=lock["input_tokens_per_request"],
                               completion_tokens=lock["output_tokens_per_request"])
-    if args.dry_run:
-        print(json.dumps({
-            "status": "dry_preflight_passed", "model_requests_sent": 0,
-            "run_id": run_id, "report_path": str(report_path),
-            "freeze_commit_sha": freeze_commit, "current_commit_sha": current_commit,
-            "model": settings.model,
-            "case_count": len(cases), "answerable_case_count": lock["answerable_case_count"],
-            "evaluation_role": lock.get("evaluation_role", "unspecified"),
-            "is_blind": lock.get("is_blind", False),
-            "guard_case_count": lock["guard_case_count"],
-            "max_actual_model_calls": lock["planned_max_api_calls"],
-            "reserved_worst_case_usd": lock["worst_case_reserve_usd"],
-            "current_run_reserve_usd": lock["current_run_reserve_usd"],
-            "historical_uncertain_reserve_usd": lock["historical_uncertain_reserve_usd"],
-            "reserved_worst_case_cny": lock["worst_case_reserve_cny"],
-            "provider_balance_preflight": balance,
-            "blind_sha256": lock["artifacts"]["blind_sha256"],
-            "gold_sha256": lock["artifacts"]["gold_sha256"],
-            "scorer_sha256": lock["artifacts"]["scorer_sha256"],
-            "runner_sha256": lock["artifacts"]["model_runner_sha256"],
-        }, ensure_ascii=False, indent=2))
-        return
-
     outputs = []
     for case in cases:
         attempts = []
