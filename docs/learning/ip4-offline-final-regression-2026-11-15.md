@@ -31,3 +31,9 @@
 复跑命令：`python -m pytest -vv -x --tb=long -p no:cacheprovider tests/test_s7_enterprise_dataset.py::S7EnterpriseDatasetTests::test_concurrency_limit_and_live_cancel_survive_request_boundary`。失败断言在 `tests/test_s7_enterprise_dataset.py:140`：`planner.entered.wait(2)` 返回 false。该断言发生于取消/并发逻辑之前；请求线程未在 2 秒内进入 planner。
 
 同一 Windows 环境 API 并发用例已有 faulthandler 证据：`socket.accept`、`socket._fallback_socketpair`、`asyncio.proactor_events._make_self_pipe`，卡在 AnyIO `run_blocking_portal` 启动。两条证据都指向 Windows asyncio socketpair/事件循环环境阻塞；当前没有实现缺陷证据，不改生产代码，也不放宽 2 秒语义。历史 Linux 容器 HTTP 探针结果另见本学习文档上节，不能当 pytest 等价证明。
+
+## 2026-11-15 Linux 并发回归 CI
+
+新增 `.github/workflows/linux-offline-regression.yml`，Ubuntu/Python 3.12 运行 API 并发取消用例和 IP-4 离线审计/载荷/manifest 测试。直接依赖见 `requirements-ci-linux.txt`（FastAPI 0.146.0、httpx 0.28.1、SQLGlot 30.23.0、psycopg 3.3.3、pytest 9.1.1）；间接依赖仍由 pip 在线解析，未实现完整 hash lock。当前环境未联网安装该文件，Linux job 结果待 CI 首次运行。
+
+本机当前 IP-4 离线集 7 passed、22 subtests passed（1.07s）。Windows 并发取消测试仍在 `planner.entered.wait(2)` 失败；修复不放宽断言，改由 Ubuntu job 验证。没有调用模型；旧评测报告未改。

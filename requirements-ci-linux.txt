@@ -1,0 +1,7 @@
+# Minimal direct dependencies for offline API concurrency and IP-4 audit tests.
+# Direct pins are fixed; transitive dependencies remain resolver-selected.
+fastapi==0.146.0
+httpx==0.28.1
+sqlglot==30.23.0
+psycopg[binary,pool]==3.3.3
+pytest==9.1.1
