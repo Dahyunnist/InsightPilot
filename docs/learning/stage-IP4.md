@@ -123,3 +123,11 @@ IP-1/IP-3 宿主入口 `scripts/run_ip1_ip3_host_validation.ps1` 的 Docker 前�
 外部 v14 候选的脱敏汇总显示：22 题离线 RulePlanner 基线 8/22（refunds 3/11、marketing ROI 5/11）；SQLite 与 PostgreSQL 两租户的逐题评分向量完全一致。该结果证明后端 parity，不证明答题质量已达标。候选状态仍是 `candidate_pending_owner_review`，没有模型调用；外部候选目录未纳入仓库。
 
 仓库中的 IP4-v13 检查仍为 blocked：当前执行代码与冻结锁不匹配，且没有 v13 22 题 PostgreSQL 同哈希证据。11 月 15 日 v13 只读余额/预算预检虽曾显示 CNY 9.08 且预算上限通过，但代码锁失败；该余额不是 v14 的执行时余额证明，报告明确标记 v14 未开始。下一步先由负责人审阅 v14 候选和 8/22 基线，决定是否接受题集与口径；只有获准后，再对确切冻结哈希做执行时只读余额预检，并独立授权模型运行。当前不能把 IP-4 标为完成，也不能重用 v13 或在未审阅时运行 v14 模型。
+
+## 2026-11-15 v14 离线负责人审阅
+
+只读核验仓库外 v14 v5 候选及其脱敏 PostgreSQL 摘要。manifest、blind、gold、SQLite、builder、planner、scorer、原始 parity 和容器日志 SHA-256 均匹配；题目与 gold 为 22 个同 ID case，11/11 分域、14 道可答和 8 道 guard。RulePlanner 8/22，PostgreSQL 两租户与 SQLite 逐题评分向量一致。候选仍 pending owner review。
+
+先前授权存档绑定 v13 blind hash；v14 使用新 blind/gold hash，因此授权不能视为完全相同。字段约束相同，但 v14 没有专用模型 runner、runner hash 或独立 prompt hash，也没有将所有运行参数锁在一份 v14 执行 manifest。Gold 与 blind 同处仓库外候选目录，当前无 ACL 隔离证据。负责人需先决定是否接受候选/口径、是否将授权扩展到 v14 hash、调用上限/重试/预算及 gold 访问边界。详情见 [`ip4-v14-owner-review-2026-11-15.md`](ip4-v14-owner-review-2026-11-15.md)。
+
+离线候选与摘要测试 7/7 通过，0 模型调用。未改候选、gold 或 `.tmp`。IP-1 `data_meta` 宿主复验通过的独立 SHA 核验也记于该审阅包；OpsPilot 的 `verify-bad-release` 未混入 InsightPilot 阶段证据。
