@@ -117,3 +117,9 @@ PostgreSQL 使用临时 tmpfs 实例和 synthetic fixture，逐租户跑完 22 �
 全套回归由 Codex 在本机同一 `.venv` 验证。普通权限运行 pytest 时，首个 API 测试卡在 Windows asyncio socketpair；60 秒 faulthandler 栈指向 `socket.accept` 与 `asyncio` Windows proactor 建立 self-pipe，随后手动中断，exit 1。提权后同一 API 并发单测 1 passed。随后执行 `\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider --basetemp=.pytest-temp-ip4-full`，全量 213 passed、148 subtests passed、46 warnings，160.45s，exit 0。此前本代理启动的 unittest session 无输出并以 Ctrl+C 中断，仍记为未通过；不把它计入成功结果。
 
 IP-1/IP-3 宿主入口 `scripts/run_ip1_ip3_host_validation.ps1` 的 Docker 前置检查未通过：`docker info --format '{{.ServerVersion}}'` 返回 Docker Desktop Linux engine named pipe 不存在。入口未执行，未启动容器；本轮 0 模型调用。IP-1/IP-3 当前宿主验收仍阻塞，待 Docker daemon 可用后再运行入口。此前 pytest 临时目录与 `.tmp/` 均保留。
+
+## 2026-11-15 v14 候选的当前验收缺口
+
+外部 v14 候选的脱敏汇总显示：22 题离线 RulePlanner 基线 8/22（refunds 3/11、marketing ROI 5/11）；SQLite 与 PostgreSQL 两租户的逐题评分向量完全一致。该结果证明后端 parity，不证明答题质量已达标。候选状态仍是 `candidate_pending_owner_review`，没有模型调用；外部候选目录未纳入仓库。
+
+仓库中的 IP4-v13 检查仍为 blocked：当前执行代码与冻结锁不匹配，且没有 v13 22 题 PostgreSQL 同哈希证据。11 月 15 日 v13 只读余额/预算预检虽曾显示 CNY 9.08 且预算上限通过，但代码锁失败；该余额不是 v14 的执行时余额证明，报告明确标记 v14 未开始。下一步先由负责人审阅 v14 候选和 8/22 基线，决定是否接受题集与口径；只有获准后，再对确切冻结哈希做执行时只读余额预检，并独立授权模型运行。当前不能把 IP-4 标为完成，也不能重用 v13 或在未审阅时运行 v14 模型。

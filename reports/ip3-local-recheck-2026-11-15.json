@@ -1,17 +1,35 @@
 {
   "manifest_version": 1,
   "run_date": "2026-11-15",
-  "status": "partial_blocked",
+  "status": "compose_host_passed_load_attempt_incomplete",
   "scope": "IP-3 local synthetic HTTP and Compose recheck",
   "model_calls": 0,
   "real_data_used": false,
   "container": {
-    "status": "not_run",
-    "reason": "Docker daemon access denied",
-    "diagnostic": "permission denied while trying to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine",
-    "local_image_availability": "unknown",
-    "image_pull_attempted": false,
-    "container_started": false
+    "status": "passed_in_user_host_run",
+    "artifact_directory": ".tmp/ip3-compose-host-11df9d5f66dd403192f2242b571b5b1a",
+    "compose_build_and_up": "passed, as reported by user",
+    "cleanup": "user reports no Compose containers remain; not independently checked because current Docker daemon access is denied",
+    "image_pull_attempted": "unknown from supplied artifacts"
+  },
+  "host_artifact_validation": {
+    "status": "passed",
+    "http_report_sha256": "87bfcac3bbddcba1691ccaeda1ac3dd8ecdeee5f64075b98dcb58c7d54982179",
+    "mcp_report_sha256": "3e8d2805f99f251c25226acdbc000ec9dff83ad7e0a3c48550089f6d0c129ecd",
+    "mcp_log_sha256": "4474f83f1786b891a55778dfc9ce347e0d52bcd315a2d85134ad183f05c5113c",
+    "checks": [
+      "HTTP Compose synthetic mode, zero model calls, idempotent replay and conflict fields",
+      "concurrency counts: 1/1 200; 5/5 200; 20 requests with 8 200, 12 429 and 0 503",
+      "MCP client cancellation, core event observation and worker completion all true"
+    ],
+    "request_count": 26,
+    "responses": {
+      "200": 14,
+      "429": 12,
+      "503": 0
+    },
+    "model_calls": 0,
+    "synthetic_data_only": true
   },
   "offline_static_regression": {
     "status": "passed",
@@ -32,8 +50,9 @@
     "docker_smoke_status": "blocked_before_container_start"
   },
   "limitations": [
-    "This attempt does not establish container or TCP HTTP behavior.",
-    "The local TestClient load attempt did not complete, so it provides no new load measurements.",
-    "The existing host Compose report is prior evidence and is not represented as a new run."
+    "Compose/TCP HTTP evidence is from the supplied host run and has been independently checked from its three artifacts; Docker cleanup and image-pull history were not independently observable from this session.",
+    "The separate local TestClient load attempt did not complete and provides no new load measurements.",
+    "Concurrency evidence is a short synthetic burst, not sustained throughput or a production SLA.",
+    "MCP log contains a post-cancel ClosedResourceError during SSE handling; the saved report records all cancellation completion checks as passed and the session DELETE returned HTTP 200."
   ]
 }

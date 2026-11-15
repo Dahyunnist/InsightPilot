@@ -179,3 +179,9 @@ if ($LASTEXITCODE -ne 0) { throw 'python:3.12-slim is not cached locally; stoppe
 ```
 
 runner 的构建仍可能访问 Python 包源，除非所需构建层已缓存。此门禁只保证 Docker 基础镜像缺失时不会自动拉取。
+
+## 2026-11-15 宿主 Compose 复验补记
+
+用户随后在有权限的宿主用唯一目录 `.tmp/ip3-compose-host-11df9d5f66dd403192f2242b571b5b1a` 执行 Compose runner。只读核对该目录三份产物并独立断言：Compose HTTP 幂等首次/重放 200、同键冲突 409；并发 1 为 1/1 个 200，并发 5 为 5/5 个 200，并发 20 为 8 个 200、12 个 429、0 个 503。MCP Streamable HTTP 取消报告中 client/core/worker 三项均为 true。HTTP 总计 26 个请求、14 个 200 和 12 个 429；模型调用 0，只用合成数据。Compose 构建和启动通过、清理后无容器是用户报告；当前会话 Docker daemon 仍拒绝访问，未能独立复查清理或镜像拉取历史。
+
+MCP 日志有取消后的 SSE `ClosedResourceError`，同时记录 session DELETE 返回 200，保存报告的取消完成标记均通过。负载是短突发，不代表持续吞吐或生产 SLA。产物 SHA-256 与复核详情见 `reports/ip3-local-recheck-2026-11-15.json`。先前 TestClient 进程内负载仍未完成，不计入本次 Compose HTTP 结果。
