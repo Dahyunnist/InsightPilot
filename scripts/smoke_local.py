@@ -68,6 +68,30 @@ def _get_json(url: str, payload: dict | None = None) -> tuple[int, dict]:
         return response.status, json.loads(response.read().decode("utf-8"))
 
 
+def _shutdown_server(server, server_thread, listener, *, join_timeout: float = 5.0) -> bool:
+    """Request bounded shutdown and always release the listening socket."""
+    server.should_exit = True
+    try:
+        server_thread.join(timeout=join_timeout)
+        if server_thread.is_alive():
+            server.force_exit = True
+            server_thread.join(timeout=join_timeout)
+        return not server_thread.is_alive()
+    finally:
+        listener.close()
+
+
+def _shutdown_server_preserving_error(server, server_thread, listener) -> None:
+    active_error = sys.exc_info()[1]
+    try:
+        if not _shutdown_server(server, server_thread, listener):
+            raise RuntimeError("本地 API 未能正常关闭。")
+    except Exception as cleanup_error:
+        if active_error is None:
+            raise
+        print(f"清理警告：{cleanup_error}", file=sys.stderr)
+
+
 def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
@@ -122,14 +146,7 @@ def main() -> None:
             print(f"金额退款率：{expected_numerator}/{expected_denominator} = {expected_value:.12f}")
             print("答案与独立 SQL 一致；模型调用：0")
         finally:
-            server.should_exit = True
-            server_thread.join(timeout=5)
-            if server_thread.is_alive():
-                server.force_exit = True
-                server_thread.join(timeout=5)
-            listener.close()
-            if server_thread.is_alive():
-                raise RuntimeError("本地 API 未能正常关闭。")
+            _shutdown_server_preserving_error(server, server_thread, listener)
 
 
 if __name__ == "__main__":
