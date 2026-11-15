@@ -61,5 +61,15 @@
       "actual": "7d65d5b8916932fd9bea3c82a485b0ce4ab25fa579cc18814848bbd9c38c0d65",
       "result": "2 passed, 22 subtests passed"
     }
+  },
+  "transport_semantics_review": {
+    "head": "40f647c5916c9f022ad61940df5886b6830fa888",
+    "document_sha256": "dd218422081398a7c9d887f202aea60af4ac25c9541b35b770f8a244495518fe",
+    "targeted_tests": "7 passed",
+    "model_calls": 0,
+    "retry_performed": false,
+    "delivery": "unknown",
+    "actual_cost_usd": null,
+    "conclusion": "transport_blocked; never infer non-delivery or zero cost"
   }
 }

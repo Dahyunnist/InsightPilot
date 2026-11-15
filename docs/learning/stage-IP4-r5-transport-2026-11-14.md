@@ -7,3 +7,9 @@ r5 使用用户提供的脱敏 DeepSeek 余额收据，采样时间 `2026-11-14T
 `$0.031932` 是 15 次请求的峰价最坏估算，不是确认费用；provider receipt 未知。账本保留 r5 预算预留和 `$5.00` cap，剩余额度按预留计算为 `$4.54499575`。报告状态为 `partial_transport_blocked`。失败与 `.env` 配置的模型 API egress 连接失败相符；余额 GET 是用户从受限联网宿主单独完成，不能证明模型 completion egress 可用。未重发任何题目。
 
 报告：`reports/ip4-v13-model-preregistration-20261114-r5.json`、`reports/ip4-v13-gold-seal-20261114-r5.json`、`reports/ip4-v13-model-evaluation-r5.json`。定向回归：`.venv\Scripts\python.exe -m unittest tests.test_ip4_v13_offline_audit tests.test_ip4_v13_holdout tests.test_ip4_v13_stale_lock_fail_closed tests.test_learning_docs_repo_relative`。全套测试在受限环境超过 60 秒无进度后中断，不记为通过。
+
+## 2026-11-15 transport 语义复核
+
+针对 HTTP provider 提交后读超时或连接中断，planner 将 `URLError` / `TimeoutError` 包装为 `PlanError`。上层只对 invalid structured response 重试，不会自动重发 transport failure。评测报告保留 `transport_blocked`；provider 是否收到请求、实际费用均未知。r5 本次未重试，未知费用不得记作零成本或已确认未送达。
+
+定向离线回归：`tests.test_ip4_v13_offline_audit`、`tests.test_ip4_v13_attempt_manifest`、`tests.test_ip4_v13_blind_payload_contract`，7 tests passed；0 模型调用。报告 SHA-256 与 HEAD 绑定见 `reports/ip4-r5-transport-audit-2026-11-15.json`。
