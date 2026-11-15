@@ -60,7 +60,7 @@ try {
     }
 
     $ComposeStarted = $true
-    & docker compose --project-name $ComposeProject -f $ComposeFile up -d --wait --pull never
+    & docker compose --project-name $ComposeProject -f $ComposeFile up -d --wait --wait-timeout 60 --pull never
     if ($LASTEXITCODE -ne 0) {
         throw "IP-3 Compose 启动失败（退出码 $LASTEXITCODE）。检查 Docker 构建输出和包索引网络。"
     }

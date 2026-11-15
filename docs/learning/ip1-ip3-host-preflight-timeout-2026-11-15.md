@@ -15,3 +15,7 @@
 `tests/test_ip1_ip3_host_entrypoint.py`：4 项通过，包含单次前置检查顺序、15 秒上限、超时终止分支、脱敏/隐藏窗口约束和 Windows PowerShell 解析。
 
 本次只运行离线回归，没有启动 Docker，也没有调用模型。此前宿主报告仍按原时间和代码版本解释；此修复需随下一次 Docker 可用时的宿主验收一并实测。
+
+## IP-3 Compose 健康等待上限
+
+复核宿主入口后，发现 IP-3 runner 的 `docker compose up --wait` 没有设置 `--wait-timeout`。镜像启动但服务一直不 healthy 时，这一步可能无限等待。现在设置 60 秒上限；Compose 返回失败后沿用现有 catch/finally 路径，仅清理本次专属项目的容器与网络，不删卷。离线测试检查该参数及 PowerShell 语法；没有启动 Compose。
