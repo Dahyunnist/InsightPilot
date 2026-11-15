@@ -54,9 +54,9 @@ RulePlanner 基线为 15/22：可答 8/14、guard 7/8。四个错误拒答是 R0
 
 ## 2026-11-15 用量导出与账本核对
 
-仅按 `api_key_name=insightpilot` 汇总 amount 导出：32 行，538 次请求，实际落在 27 天跨度中的 6 个观察日期；日期始于 2026-10-19，10-17 至 10-18 无匹配数据。输入 cache-hit 83,781 tokens、cache-miss 168,202 tokens，输出 312,926 tokens。排除 `request_count` 后，按该 key 汇总 `price×amount` 得 ¥1.84931692。
+两个文件名都声明 2026-10-17 至 2026-11-15。仅按 `api_key_name=insightpilot` 汇总 amount 导出：32 行、538 次请求，6 个不同的 `start_time_iso` 日期；首个匹配区间从 2026-10-19 开始，最后一个匹配区间于 2026-11-15 结束。输入 cache-hit 83,781 tokens、cache-miss 168,202 tokens，输出 312,926 tokens。排除 `request_count` 后，按该 key 汇总 `price×amount` 得 ¥1.84931692。
 
-amount 全表同算法为 ¥10.91277486，与 cost 导出 6 条 CNY 记录总额 ¥10.91277486 精确相等。因此 key 级 ¥1.84931692 可作为派生并经全表对账的 CNY 用量。cost 导出本身无 `api_key_name`，不能直接按 key 列账；稀疏日期、本地 USD ledger 与 provider CNY 费用的汇率/历史 run 归属仍有不确定性。没有复制 CSV，也没有模型请求。详见同一预检报告。
+amount 全表同算法为 ¥10.91277486，与 cost 全表 CNY 总额 ¥10.91277486 精确相等。因此 key 级 ¥1.84931692 是从 amount 导出按 key 派生、并经 cost 全表对账的 CNY 用量。cost 导出没有 `api_key_name`，不能直接按 key 列账。已查阅 [DeepSeek API FAQ](https://api-docs.deepseek.com/faq/)；公开说明未说明零用量日期是否从 CSV 省略。六个有匹配行的日期不能证明周期不完整，也不能证明其余日期用量为零，覆盖解释保持未知。Provider CNY 导出与本地 USD 调用账本不相加：后者记录运行尝试/预算暴露，不是第二张供应商账单；缺少逐请求归属和汇率时，直接合并会有重复计费风险。没有复制 CSV，也没有模型请求。详见同一预检报告。
 
 所有者审阅摘要 `reports/ip4-v13-owner-review-2026-11-15.md` 精确记录 M09 新旧行为、planner/prompt/scorer/payload 哈希、预算证据与 v13/v14 区别。新增 M09 零模型调用、prompt/scorer 哈希稳定性和显式 r5 锁不可改写回归；16 passed、27 subtests passed。无新锁，v13 继续 blocked。
 

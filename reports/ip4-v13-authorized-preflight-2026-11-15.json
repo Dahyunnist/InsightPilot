@@ -7,12 +7,17 @@
     "amount_file": {
       "file": "amount-2026-10-17_2026-11-15.csv",
       "filter": "api_key_name=insightpilot",
+      "export_period_start": "2026-10-17",
+      "export_period_end": "2026-11-15",
+      "export_period_matches_cost_file": true,
       "all_key_rows": 96,
       "rows": 32,
-      "coverage_start": "2026-10-19T00:00:00+08:00",
-      "coverage_end": "2026-11-15T00:00:00+08:00",
-      "observed_dates": 6,
-      "unobserved_days_inside_coverage_span": 21,
+      "first_matching_interval_start": "2026-10-19T00:00:00+08:00",
+      "last_matching_interval_end": "2026-11-15T00:00:00+08:00",
+      "distinct_matching_start_dates": 6,
+      "zero_usage_date_export_policy_confirmed": false,
+      "date_coverage_interpretation": "unknown_from_row_gaps; do not infer incomplete coverage from dates without matching rows",
+      "zero_usage_semantics_reference_checked": "https://api-docs.deepseek.com/faq/",
       "request_count": 538,
       "input_cache_hit_tokens": 83781,
       "input_cache_miss_tokens": 168202,
@@ -23,6 +28,9 @@
     },
     "cost_file": {
       "file": "cost-2026-10-17_2026-11-15.csv",
+      "export_period_start": "2026-10-17",
+      "export_period_end": "2026-11-15",
+      "export_period_matches_amount_file": true,
       "api_key_name_column_present": false,
       "user_id_values_emitted_or_saved": false,
       "cny_rows": 6,
@@ -34,7 +42,14 @@
       "direct_per_key_cost_column_available": false,
       "status": "all_key_total_reconciled_per_key_derived"
     },
-    "date_coverage_note": "Only 6 observed dates in a 27-day span; no matching usage rows before 2026-10-19T00:00:00+08:00, and 2026-10-17 through 2026-10-18 are absent."
+    "date_coverage_note": "Both filenames declare 2026-10-17 through 2026-11-15. The filtered amount rows contain six distinct start dates, with matching intervals spanning 2026-10-19T00:00:00+08:00 through 2026-11-15T00:00:00+08:00. The published DeepSeek FAQ reviewed does not specify whether zero-usage dates are omitted; absent rows therefore prove neither incomplete coverage nor zero usage.",
+    "ledger_reconciliation": {
+      "provider_cny_export_and_local_usd_run_ledger_are_added_together": false,
+      "provider_key_cost_directly_available": false,
+      "key_cost_source": "amount export price × amount, filtered by api_key_name=insightpilot, excluding request_count",
+      "local_usd_ledger_role": "run-attempt budget and exposure evidence; not a second provider invoice",
+      "status": "kept_separate_to_avoid_double_counting; exact request attribution and FX reconciliation unavailable"
+    }
   },
   "provider_balance_read_only_get": {
     "status": "passed",
@@ -120,7 +135,8 @@
       "private_data"
     ]
   },
-  "decision": "No model call. Balance, budget, frozen data hashes, payload allowlist, and derived CNY usage reconcile. Planner behavior change prevents a test-only relock.",
+  "decision": "No model call. Balance, budget, frozen data hashes, payload allowlist, and derived CNY usage reconcile. Date gaps do not establish incomplete coverage because zero-usage export semantics are undocumented. Provider CNY totals are not added to the local USD run ledger. Planner behavior change prevents a test-only relock.",
   "v14_used": false,
+  "v14_model_run_status": "not_started_pending_owner_review_and_authorization",
   "api_key_recorded": false
 }
