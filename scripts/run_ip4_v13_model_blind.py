@@ -6,8 +6,10 @@ import hashlib
 import argparse
 import json
 import platform
+import re
 import subprocess
 import sys
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
@@ -73,16 +75,27 @@ def is_ancestor(commit: str, ref: str) -> bool:
                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
 
 
+def resolve_run_identity(run_id: str | None, report_arg: Path | None, root: Path) -> tuple[str, Path]:
+    resolved_id = run_id or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:12]
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", resolved_id):
+        raise SystemExit("run_id must be 1-64 safe filename characters")
+    report = (root / report_arg).resolve() if report_arg else root / "reports" / f"ip4-v13-model-evaluation-{resolved_id}.json"
+    if report.exists():
+        raise SystemExit("run report already exists; refusing to overwrite")
+    return resolved_id, report
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="verify all gates and send no model requests")
     parser.add_argument("--preregistration", type=Path,
-                        default=Path("reports/ip4-v13-model-preregistration.json"))
-    parser.add_argument("--report", type=Path,
-                        default=Path("reports/ip4-v13-model-evaluation-report.json"))
+                        default=Path("reports/ip4-v13-model-preregistration-20261114-r5.json"))
+    parser.add_argument("--run-id", help="unique safe run identifier; generated when omitted")
+    parser.add_argument("--report", type=Path, help="optional independent report path")
     parser.add_argument("--balance-evidence-json", help="sanitized provider balance JSON for this run only")
     parser.add_argument("--balance-checked-at-utc", help="UTC timestamp supplied by trusted host")
     args = parser.parse_args()
+    run_id, report_path = resolve_run_identity(args.run_id, args.report, ROOT)
     lock_path = (ROOT / args.preregistration).resolve()
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
     blind_path, gold_path = ROOT / "evals/ip4-v13-blind.jsonl", ROOT / "evals/ip4-v13-gold.jsonl"
@@ -171,10 +184,6 @@ def main() -> None:
             lock.get("planned_max_api_calls") != len(cases) or
             lock["planned_max_api_calls"] > lock["max_api_calls"]):
         raise SystemExit("v13 execution count differs from one-call-per-case plan; no request sent")
-    report_path = (ROOT / args.report).resolve()
-    if report_path.exists():
-        raise SystemExit("v13 model report already exists; refusing to overwrite or rerun the frozen set")
-
     ledger_path = ROOT / "reports/model-experiment-cost-ledger.json"
     ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
     if ledger["cap_usd"] != lock["global_cap_usd"]:
@@ -192,6 +201,7 @@ def main() -> None:
     if args.dry_run:
         print(json.dumps({
             "status": "dry_preflight_passed", "model_requests_sent": 0,
+            "run_id": run_id, "report_path": str(report_path),
             "freeze_commit_sha": freeze_commit, "current_commit_sha": current_commit,
             "model": settings.model,
             "case_count": len(cases), "answerable_case_count": lock["answerable_case_count"],
@@ -276,6 +286,7 @@ def main() -> None:
                             if gold[score["case_id"]].get("expected_status") == "refused"
                             and score.get("actual_status") == "answered"]
     report = {
+        "run_id": run_id,
         "created_at_utc": datetime.now(timezone.utc).isoformat(), "status": "completed",
         "evaluation_design": "single pass on frozen synthetic questions; historical exposure unknown",
         "suite_id": lock["suite_id"], "model": settings.model,
