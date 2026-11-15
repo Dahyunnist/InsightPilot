@@ -111,3 +111,9 @@ PostgreSQL 使用临时 tmpfs 实例和 synthetic fixture，逐租户跑完 22 �
 运行 `scripts/verify_final_acceptance.ps1`，合成数据下的 PostgreSQL/RLS、权限拒绝、分域规则基线、IP4 冻结封存和报告哈希均通过；本次 0 模型请求，临时容器已移除。完整 `\.venv\Scripts\python.exe -m unittest discover -s tests -q` 共 206 项，通过。
 
 首次全套测试发现 R3 的公开 blocked-run manifest 仍引用旧费用账本 SHA。更新生成的只读 manifest 后，`tests.test_run_manifest` 9 项通过，全套重跑 206 项通过。R3 状态仍为 blocked；只更新当前 ledger 哈希，不改写旧题、gold 或模型运行结果。FastAPI `on_event` 弃用警告仍存在。
+
+## 2026-11-15 全套回归与宿主阻塞
+
+全套回归由 Codex 在本机同一 `.venv` 验证。普通权限运行 pytest 时，首个 API 测试卡在 Windows asyncio socketpair；60 秒 faulthandler 栈指向 `socket.accept` 与 `asyncio` Windows proactor 建立 self-pipe，随后手动中断，exit 1。提权后同一 API 并发单测 1 passed。随后执行 `\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider --basetemp=.pytest-temp-ip4-full`，全量 213 passed、148 subtests passed、46 warnings，160.45s，exit 0。此前本代理启动的 unittest session 无输出并以 Ctrl+C 中断，仍记为未通过；不把它计入成功结果。
+
+IP-1/IP-3 宿主入口 `scripts/run_ip1_ip3_host_validation.ps1` 的 Docker 前置检查未通过：`docker info --format '{{.ServerVersion}}'` 返回 Docker Desktop Linux engine named pipe 不存在。入口未执行，未启动容器；本轮 0 模型调用。IP-1/IP-3 当前宿主验收仍阻塞，待 Docker daemon 可用后再运行入口。此前 pytest 临时目录与 `.tmp/` 均保留。
