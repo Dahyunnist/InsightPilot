@@ -9,7 +9,22 @@ from pathlib import Path
 from urllib.parse import quote
 
 from .sql import CompiledQuery
-from .sql_policy import ALLOWED_COLUMNS, ALLOWED_FUNCTIONS, ALLOWED_TABLES, MAX_ROWS, SQLPolicyError, validate_sql
+from .sql_policy import ALLOWED_FUNCTIONS, ALLOWED_TABLES, MAX_ROWS, SQLPolicyError, validate_sql
+
+
+ALLOWED_COLUMNS_BY_TABLE = {
+    "orders": {"order_id", "product_id", "region", "channel", "ordered_at", "status", "paid_amount_cents"},
+    "refunds": {"refund_id", "order_id", "refunded_at", "recorded_at", "amount_cents", "status"},
+    "products": {"product_id", "category"},
+    "campaign_attributions": {"order_id", "campaign_id", "weight"},
+    "campaigns": {"campaign_id", "campaign_name"},
+    "data_meta": {"key", "value"},
+    "refund_reversals": {"reversal_id", "refund_id", "reversed_at", "recorded_at", "amount_cents"},
+    "campaign_spend_events": {"event_id", "business_event_id", "revision", "campaign_id", "spent_at",
+                               "recorded_at", "spend_cents", "event_status"},
+    "inventory_daily_snapshots": {"category", "snapshot_at", "local_date", "inventory_value_cents"},
+    "inventory_cogs_events": {"category", "sold_at", "cogs_cents"},
+}
 
 
 class QueryExecutionError(RuntimeError):
@@ -40,7 +55,9 @@ def _authorize(action: int, arg1: str | None, arg2: str | None, _database: str |
     if action == sqlite3.SQLITE_SELECT:
         return sqlite3.SQLITE_OK
     if action == sqlite3.SQLITE_READ:
-        if arg1 in ALLOWED_TABLES and (not arg2 or arg2 in ALLOWED_COLUMNS):
+        table = (arg1 or "").lower()
+        column = (arg2 or "").lower()
+        if table in ALLOWED_TABLES and (not column or column in ALLOWED_COLUMNS_BY_TABLE.get(table, set())):
             return sqlite3.SQLITE_OK
         return sqlite3.SQLITE_DENY
     if action == sqlite3.SQLITE_FUNCTION:
