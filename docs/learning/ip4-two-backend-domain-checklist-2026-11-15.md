@@ -30,3 +30,16 @@
 3. 生产数据、外部客户准确率、持续负载和 SLA 不在本清单证据范围内。
 
 因此，IP-4 双后端验收整体仍未完成；只有 v14 候选有已归档双租户 parity 证据。
+
+## v13 PostgreSQL parity 阻断与复现
+
+本轮只检查配置是否存在，不读取或输出凭据值。进程环境与项目 `.env` 都没有 `INSIGHTPILOT_IP4_ADMIN_DSN`、`INSIGHTPILOT_IP4_ADMIN_PASSWORD`、`INSIGHTPILOT_IP4_APP_DSN`、`INSIGHTPILOT_IP4_APP_ROLE`、`INSIGHTPILOT_IP4_APP_PASSWORD`。Docker CLI 存在，但 Docker Engine 返回 named-pipe `permission denied`；本机没有 `psql`。因此未启动容器、未重建数据库、未声称 parity 通过。
+
+Docker 与专用连接配置可用后，使用独立 Compose project、临时 Compose 副本（去掉固定 `container_name`，端口改为 `127.0.0.1::5432`）和 tmpfs，避免碰现有容器或持久卷。按顺序从 v13 固定 SQLite 装载同一 schema，再跑两个 tenant：
+
+```powershell
+.\.venv\Scripts\python.exe scripts\prepare_ip4_postgres.py --database data\insightpilot-ip4-v13.sqlite
+.\.venv\Scripts\python.exe scripts\run_ip4_offline_audit.py --bundle benchmarks\ip4-offline-prep-v1 --database data\insightpilot-ip4-v13.sqlite --postgres-dsn $env:INSIGHTPILOT_IP4_APP_DSN --output reports\ip4-v13-postgres-parity-current.json
+```
+
+第一条只可指向一次性 `insightpilot_ip4` 测试数据库：loader 会重建该库的 `public` schema。第二条应报告 SQLite 与 tenant-a、tenant-b 各 22/22 结果一致，并保持 `model_calls=0`。通过后仍需核对其 `source_v13` manifest/blind/gold 哈希及执行代码锁；不能由此放行模型请求。结束时只停止本次唯一 Compose project 的 PostgreSQL 容器；不运行 `down -v` 或删除卷。
