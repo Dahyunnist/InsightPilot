@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -61,7 +62,24 @@ def _arm_summary(rows: list[dict], gold_by_id: dict[str, dict], *, verifier: boo
     }
 
 
-def run(database: Path = DEFAULT_DATABASE, output: Path | None = DEFAULT_OUTPUT) -> dict:
+def _database_parity(raw: dict, postgres_requested: bool) -> dict:
+    parity = raw.get("postgresql_sqlite_result_parity", {})
+    if not postgres_requested:
+        return {"status": "not_run", "tenants": {}}
+    tenants = {
+        tenant: {
+            "passed": result.get("passed", 0),
+            "total": result.get("total", 0),
+            "failures": result.get("failures", []),
+        }
+        for tenant, result in parity.items()
+    }
+    passed = len(tenants) == 2 and all(item["passed"] == item["total"] == 22 for item in tenants.values())
+    return {"status": "passed" if passed else "failed", "tenants": tenants}
+
+
+def run(database: Path = DEFAULT_DATABASE, output: Path | None = DEFAULT_OUTPUT,
+        postgres_dsn: str | None = None) -> dict:
     source_manifest_path = ROOT / "evals/ip4-v13-manifest.json"
     source_blind_path = ROOT / "evals/ip4-v13-blind.jsonl"
     source_gold_path = ROOT / "evals/ip4-v13-gold.jsonl"
@@ -80,7 +98,7 @@ def run(database: Path = DEFAULT_DATABASE, output: Path | None = DEFAULT_OUTPUT)
             or source_v13.get("gold_sha256") != frozen_hashes["gold_sha256"]):
         raise ValueError("Frozen v13 manifest/blind/gold hashes differ from offline bundle provenance")
 
-    raw = run_offline_audit(bundle=BUNDLE, database=database, output=None, postgres_dsn=None)
+    raw = run_offline_audit(bundle=BUNDLE, database=database, output=None, postgres_dsn=postgres_dsn)
     gold_by_id = {}
     for domain, files in bundle_manifest["domains"].items():
         rows = [json.loads(line) for line in (BUNDLE / files["gold_path"]).read_text(encoding="utf-8").splitlines()
@@ -94,7 +112,7 @@ def run(database: Path = DEFAULT_DATABASE, output: Path | None = DEFAULT_OUTPUT)
         "evaluation_type": "deterministic_rule_policy_comparison_not_llm",
         "suite_id": source_manifest["suite_id"],
         "offline_bundle_suite_id": raw["suite_id"],
-        "backend": "SQLite",
+        "backend": "SQLite + PostgreSQL" if postgres_dsn else "SQLite",
         "synthetic_only": True,
         "model_calls": 0,
         "model_requests_sent": 0,
@@ -106,11 +124,12 @@ def run(database: Path = DEFAULT_DATABASE, output: Path | None = DEFAULT_OUTPUT)
             "ruleplanner_with_independent_verifier": _arm_summary(verifier_rows, gold_by_id, verifier=True),
             "ruleplanner_without_independent_verifier": _arm_summary(no_verifier_rows, gold_by_id, verifier=False),
         },
+        "database_parity": _database_parity(raw, bool(postgres_dsn)),
         "metric_retrieval_candidate_coverage": raw["metric_retrieval_candidate_coverage"],
         "comparison_note": (
             "Both arms use the deterministic RulePlanner and the same frozen synthetic questions/database. "
             "The no-verifier score intentionally omits verifier success; equal totals do not prove verifier equivalence. "
-            "This is not a live-model result. PostgreSQL was not run in this comparison."
+            "This is not a live-model result. PostgreSQL parity, when requested, compares deterministic outputs only."
         ),
         "payload_note": "No questions, gold values, SQL, parameters, query rows, or private data are emitted.",
     }
@@ -124,8 +143,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--database", type=Path, default=DEFAULT_DATABASE)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--postgres-dsn", default=os.environ.get("INSIGHTPILOT_IP4_APP_DSN"))
     args = parser.parse_args()
-    report = run(database=args.database, output=args.output)
+    report = run(database=args.database, output=args.output, postgres_dsn=args.postgres_dsn)
     print(json.dumps({
         "report_id": report["report_id"],
         "model_calls": report["model_calls"],
@@ -133,6 +153,7 @@ def main() -> None:
                           for key in ("passed", "total", "false_refusals", "false_accepts")},
         "without_verifier": {key: report["arms"]["ruleplanner_without_independent_verifier"][key]
                              for key in ("passed", "total", "false_refusals", "false_accepts")},
+        "database_parity": report["database_parity"],
     }, ensure_ascii=False, indent=2))
 
 

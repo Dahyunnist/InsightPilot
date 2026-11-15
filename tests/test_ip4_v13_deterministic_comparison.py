@@ -5,7 +5,9 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from scripts.run_ip4_v13_deterministic_comparison import DEFAULT_DATABASE, run
+from scripts.run_ip4_v13_deterministic_comparison import (
+    DEFAULT_DATABASE, _database_parity, run,
+)
 
 
 class IP4V13DeterministicComparisonTests(unittest.TestCase):
@@ -42,6 +44,18 @@ class IP4V13DeterministicComparisonTests(unittest.TestCase):
 
         emitted_keys = keys(stored)
         self.assertFalse({"question", "questions", "gold", "sql", "parameters", "rows"} & emitted_keys)
+
+    def test_postgres_parity_summary_requires_both_tenants_and_all_cases(self):
+        complete = {"postgresql_sqlite_result_parity": {
+            tenant: {"passed": 22, "total": 22, "failures": []}
+            for tenant in ("tenant-a", "tenant-b")}}
+        mismatch = {"postgresql_sqlite_result_parity": {
+            "tenant-a": {"passed": 21, "total": 22, "failures": ["IP4V13-R02"]},
+            "tenant-b": {"passed": 22, "total": 22, "failures": []}}}
+
+        self.assertEqual(_database_parity(complete, True)["status"], "passed")
+        self.assertEqual(_database_parity(mismatch, True)["status"], "failed")
+        self.assertEqual(_database_parity({}, False), {"status": "not_run", "tenants": {}})
 
 
 if __name__ == "__main__":

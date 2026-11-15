@@ -37,11 +37,19 @@
 
 Docker 与专用连接配置可用后，使用独立 Compose project、临时 Compose 副本（去掉固定 `container_name`，端口改为 `127.0.0.1::5432`）和 tmpfs，避免碰现有容器或持久卷。此时只在用户宿主显式启动专用临时服务。先设置仅进程内的 admin/app DSN 与密码，再按顺序从 v13 固定 SQLite 装载同一 schema，并跑两个 tenant：
 
+新增宿主入口 `scripts/run_ip4_v13_postgres_parity.ps1`。默认 dry-run 不启动服务；执行必须同时传 `-Execute -ConfirmDedicatedDatabase`。它核对 v13 manifest/blind/gold 与 SQLite fixture 哈希，使用缓存中的 PostgreSQL 镜像（不会 pull）、随机项目名、随机回环端口和 tmpfs；所有数据库凭据只在子进程环境变量中短暂存在。容器启动、fixture 导入、parity 评测和项目级清理均有等待上限。成功或失败只打印脱敏 case ID、失败检查分类、parity 状态和 model_calls；不会输出 DSN、SQL、参数或结果行。finally 仅对该随机 Compose project 执行 `down --remove-orphans`，不加 `-v`，不删除卷，也不影响其他服务。
+
 ```powershell
 .\.venv\Scripts\python.exe scripts\prepare_ip4_postgres.py --database data\insightpilot-ip4-v13.sqlite
 .\.venv\Scripts\python.exe scripts\run_ip4_offline_audit.py --bundle benchmarks\ip4-offline-prep-v1 --database data\insightpilot-ip4-v13.sqlite --postgres-dsn $env:INSIGHTPILOT_IP4_APP_DSN --output reports\ip4-v13-postgres-parity-current.json
 ```
 
 第一条只可指向一次性 `insightpilot_ip4` 测试数据库：loader 会重建该库的 `public` schema。第二条现在会先将 bundle `source_v13` manifest/blind/gold 哈希与仓库冻结件逐一比对；不匹配立即停止。应报告 SQLite 与 tenant-a、tenant-b 各 22/22 结果一致，并保持 `model_calls=0`。通过后仍需审阅执行代码锁；不能由此放行模型请求。结束时只停止本次唯一 Compose project 的 PostgreSQL 容器；不运行 `down -v` 或删除卷。
+
+宿主入口用户命令（仅在 Docker Engine 权限、依赖和缓存镜像满足后手动执行）：
+
+```powershell
+.\scripts\run_ip4_v13_postgres_parity.ps1 -Execute -ConfirmDedicatedDatabase
+```
 
 临时 Compose 启动前必须确认 project 名唯一、宿主端口动态分配、data dir 为 tmpfs、目标数据库名固定为 `insightpilot_ip4`。不能确认上述条件时，不运行 loader。当前工作机不满足 Docker/DSN 前置条件，以上步骤只作待复现实验说明。
