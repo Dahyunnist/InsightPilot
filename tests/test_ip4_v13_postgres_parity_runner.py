@@ -57,7 +57,7 @@ class IP4V13PostgresParityRunnerTests(unittest.TestCase):
         env["IP4_PARITY_SCRIPT_PATH"] = str(self.path)
         command = (
             "$tokens=$null; $errors=$null; "
-            "[System.Management.Automation.Language.Parser]::ParseFile(" 
+            "[System.Management.Automation.Language.Parser]::ParseFile("
             "$env:IP4_PARITY_SCRIPT_PATH,[ref]$tokens,[ref]$errors)|Out-Null; "
             "if($errors.Count){$errors|ForEach-Object{Write-Error $_.Message};exit 1}; "
             "Write-Output IP4_PARITY_PS_PARSE_OK"
