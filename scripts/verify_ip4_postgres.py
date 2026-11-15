@@ -105,6 +105,7 @@ def verify(database: Path, blind_path: Path, gold_path: Path, tenant_ids: tuple[
         engine.close()
 
     dml_denied = False
+    ddl_denied = False
     with psycopg.connect(dsn) as connection:
         try:
             connection.execute("BEGIN")
@@ -113,6 +114,15 @@ def verify(database: Path, blind_path: Path, gold_path: Path, tenant_ids: tuple[
             connection.execute("DELETE FROM orders WHERE false")
         except psycopg.errors.InsufficientPrivilege:
             dml_denied = True
+        finally:
+            connection.rollback()
+        try:
+            connection.execute("BEGIN")
+            connection.execute("SET LOCAL ROLE insightpilot_reader")
+            connection.execute("SELECT set_config('app.tenant_id', %s, true)", (tenant_ids[0],))
+            connection.execute("CREATE TABLE public.ip1_ddl_must_be_denied (id integer)")
+        except psycopg.errors.InsufficientPrivilege:
+            ddl_denied = True
         finally:
             connection.rollback()
 
@@ -149,12 +159,13 @@ def verify(database: Path, blind_path: Path, gold_path: Path, tenant_ids: tuple[
         slow_engine.close()
 
     passed = (all(value["passed"] == value["total"] for value in tenant_results.values())
-              and no_tenant_result == "rejected" and dml_denied and pool_result == "recovered"
+              and no_tenant_result == "rejected" and dml_denied and ddl_denied and pool_result == "recovered"
               and timeout_result == "timed_out")
     return {"status": "passed" if passed else "failed", "backend": "PostgreSQL via FastAPI/InsightPilot/PostgresQueryEngine",
             "case_count_per_tenant": len(cases), "answerable_case_count": len(answerable), "tenants": tenant_results,
             "missing_tenant_context": no_tenant_result,
             "postgres_dml_denied": dml_denied,
+            "postgres_ddl_denied": ddl_denied,
             "pool_exhaustion_and_recovery": pool_result,
             "statement_timeout": timeout_result,
             "independent_gold": "IP4 Python gold; PostgreSQL output also compared to SQLite output"}

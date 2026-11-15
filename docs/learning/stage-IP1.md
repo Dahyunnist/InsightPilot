@@ -93,3 +93,13 @@ IP-1 使用 PostgreSQL/FastAPI/`PostgresQueryEngine` 与合成数据：两个 te
 命令：` .\scripts\run_ip1_rls.ps1 -Execute -ConfirmDatabaseCreation -ArtifactDirectory 'E:\job\insightpilot-ip1-acceptance-20261115' `。Docker Engine 29.1.3；镜像 `postgres:16-alpine` digest `sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36`。临时凭据由 runner 生成，PostgreSQL data dir 使用 Compose tmpfs；未用生产凭据、未调用模型。
 
 容器创建并报告 Started，但 `scripts/prepare_ip4_postgres.py` 的首次 psycopg 连接失败，runner exit 1：`connection to server at "127.0.0.1", port 55432 failed: server closed the connection unexpectedly`。因此双租户实际查询、越权、DDL/DML、超时和行预算本轮均未验收，不能称通过。Runner finally 已清理专用容器与 Compose 网络；无容器日志或校验报告生成。后续需先查 PostgreSQL 初始化/启动日志，再按相同命令重跑；本轮不自动重试。
+
+## 2026-11-15 PostgreSQL/RLS 宿主复验
+
+首轮容器启动后立即准备导致 psycopg 连接被服务端关闭；旧 runner 已清理容器，故启动日志无法追溯，根因未确认。runner 已改为 Compose `--wait --wait-timeout 60`、额外 `pg_isready`，失败时先保存 `ip1-postgres-startup.log` 再清理。`tests/test_ip1_rls_runner.py` 定向 5 passed。
+
+复验命令：` .\scripts\run_ip1_rls.ps1 -Execute -ConfirmDatabaseCreation -ArtifactDirectory 'E:\job\insightpilot-ip1-acceptance-20261115-r3' `，exit 0。Docker Engine 29.1.3；PostgreSQL 16.15，镜像 digest `sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36`。RLS bootstrap SQL SHA-256 `b8bf95cf1e3b474d4178445226a50c879f7985c6030e3481d2c31a187296017a`。临时凭据由 runner 生成；只用合成数据与 tmpfs。
+
+最终 `ip1-ip2-postgres-verification.json` 状态 passed：tenant-a 与 tenant-b 各 12/12；每租户 6 道可答题与 6 道 guard 全通过，PG 答案经独立 Python gold 和 SQLite 交叉核对。Canary 通过同一连接池切换 tenant-a、tenant-b、missing、unknown context；缺 tenant 在应用层拒绝，unknown/missing RLS 可见行 0。只读角色 DML 与 DDL 均拒绝；statement_timeout 实测超时，池耗尽后恢复。`ip1-data-meta-timeout.json` 100ms 超时 123.31ms，随后读取恢复。0 模型调用。
+
+Artifacts 位于仓库外 `E:\job\insightpilot-ip1-acceptance-20261115-r3`。验收后专用容器和 Compose network 均无残留。边界：验证的是本地 PostgreSQL 16.15 与固定合成 fixture，不代表生产部署；首轮失败根因仍未知，不能归因于代码或容器竞态。

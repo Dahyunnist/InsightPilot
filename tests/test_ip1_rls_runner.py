@@ -27,6 +27,11 @@ class IP1RlsRunnerTests(unittest.TestCase):
         self.assertNotIn("VOLUME RM", script.upper())
         self.assertIn("127.0.0.1:55432:5432", compose)
         self.assertIn("tmpfs:", compose)
+        self.assertIn("up -d --wait --wait-timeout 60 postgres", script)
+        self.assertIn("pg_isready -U postgres -d insightpilot_ip4", script)
+        self.assertIn("ip1-postgres-startup.log", script)
+        self.assertLess(script.index("--wait-timeout 60"), script.index("prepare_ip4_postgres.py"))
+        self.assertLess(script.index("prepare_ip4_postgres.py"), script.index("verify_ip1_rls_canary.py"))
         self.assertNotIn("docker run", script.lower())
         self.assertNotIn("docker compose down -v", script.lower())
         self.assertNotIn(".env", script.lower())
@@ -42,15 +47,15 @@ class IP1RlsRunnerTests(unittest.TestCase):
         self.assertIn("catch { return $false }", guard)
         self.assertIn("if (-not $ConfirmDatabaseCreation)", script)
         self.assertLess(script.index("if (-not $Execute)"),
-                        script.index("docker compose --project-name $composeProject -f $compose up -d postgres"))
+                        script.index("docker compose --project-name $composeProject -f $compose up -d --wait --wait-timeout 60 postgres"))
         self.assertLess(script.index("if (-not $ConfirmDatabaseCreation)"),
-                        script.index("docker compose --project-name $composeProject -f $compose up -d postgres"))
+                        script.index("docker compose --project-name $composeProject -f $compose up -d --wait --wait-timeout 60 postgres"))
         self.assertIn("ENABLE ROW LEVEL SECURITY", sql)
         self.assertIn("FORCE ROW LEVEL SECURITY", sql)
         self.assertIn("CURRENT_SETTING('APP.TENANT_ID'", sql)
         self.assertIn("INSIGHTPILOT_READER", sql)
         self.assertLess(script.index("$started = $true"),
-                        script.index("docker compose --project-name $composeProject -f $compose up -d postgres"))
+                        script.index("docker compose --project-name $composeProject -f $compose up -d --wait --wait-timeout 60 postgres"))
         self.assertLess(script.index("scripts\\prepare_ip4_postgres.py"), script.index("scripts\\verify_ip4_postgres.py"))
         self.assertLess(script.index("scripts\\verify_ip4_postgres.py"),
                         script.index("scripts\\verify_ip1_data_meta_timeout.py"))
@@ -75,6 +80,7 @@ class IP1RlsRunnerTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         runner = (root / "scripts/run_ip1_rls.ps1").read_text(encoding="utf-8")
         verifier = (root / "scripts/verify_ip1_rls_canary.py").read_text(encoding="utf-8")
+        postgres_verifier = (root / "scripts/verify_ip4_postgres.py").read_text(encoding="utf-8")
         self.assertIn("ip1-tenant-rls-canary.json", runner)
         self.assertIn("scripts\\verify_ip1_rls_canary.py --output $canaryReport", runner)
         self.assertLess(runner.index("verify_ip1_rls_canary.py"), runner.index("verify_ip4_postgres.py"))
@@ -82,6 +88,10 @@ class IP1RlsRunnerTests(unittest.TestCase):
                          "current_setting('app.tenant_id', true)", "BYPASSRLS",
                          "pg_backend_pid()", "tenant-unknown", '"model_calls": 0'):
             self.assertIn(contract, verifier)
+        self.assertIn('connection.execute("DELETE FROM orders WHERE false")', postgres_verifier)
+        self.assertIn('connection.execute("CREATE TABLE public.ip1_ddl_must_be_denied (id integer)")',
+                      postgres_verifier)
+        self.assertIn('"postgres_ddl_denied": ddl_denied', postgres_verifier)
 
     def test_rls_runner_parses_with_powershell(self):
         root = Path(__file__).resolve().parents[1]

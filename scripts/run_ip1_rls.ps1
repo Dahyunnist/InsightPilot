@@ -46,8 +46,11 @@ try {
     $env:INSIGHTPILOT_IP4_APP_PASSWORD = $appPassword
     $env:INSIGHTPILOT_IP4_APP_DSN = "postgresql://insightpilot_ip1_acceptance:$appPassword@127.0.0.1:55432/insightpilot_ip4"
     $started = $true
-    & docker compose --project-name $composeProject -f $compose up -d postgres
+    & docker compose --project-name $composeProject -f $compose up -d --wait --wait-timeout 60 postgres
     if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL service start failed.' }
+    & docker compose --project-name $composeProject -f $compose exec -T postgres `
+        pg_isready -U postgres -d insightpilot_ip4
+    if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL health check failed after Compose readiness.' }
     & (Join-Path $root '.venv\Scripts\python.exe') scripts\prepare_ip4_postgres.py
     if ($LASTEXITCODE -ne 0) { throw 'Synthetic PostgreSQL preparation failed.' }
     $python = Join-Path $root '.venv\Scripts\python.exe'
@@ -60,6 +63,18 @@ try {
     $identityTimeoutReport = Join-Path $artifactRoot 'ip1-data-meta-timeout.json'
     & $python scripts\verify_ip1_data_meta_timeout.py --output $identityTimeoutReport
     if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL data_meta statement-timeout acceptance failed.' }
+} catch {
+    if ($started) {
+        $startupLog = Join-Path $artifactRoot 'ip1-postgres-startup.log'
+        try {
+            & docker compose --project-name $composeProject -f $compose logs --no-color postgres 2>&1 |
+                Set-Content -LiteralPath $startupLog -Encoding UTF8
+            Write-Warning "PostgreSQL startup diagnostics saved to $startupLog."
+        } catch {
+            Write-Warning 'Could not capture PostgreSQL startup diagnostics.'
+        }
+    }
+    throw
 } finally {
     if ($started) {
         try {
