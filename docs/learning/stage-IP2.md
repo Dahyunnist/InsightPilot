@@ -50,3 +50,5 @@ fixture 覆盖 Asia/Shanghai 日期左闭右开边界（边界前一刻/恰好�
 PostgreSQL bootstrap 现为 `inventory_daily_snapshots` 与 `inventory_cogs_events` 增加最小列级 SELECT、`FORCE ROW LEVEL SECURITY` 和租户策略。新增 opt-in 集成测试会用固定合成库存 fixture 重建专用 `insightpilot_ip4` 测试库，比较 SQLite/PostgreSQL 逐组分子、分母、周转率，并检查缺租户上下文拒绝、两租户隔离。测试使用 `INSIGHTPILOT_RUN_IP2_INVENTORY_POSTGRES_INTEGRATION=1` 才会运行，因为 fixture loader 会清空并重建该专用测试库。
 
 离线验收：库存周转、共享引擎契约与新集成测试共 `12 passed, 1 skipped`；SQLGlot 成功验证并转译四个绑定参数。PostgreSQL 实测尚未执行，本次未读取 `.env` 来启动具破坏性的数据库重建。当前结果证明可接入共享契约，不代表 PostgreSQL parity 已通过。
+
+同日尝试用随机 Compose 项目、内部网络、tmpfs 和本机临时端口启动 PostgreSQL。Docker Desktop 对内部网络中的映射端口没有提供宿主可达绑定；数据库无连接记录，测试未进入数据库断言。该随机项目的容器和网络已按项目名清理；既有 IP-4 容器及卷未触碰。此次不计 PostgreSQL parity 通过。后续需用无外网的容器内测试 runner，或经核验的 host-only bridge 重跑。
