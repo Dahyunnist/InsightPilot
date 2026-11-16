@@ -10,7 +10,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -20,6 +20,11 @@ from insightpilot.ip4_v14_model_runner import _provider_origin_hash
 
 PREREGISTRATION = ROOT / "reports/ip4-v14-model-preregistration-v5.json"
 CONSERVATIVE_CNY_PER_USD = Decimal("7.5")
+
+
+class _RejectRedirects(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
 
 
 def _amount(value: object) -> Decimal | None:
@@ -49,7 +54,7 @@ def main() -> int:
             "Authorization": f"Bearer {settings.api_key}",
             "Accept": "application/json",
         }, method="GET")
-        with urlopen(request, timeout=15) as response:
+        with build_opener(_RejectRedirects).open(request, timeout=15) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except (OSError, ValueError, HTTPError, URLError, json.JSONDecodeError) as exc:
         print(json.dumps({"status": "failed", "error_class": type(exc).__name__,
