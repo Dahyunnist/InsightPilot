@@ -8,11 +8,16 @@ import argparse
 import time
 import urllib.error
 import urllib.request
+from uuid import uuid4
 from pathlib import Path
 
 
 BASE = "http://127.0.0.1:58080"
 TOKEN = "ip3-compose-synthetic-token"
+
+
+def new_idempotency_key(scenario: str) -> str:
+    return f"ip3-matrix-{scenario}-{uuid4().hex}"
 
 
 def request(path: str, *, payload: dict | None = None, headers: dict | None = None,
@@ -82,7 +87,8 @@ def pressure(concurrency: int) -> dict:
 
 
 def idempotency_case() -> dict:
-    headers = {"Authorization": f"Bearer {TOKEN}", "Idempotency-Key": "ip3-matrix-idempotency"}
+    headers = {"Authorization": f"Bearer {TOKEN}",
+               "Idempotency-Key": new_idempotency_key("idempotency")}
     first = request("/analysis", payload={"question": "合成幂等可靠性探针"}, headers=headers)
     replay = request("/analysis", payload={"question": "合成幂等可靠性探针"}, headers=headers)
     conflict = request("/analysis", payload={"question": "合成幂等冲突探针"}, headers=headers)
@@ -100,7 +106,8 @@ def idempotency_case() -> dict:
 
 
 def cancellation_case() -> dict:
-    headers = {"Authorization": f"Bearer {TOKEN}", "Idempotency-Key": "ip3-matrix-cancel"}
+    headers = {"Authorization": f"Bearer {TOKEN}",
+               "Idempotency-Key": new_idempotency_key("cancel")}
     payload = {"question": "合成取消可靠性探针"}
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
         initial = pool.submit(request, "/analysis", payload=payload, headers=headers)
