@@ -251,3 +251,13 @@ $artifact = Join-Path $env:TEMP ('ip3 reliability retry ' + [guid]::NewGuid().To
 后续修复后的 gold-free 库存、权限与 IP3 定向回归在 Python 3.12 容器中 39 项通过；6 项专用 PostgreSQL 集成测试按默认 opt-in 门禁跳过。9 项 PowerShell runner 专项已在 Windows 宿主单独复跑，全部通过。MCP 取消异步组在 Python 3.12 容器 2/2 通过。网络隔离，合成配置，模型调用 0。
 
 此前 2026-11-16 的宿主完整矩阵报告仍保留；修复后的完整 Compose/PostgreSQL/进程重启矩阵尚待普通 PowerShell 环境重跑。本次没有覆盖或删除任何失败报告，也没有以定向离线通过替代宿主矩阵结果。
+
+### 2026-11-16 取消/重放调度竞态
+
+用户复跑报告中的 `202` 且无 `stage`/`reason`，响应体对应已存在运行的 `replay_response(status=running)`。原因是 `ThreadPoolExecutor.submit` 只排入初始请求；探针主线程随即发送重放请求，调度上主线程可能先到 API 并创建运行，线程池请求随后得到 `202 running`。只将幂等键改为每轮唯一仍可复现该竞态。
+
+合成 HTTP 服务现提供隐藏于 OpenAPI 的 planner-start 计数端点。探针先读取计数，再提交初始请求；确认 planner 已开始后才发重放请求。每轮仍生成唯一幂等键。新增 `tests/test_ip3_http_probe.py` 以受控 fake HTTP 验证先启动后重放、同轮复用同键、跨轮使用不同键。Windows Python 3.14 定向回归 `3 passed`，包括该测试、持久取消状态回归和 Compose runner 检查。
+
+Windows 宿主在同一个临时 Compose 服务上连续运行 HTTP 探针两次，均 `exit=0`：取消请求 `202`、最终状态 `cancelled`、`cancel_requested=true`、模型调用 `0`。两份结果分别见 `reports/ip3-http-cancel-retry-a-2026-11-16.json` 和 `reports/ip3-http-cancel-retry-b-2026-11-16.json`；本次项目清理核验通过，容器/网络均为 0，见 `reports/ip3-http-cancel-retry-cleanup-2026-11-16.json`。原失败报告未覆盖或删除。
+
+此复验只覆盖 HTTP 幂等/取消探针。含 PostgreSQL 故障恢复、API 重启的完整可靠性矩阵仍未通过修复后复跑；不以两轮 HTTP 通过替代完整矩阵。

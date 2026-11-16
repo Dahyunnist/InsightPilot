@@ -1,0 +1,256 @@
+{
+  "service": "FastAPI real HTTP via Docker Compose",
+  "planner": "fixed synthetic planner with 150ms delay",
+  "backend": "synthetic SQLite",
+  "model_calls": 0,
+  "idempotency": {
+    "first_status": 200,
+    "replay_status": 200,
+    "same_run_id": true,
+    "run_id": "0b99a50c-e915-4d2a-93cd-f5ae06ac0eb7",
+    "replay_header": "true",
+    "request_id_matches": true,
+    "conflict_status": 409,
+    "conflict_run_id": "0238054b-57c3-4f57-b389-b28c1f60941d"
+  },
+  "cancellation": {
+    "running_replay_status": 202,
+    "run_id": "d8274631-881e-4f83-ade6-c9503d65c73d",
+    "replay_header": "true",
+    "cancel_status": 202,
+    "cancel_run_id_matches": true,
+    "final_http_status": 409,
+    "final_status": "cancelled",
+    "final_run_id_matches": true,
+    "persisted_status": "cancelled",
+    "cancel_requested": true
+  },
+  "cases": [
+    {
+      "concurrency": 1,
+      "requests": 1,
+      "status_counts": {
+        "200": 1
+      },
+      "latency_ms": {
+        "p50": 192.9,
+        "p95": 192.9,
+        "max": 192.9
+      },
+      "success_count": 1,
+      "http_429_count": 0,
+      "http_503_count": 0,
+      "http_429_reason_counts": {},
+      "run_id_evidence": [
+        {
+          "request_index": 0,
+          "http_status": 200,
+          "run_id": "6a9f3d52-34eb-4712-96c2-5e5a68046f8c",
+          "request_id_matches": true
+        }
+      ],
+      "run_id_count": 1,
+      "unique_run_id_count": 1,
+      "request_id_match_count": 1,
+      "mode": "real_http_synthetic_sqlite_fixed_planner_no_model_calls"
+    },
+    {
+      "concurrency": 5,
+      "requests": 5,
+      "status_counts": {
+        "200": 5
+      },
+      "latency_ms": {
+        "p50": 186.736,
+        "p95": 189.988,
+        "max": 203.3
+      },
+      "success_count": 5,
+      "http_429_count": 0,
+      "http_503_count": 0,
+      "http_429_reason_counts": {},
+      "run_id_evidence": [
+        {
+          "request_index": 0,
+          "http_status": 200,
+          "run_id": "6620d149-2b21-47ad-a4f9-747bae34a7ae",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 1,
+          "http_status": 200,
+          "run_id": "882985a8-da6e-48c6-b331-79bfac3bd3b8",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 2,
+          "http_status": 200,
+          "run_id": "05c60302-cf54-42ef-8d0a-ee7204f4ad5d",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 3,
+          "http_status": 200,
+          "run_id": "b3dd4eac-da78-43c4-b828-d66a9d74ee8b",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 4,
+          "http_status": 200,
+          "run_id": "0eb9b739-ad1b-4fd0-823d-6d479f11dbc4",
+          "request_id_matches": true
+        }
+      ],
+      "run_id_count": 5,
+      "unique_run_id_count": 5,
+      "request_id_match_count": 5,
+      "mode": "real_http_synthetic_sqlite_fixed_planner_no_model_calls"
+    },
+    {
+      "concurrency": 20,
+      "requests": 20,
+      "status_counts": {
+        "200": 8,
+        "429": 12
+      },
+      "latency_ms": {
+        "p50": 18.097,
+        "p95": 256.307,
+        "max": 283.932
+      },
+      "success_count": 8,
+      "http_429_count": 12,
+      "http_503_count": 0,
+      "http_429_reason_counts": {
+        "concurrency_limit": 12
+      },
+      "run_id_evidence": [
+        {
+          "request_index": 0,
+          "http_status": 200,
+          "run_id": "44ed33f9-36af-4c02-b59f-8252104dcc83",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 1,
+          "http_status": 429,
+          "run_id": "da172f5f-5fb4-4438-845f-8bc8fcea965e",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 2,
+          "http_status": 200,
+          "run_id": "52d1e161-fdbf-48b6-8616-a821e5299700",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 3,
+          "http_status": 200,
+          "run_id": "e4c67d0f-ac21-4257-a892-530993d1fbe5",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 4,
+          "http_status": 200,
+          "run_id": "c6d29ddd-cf36-45ce-b0d9-c275447e86cc",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 5,
+          "http_status": 200,
+          "run_id": "8fae53a6-6556-4aca-864e-511350ae7747",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 6,
+          "http_status": 200,
+          "run_id": "78b66fb3-a355-48c9-9cce-b5b7fcf675c4",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 7,
+          "http_status": 200,
+          "run_id": "370ebb2e-82cf-4d91-8119-e4becccd268b",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 8,
+          "http_status": 200,
+          "run_id": "1dad924f-c7c3-4eb6-a77d-694dbe4279eb",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 9,
+          "http_status": 429,
+          "run_id": "76b99c74-967c-44dc-bbc2-c97986a0ddb0",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 10,
+          "http_status": 429,
+          "run_id": "ec28beeb-94ce-44a1-9ca2-31a154a754d3",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 11,
+          "http_status": 429,
+          "run_id": "aa74bf19-22da-4798-a60d-4d3946139d52",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 12,
+          "http_status": 429,
+          "run_id": "6a436131-f7aa-45f9-8b22-1b302cec1fa2",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 13,
+          "http_status": 429,
+          "run_id": "db085095-8461-45c1-b367-f0baf3e59be9",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 14,
+          "http_status": 429,
+          "run_id": "9e0e5c7f-74e3-402f-9750-46ca9389c5a8",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 15,
+          "http_status": 429,
+          "run_id": "b112d44f-43c2-482c-9d9c-19433f66c30c",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 16,
+          "http_status": 429,
+          "run_id": "992dfe76-795b-469c-ac76-7b5c123ef4dd",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 17,
+          "http_status": 429,
+          "run_id": "c70bcacc-ec2d-4876-8f4c-8673e2647992",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 18,
+          "http_status": 429,
+          "run_id": "95596fe1-b280-414f-b364-5969846eefb2",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 19,
+          "http_status": 429,
+          "run_id": "7946dc8b-9c0f-42a8-b3fd-c90fb9af2ae5",
+          "request_id_matches": true
+        }
+      ],
+      "run_id_count": 20,
+      "unique_run_id_count": 20,
+      "request_id_match_count": 20,
+      "mode": "real_http_synthetic_sqlite_fixed_planner_no_model_calls"
+    }
+  ],
+  "interpretation": "Synchronous HTTP requests wait for analysis results; concurrency is a burst, not async job throughput. Rejected 429s are included in latency percentiles. Report includes only statuses and run-ID evidence, not answers, rows, SQL, or bound parameters."
+}
