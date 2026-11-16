@@ -191,3 +191,11 @@ runner 的构建仍可能访问 Python 包源，除非所需构建层已缓存�
 用户随后在有权限的宿主用唯一目录 `.tmp/ip3-compose-host-11df9d5f66dd403192f2242b571b5b1a` 执行 Compose runner。只读核对该目录三份产物并独立断言：Compose HTTP 幂等首次/重放 200、同键冲突 409；并发 1 为 1/1 个 200，并发 5 为 5/5 个 200，并发 20 为 8 个 200、12 个 429、0 个 503。MCP Streamable HTTP 取消报告中 client/core/worker 三项均为 true。HTTP 总计 26 个请求、14 个 200 和 12 个 429；模型调用 0，只用合成数据。Compose 构建和启动通过、清理后无容器是用户报告；当前会话 Docker daemon 仍拒绝访问，未能独立复查清理或镜像拉取历史。
 
 MCP 日志有取消后的 SSE `ClosedResourceError`，同时记录 session DELETE 返回 200，保存报告的取消完成标记均通过。负载是短突发，不代表持续吞吐或生产 SLA。产物 SHA-256 与复核详情见 `reports/ip3-local-recheck-2026-11-15.json`。先前 TestClient 进程内负载仍未完成，不计入本次 Compose HTTP 结果。
+
+## 2026-11-16 IP-3 全项离线复核
+
+按升级路线逐项核对：同主体幂等键与问题哈希、`BEGIN IMMEDIATE` 并发去重、异题冲突、运行中取消、请求/SQL 超时、429 速率与并发上限、503 RunStore/worker 故障、502 数据库错误，以及连接池坏连接后的惰性重建。取消和超时后 RunStore 状态由测试确认；pool 生命周期与 SQLSTATE 由 fake pool 回归确认。PostgreSQL 池耗尽和恢复沿用既有隔离合成报告，本次按要求不启动容器，因此不算本次实测。
+
+发现无效幂等键和同键异题冲突响应缺少 `run_id` / `X-Request-ID`。现两条 422/409 拒绝响应都返回匹配 ID；回归确认不会规划。新增限流回归确认同键重放不消耗新任务额度，下一条无键请求返回 429 与 `Retry-After`；RunStore 启动故障返回 503、带匹配 ID 且不调用规划器。
+
+IP-3 定向组：`48 passed`、7 个 subtests。全量 `tests/` 受禁止读取 gold 限制，排除 32 个引用 gold 的模块后运行其余离线测试：`146 passed, 1 skipped, 50 subtests passed`。唯一 skip 为需显式启用 PostgreSQL 的集成测试。无模型请求、无外网、无容器。此结果是 gold-free 子集，不等于完整 `tests/` 全套通过，也不代表生产 SLA。

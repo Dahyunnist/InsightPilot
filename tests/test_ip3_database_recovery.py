@@ -109,7 +109,91 @@ class CountingSQLiteEngine(SQLiteQueryEngine):
         return super().execute_readonly(query, tenant_id=tenant_id, cancel_event=cancel_event)
 
 
+class FailingStartRunStore(RunStore):
+    def start(self, *args, **kwargs):
+        raise sqlite3.OperationalError("injected run-store unavailable")
+
+
 class IP3DatabaseRecoveryTests(unittest.TestCase):
+    def test_invalid_idempotency_key_returns_request_id_without_planning(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            database = create_database(root / "synthetic.sqlite")
+            planner = FixedPlanner()
+            app = create_app(InsightPilot(planner, database, tracer=None),
+                             run_store=RunStore(root / "runs.sqlite"),
+                             api_token="local-test-token", api_scopes={"refund:read"})
+            analysis = route_endpoint(app, "/analysis")
+
+            try:
+                response = analysis(AnalysisRequest(question=QUESTION),
+                                    authorization="Bearer local-test-token", idempotency_key="bad key")
+                body = response_json(response)
+
+                self.assertEqual(response.status_code, 422)
+                self.assertEqual(body["reason"], "invalid_idempotency_key")
+                self.assertEqual(response.headers["X-Request-ID"], body["run_id"])
+                self.assertEqual(planner.calls, 0)
+            finally:
+                app.state.analysis_executor.shutdown(wait=True)
+
+    def test_rate_limit_preserves_retry_after_and_idempotent_replay(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            database = create_database(root / "synthetic.sqlite")
+            planner = FixedPlanner()
+            store = RunStore(root / "runs.sqlite")
+            app = create_app(InsightPilot(planner, database, tracer=None), run_store=store,
+                             api_token="local-test-token", api_scopes={"refund:read"},
+                             max_requests_per_minute=1)
+            analysis = route_endpoint(app, "/analysis")
+            authorization = "Bearer local-test-token"
+
+            try:
+                first = analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
+                                 idempotency_key="rate-replay")
+                replay = analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
+                                  idempotency_key="rate-replay")
+                conflict = analysis(AnalysisRequest(question=QUESTION + " 按渠道"),
+                                    authorization=authorization, idempotency_key="rate-replay")
+                limited = analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
+                                   idempotency_key=None)
+
+                self.assertEqual((first.status_code, replay.status_code, conflict.status_code,
+                                  limited.status_code), (200, 200, 409, 429))
+                self.assertEqual(first.headers["X-Request-ID"], response_json(first)["run_id"])
+                self.assertEqual(replay.headers["Idempotency-Replay"], "true")
+                self.assertEqual(replay.headers["X-Request-ID"], response_json(first)["run_id"])
+                self.assertEqual(conflict.headers["X-Request-ID"], response_json(conflict)["run_id"])
+                self.assertEqual(response_json(conflict)["reason"], "idempotency_key_question_conflict")
+                self.assertGreaterEqual(int(limited.headers["Retry-After"]), 1)
+                self.assertEqual(planner.calls, 1)
+            finally:
+                app.state.analysis_executor.shutdown(wait=True)
+
+    def test_run_store_start_failure_returns_503_without_planning(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            database = create_database(root / "synthetic.sqlite")
+            planner = FixedPlanner()
+            store = FailingStartRunStore(root / "runs.sqlite")
+            app = create_app(InsightPilot(planner, database, tracer=None), run_store=store,
+                             api_token="local-test-token", api_scopes={"refund:read"})
+            analysis = route_endpoint(app, "/analysis")
+
+            try:
+                response = analysis(AnalysisRequest(question=QUESTION),
+                                    authorization="Bearer local-test-token",
+                                    idempotency_key="run-store-unavailable")
+
+                body = response_json(response)
+                self.assertEqual(response.status_code, 503)
+                self.assertEqual(body["reason"], "run_store_unavailable")
+                self.assertEqual(response.headers["X-Request-ID"], body["run_id"])
+                self.assertEqual(planner.calls, 0)
+            finally:
+                app.state.analysis_executor.shutdown(wait=True)
+
     def test_request_timeout_persists_cancel_marker_and_worker_finishes_cancelled(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

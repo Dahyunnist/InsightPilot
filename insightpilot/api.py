@@ -158,16 +158,21 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
                  idempotency_key: str | None = Header(default=None, alias="Idempotency-Key")) -> JSONResponse:
         principal_id = require_scope(authorization, required_access_scopes(request.question))
         if idempotency_key is not None and not re.fullmatch(r"[A-Za-z0-9._:/-]{1,128}", idempotency_key):
+            run_id = str(uuid.uuid4())
             return JSONResponse(status_code=422,
-                content={"status": "failed", "stage": "validation", "reason": "invalid_idempotency_key"})
+                content={"run_id": run_id, "status": "failed", "stage": "validation",
+                         "reason": "invalid_idempotency_key"},
+                headers={"X-Request-ID": run_id})
         if idempotency_key is not None:
             try:
                 scoped_key = f"{principal_id or 'default'}:{idempotency_key}"
                 existing_id = store.find_idempotent(scoped_key, request.question)
             except IdempotencyConflict:
+                run_id = str(uuid.uuid4())
                 return JSONResponse(status_code=409,
-                    content={"status": "failed", "stage": "idempotency",
-                             "reason": "idempotency_key_question_conflict"})
+                    content={"run_id": run_id, "status": "failed", "stage": "idempotency",
+                             "reason": "idempotency_key_question_conflict"},
+                    headers={"X-Request-ID": run_id})
             if existing_id is not None:
                 return replay_response(existing_id, principal_id)
         retry_after = consume_rate_limit()
@@ -189,8 +194,9 @@ def create_app(core: InsightPilot, *, run_store: RunStore | None = None, api_tok
         except IdempotencyConflict:
             capacity.release()
             return JSONResponse(status_code=409,
-                content={"status": "failed", "stage": "idempotency",
-                         "reason": "idempotency_key_question_conflict"})
+                content={"run_id": run_id, "status": "failed", "stage": "idempotency",
+                         "reason": "idempotency_key_question_conflict"},
+                headers={"X-Request-ID": run_id})
         except Exception:
             capacity.release()
             return JSONResponse(status_code=503,
