@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "checked_projects": [
+    {
+      "project": "insightpilot-ip3-compose",
+      "container_check": "passed",
+      "container_count": 0,
+      "network_check": "passed",
+      "network_count": 0,
+      "empty": true
+    },
+    {
+      "project": "insightpilot-ip3-db-outage",
+      "container_check": "passed",
+      "container_count": 0,
+      "network_check": "passed",
+      "network_count": 0,
+      "empty": true
+    },
+    {
+      "project": "insightpilot-ip3-restart",
+      "container_check": "passed",
+      "container_count": 0,
+      "network_check": "passed",
+      "network_count": 0,
+      "empty": true
+    }
+  ],
+  "policy": "verify only; do not remove resources outside child runner cleanup"
+}

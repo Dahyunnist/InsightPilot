@@ -1,0 +1,33 @@
+{
+  "synthetic_only": true,
+  "model_calls": 0,
+  "external_api_calls": 0,
+  "transport": "FastAPI HTTP through localhost port mapping",
+  "network": "local Compose bridge; fixed planner makes no external calls",
+  "termination_signal": "SIGKILL",
+  "pending_replay": {
+    "http_status": 202,
+    "run_id": "845bcca1-8a73-4eb4-8bb3-52a243cfe25a",
+    "replay_header": "true"
+  },
+  "container_id_stable": true,
+  "inflight_request_after_kill": {
+    "transport_error": "RemoteDisconnected"
+  },
+  "recovered_run": {
+    "http_status": 200,
+    "status": "interrupted",
+    "result_present": false
+  },
+  "idempotent_retry": {
+    "http_status": 409,
+    "status": "interrupted",
+    "reason": "result_unavailable",
+    "run_id": "845bcca1-8a73-4eb4-8bb3-52a243cfe25a",
+    "replay_header": "true"
+  },
+  "passed": true,
+  "compose_cleanup": true,
+  "duration_seconds": 9.96,
+  "output_path": "reports/ip3-reliability-host-restart-2026-11-16-r2.json"
+}

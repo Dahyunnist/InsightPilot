@@ -1,0 +1,114 @@
+{
+  "created_at_utc": "2026-11-16T13:01:42.962828+00:00",
+  "status": "passed",
+  "scenario": "stop PostgreSQL service while API remains live; restore same container",
+  "synthetic_data_only": true,
+  "synthetic_fixture_only": true,
+  "external_model_calls": 0,
+  "fixture_profile": {
+    "paid_orders": 1,
+    "approved_refunds": 1,
+    "refund_rate": 0.1,
+    "tenant_copies": 2
+  },
+  "planner": "fixed local planner with invocation counter",
+  "fixture_identity": {
+    "data_version": "insightpilot-enterprise-v1",
+    "data_fingerprint": "09b8226f2705bd527e2a749c247c49fd77807d1a516c9e95e40a042468bd93e8"
+  },
+  "expected": {
+    "baseline": "200 answered; planner calls 1",
+    "database_down": "502 failed at dataset; model calls 0; run persisted failed",
+    "same_key_replay": "502 same run_id with replay marker; planner count unchanged",
+    "recovery": "200 answered after PostgreSQL restart; planner calls 2"
+  },
+  "steps": {
+    "connection_termination_and_recovery": {
+      "http_status": 200,
+      "status": "passed",
+      "backend_terminated": true,
+      "disconnect_error_class": "AdminShutdown",
+      "recovery_query_completed": true
+    },
+    "baseline": {
+      "http_status": 200,
+      "run_id": "d69a6d41-67ce-45fe-bdbd-db54ac6c59b4",
+      "status": "answered",
+      "stage": null,
+      "reason": null,
+      "failure_layer": null,
+      "failure_category": null,
+      "model_call_count": 1,
+      "idempotency_replay": false,
+      "planner_total_calls": 1
+    },
+    "api_liveness_during_db_outage": {
+      "http_status": 200,
+      "status": "ok"
+    },
+    "database_unavailable": {
+      "http_status": 502,
+      "run_id": "20fc4a5d-97a5-47f1-8e80-8ae9c1575441",
+      "status": "failed",
+      "stage": "dataset",
+      "reason": null,
+      "failure_layer": "db_execution",
+      "failure_category": "database_execution",
+      "model_call_count": 0,
+      "idempotency_replay": false,
+      "planner_total_calls": 1,
+      "run_store_http_status": 200,
+      "persisted_run_status": "failed",
+      "persisted_result_stage": "dataset",
+      "persisted_model_call_count": 0,
+      "planning_not_reached": true
+    },
+    "idempotent_replay_while_down": {
+      "http_status": 502,
+      "run_id": "20fc4a5d-97a5-47f1-8e80-8ae9c1575441",
+      "status": "failed",
+      "stage": "dataset",
+      "reason": null,
+      "failure_layer": "db_execution",
+      "failure_category": "database_execution",
+      "model_call_count": 0,
+      "idempotency_replay": true,
+      "planner_total_calls": 1
+    },
+    "after_database_recovery": {
+      "http_status": 200,
+      "run_id": "42b546bf-9444-41aa-a134-3a2386b08e15",
+      "status": "answered",
+      "stage": null,
+      "reason": null,
+      "failure_layer": null,
+      "failure_category": null,
+      "model_call_count": 1,
+      "idempotency_replay": false,
+      "planner_total_calls": 2,
+      "direct_db_probe_http_status": 200,
+      "direct_db_probe_status": "connected",
+      "pool_stats_http_status": 200,
+      "pool_stats_before_analysis": {
+        "pool_min": 1,
+        "pool_max": 8,
+        "pool_size": 1,
+        "pool_available": 0,
+        "requests_waiting": 0
+      },
+      "pool_stats_after_analysis": {
+        "connections_num": 1,
+        "connections_ms": 10,
+        "requests_num": 2,
+        "usage_ms": 12,
+        "pool_min": 1,
+        "pool_max": 8,
+        "pool_size": 1,
+        "pool_available": 1,
+        "requests_waiting": 0
+      }
+    }
+  },
+  "compose_cleanup": true,
+  "elapsed_seconds": 10.998
+}

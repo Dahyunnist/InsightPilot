@@ -261,3 +261,11 @@ $artifact = Join-Path $env:TEMP ('ip3 reliability retry ' + [guid]::NewGuid().To
 Windows 宿主在同一个临时 Compose 服务上连续运行 HTTP 探针两次，均 `exit=0`：取消请求 `202`、最终状态 `cancelled`、`cancel_requested=true`、模型调用 `0`。两份结果分别见 `reports/ip3-http-cancel-retry-a-2026-11-16.json` 和 `reports/ip3-http-cancel-retry-b-2026-11-16.json`；本次项目清理核验通过，容器/网络均为 0，见 `reports/ip3-http-cancel-retry-cleanup-2026-11-16.json`。原失败报告未覆盖或删除。
 
 此复验只覆盖 HTTP 幂等/取消探针。含 PostgreSQL 故障恢复、API 重启的完整可靠性矩阵仍未通过修复后复跑；不以两轮 HTTP 通过替代完整矩阵。
+
+### 2026-11-16 修复后完整宿主矩阵复验
+
+此前进程重启阶段的 `TimeoutError` 只记录异常类型。检查发现探针没有等初始请求进入 planner，就开始轮询幂等重放；两个请求可能竞速，且重放请求超时短于 4 秒合成 planner 延迟。现由合成服务提供隐藏的 planner-start 计数端点，探针确认初始请求进入 planner 后再发重放；错误报告记录阶段、异常类型及脱敏后的异常消息。新增离线回归覆盖 planner-start 等待和错误诊断。
+
+原工作分支 Windows 定向回归 `13 passed`；净发布分支定向回归 `2 passed`。修复提交：`5e07c27 诊断并修复 IP-3 重启探针竞态（净发布分支）`。随后完整宿主矩阵通过：HTTP 并发 1/5/20 为 1×200、5×200、8×200+12×429，0×503；26/26 request ID 匹配；PostgreSQL 故障时返回 502，恢复后返回 200；API 进程重启后状态为 `interrupted`，重放返回 409 `result_unavailable`。HTTP、MCP、PostgreSQL 与重启阶段均无模型或外部 API 调用。
+
+汇总、清理、HTTP、MCP、PostgreSQL 与重启报告分别保存在 `reports/ip3-reliability-host-2026-11-16-r2.json`、`reports/ip3-reliability-host-cleanup-2026-11-16-r2.json`、`reports/ip3-reliability-host-http-2026-11-16-r2.json`、`reports/ip3-reliability-host-mcp-2026-11-16-r2.json`、`reports/ip3-reliability-host-postgres-2026-11-16-r2.json` 和 `reports/ip3-reliability-host-restart-2026-11-16-r2.json`。清理核验三个专用 Compose 项目各为 0 容器、0 网络；未触碰数据卷或其他 Compose。之前报告及失败产物未覆盖或删除。

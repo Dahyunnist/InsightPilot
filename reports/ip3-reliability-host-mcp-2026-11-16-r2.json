@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "transport": "MCP Streamable HTTP over local TCP with synthetic ASGI app",
+  "client_cancel_received": true,
+  "core_cancel_event_observed": true,
+  "worker_finished": true,
+  "model_calls": 0,
+  "synthetic_data_only": true
+}

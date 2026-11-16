@@ -1,0 +1,273 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "synthetic_only": true,
+  "model_calls": 0,
+  "http_concurrency": [
+    {
+      "concurrency": 1,
+      "requests": 1,
+      "p50_ms": 211.205,
+      "p95_ms": 211.205,
+      "success_count": 1,
+      "http_429_count": 0,
+      "http_429_reason_counts": {},
+      "http_503_count": 0,
+      "run_id_count": 1,
+      "unique_run_id_count": 1,
+      "request_id_match_count": 1,
+      "run_id_evidence": [
+        {
+          "request_index": 0,
+          "http_status": 200,
+          "run_id": "192baf08-68fe-45fc-aa31-42506237ecbe",
+          "request_id_matches": true
+        }
+      ]
+    },
+    {
+      "concurrency": 5,
+      "requests": 5,
+      "p50_ms": 298.254,
+      "p95_ms": 303.889,
+      "success_count": 5,
+      "http_429_count": 0,
+      "http_429_reason_counts": {},
+      "http_503_count": 0,
+      "run_id_count": 5,
+      "unique_run_id_count": 5,
+      "request_id_match_count": 5,
+      "run_id_evidence": [
+        {
+          "request_index": 0,
+          "http_status": 200,
+          "run_id": "51181d6e-88df-4dfb-a609-00fa2238e669",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 1,
+          "http_status": 200,
+          "run_id": "6a1dcc65-4622-46b7-9d90-98273c48cd95",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 2,
+          "http_status": 200,
+          "run_id": "1580027e-d0b4-43fe-8c92-f3fc7c836b78",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 3,
+          "http_status": 200,
+          "run_id": "d65ad13e-bca6-4981-b118-e52dc7ac7472",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 4,
+          "http_status": 200,
+          "run_id": "eebeb846-ff3b-41ea-a2db-b1f60a923e1e",
+          "request_id_matches": true
+        }
+      ]
+    },
+    {
+      "concurrency": 20,
+      "requests": 20,
+      "p50_ms": 88.128,
+      "p95_ms": 581.484,
+      "success_count": 8,
+      "http_429_count": 12,
+      "http_429_reason_counts": {
+        "concurrency_limit": 12
+      },
+      "http_503_count": 0,
+      "run_id_count": 20,
+      "unique_run_id_count": 20,
+      "request_id_match_count": 20,
+      "run_id_evidence": [
+        {
+          "request_index": 0,
+          "http_status": 429,
+          "run_id": "869af57d-6f85-4abb-9436-05885d68b5a2",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 1,
+          "http_status": 200,
+          "run_id": "52ce9862-0ba5-4a7f-8898-ef7d3500e68c",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 2,
+          "http_status": 200,
+          "run_id": "2decd39b-5f3a-45f2-aa27-d08f595cb8d9",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 3,
+          "http_status": 200,
+          "run_id": "bba2b8cc-2396-44aa-af7b-56568bf320d1",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 4,
+          "http_status": 200,
+          "run_id": "475973aa-1891-4f0c-a6e3-ae6038b9bad3",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 5,
+          "http_status": 200,
+          "run_id": "ae2ec4e7-c2b2-4a27-a4d2-2b38f7e20b7d",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 6,
+          "http_status": 200,
+          "run_id": "137108ac-bf0b-490f-8fb4-8ac4972b42cd",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 7,
+          "http_status": 200,
+          "run_id": "3118acec-6a8f-4b0e-bed1-183437426b3c",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 8,
+          "http_status": 200,
+          "run_id": "5539582c-c8fd-425e-af47-b00951d0f919",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 9,
+          "http_status": 429,
+          "run_id": "55e7b407-682b-49ae-af77-6776ac261c98",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 10,
+          "http_status": 429,
+          "run_id": "f10d04fb-9701-46e7-a407-857338ed36ff",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 11,
+          "http_status": 429,
+          "run_id": "0a92cfaf-f7ad-4414-a3ab-e09b29a65f21",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 12,
+          "http_status": 429,
+          "run_id": "125f37ac-4dbf-4e1d-922e-f95331738285",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 13,
+          "http_status": 429,
+          "run_id": "76baa91e-566f-4c81-87d3-df0ebc60e9cd",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 14,
+          "http_status": 429,
+          "run_id": "99c042e6-4443-4eb5-ad08-68d9ad76542a",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 15,
+          "http_status": 429,
+          "run_id": "ff883969-fa69-4280-a70c-dfb3826b1c86",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 16,
+          "http_status": 429,
+          "run_id": "754f8c27-d852-4af3-b704-9dc656774542",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 17,
+          "http_status": 429,
+          "run_id": "08814fa1-8c98-4961-ae4e-bf2cfa3f3680",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 18,
+          "http_status": 429,
+          "run_id": "8de19ab9-7c43-4e6b-9364-ca0ff6a8eeb5",
+          "request_id_matches": true
+        },
+        {
+          "request_index": 19,
+          "http_status": 429,
+          "run_id": "b98c32ee-1995-4179-9292-8860be7faced",
+          "request_id_matches": true
+        }
+      ]
+    }
+  ],
+  "idempotency": {
+    "first_status": 200,
+    "replay_status": 200,
+    "same_run_id": true,
+    "run_id": "33c1203d-b4c1-4976-85bf-0dd49c89ec05",
+    "conflict_status": 409
+  },
+  "cancellation": {
+    "run_id": "bd546e05-9e05-41c6-9f13-4ebdc158db20",
+    "cancel_status": 202,
+    "final_status": "cancelled",
+    "persisted_status": "cancelled"
+  },
+  "postgres_connection": {
+    "backend_terminated": true,
+    "disconnect_error_class": "AdminShutdown",
+    "recovery_query_completed": true
+  },
+  "postgres_service": {
+    "baseline_run_id": "d69a6d41-67ce-45fe-bdbd-db54ac6c59b4",
+    "outage_run_id": "20fc4a5d-97a5-47f1-8e80-8ae9c1575441",
+    "outage_http_status": 502,
+    "recovery_run_id": "42b546bf-9444-41aa-a134-3a2386b08e15",
+    "recovery_http_status": 200
+  },
+  "service_restart": {
+    "run_id": "845bcca1-8a73-4eb4-8bb3-52a243cfe25a",
+    "container_id_stable": true,
+    "recovered_status": "interrupted",
+    "retry_status": 409,
+    "retry_run_id": "845bcca1-8a73-4eb4-8bb3-52a243cfe25a"
+  },
+  "compose_cleanup": {
+    "status": "passed",
+    "checked_projects": [
+      {
+        "project": "insightpilot-ip3-compose",
+        "container_check": "passed",
+        "container_count": 0,
+        "network_check": "passed",
+        "network_count": 0,
+        "empty": true
+      },
+      {
+        "project": "insightpilot-ip3-db-outage",
+        "container_check": "passed",
+        "container_count": 0,
+        "network_check": "passed",
+        "network_count": 0,
+        "empty": true
+      },
+      {
+        "project": "insightpilot-ip3-restart",
+        "container_check": "passed",
+        "container_count": 0,
+        "network_check": "passed",
+        "network_count": 0,
+        "empty": true
+      }
+    ]
+  },
+  "detail_policy": "statuses, latency, and run IDs only; no question, SQL, parameters, answer rows, or credentials"
+}
