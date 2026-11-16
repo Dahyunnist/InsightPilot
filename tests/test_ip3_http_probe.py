@@ -11,17 +11,27 @@ def _run_cancel_probe_with_fake_http(monkeypatch) -> str:
     initial_started = threading.Event()
     release_initial = threading.Event()
     seen_keys: list[str] = []
+    ordered_analysis_callers: list[str] = []
+    started_count = 0
     lock = threading.Lock()
 
     def fake_request(path, *, payload=None, headers=None, method=None):
+        nonlocal started_count
+        if path == "/_probe/cancellation-start-count":
+            with lock:
+                return (200, {"started_count": started_count}, {})
         if path == "/analysis":
             key = headers["Idempotency-Key"]
             with lock:
                 seen_keys.append(key)
             if threading.current_thread() is caller:
+                ordered_analysis_callers.append("main")
                 assert initial_started.wait(1), "initial request did not start"
                 return (202, {"run_id": run_id, "status": "running"},
                         {"idempotency-replay": "true"})
+            ordered_analysis_callers.append("worker")
+            with lock:
+                started_count += 1
             initial_started.set()
             assert release_initial.wait(1), "cancel did not release initial request"
             return (409, {"run_id": run_id, "status": "cancelled"},
@@ -45,6 +55,7 @@ def _run_cancel_probe_with_fake_http(monkeypatch) -> str:
     assert result["persisted_status"] == "cancelled"
     assert len(seen_keys) == 2
     assert seen_keys[0] == seen_keys[1]
+    assert ordered_analysis_callers == ["worker", "main"]
     return seen_keys[0]
 
 

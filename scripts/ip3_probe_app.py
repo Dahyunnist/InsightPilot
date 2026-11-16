@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import threading
 import time
 from pathlib import Path
 
@@ -23,11 +24,30 @@ from insightpilot.planner import QueryPlan
 from insightpilot.run_store import RunStore
 
 
+class ProbeSignals:
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._cancel_plans_started = 0
+
+    def mark_cancel_plan_started(self) -> None:
+        with self._lock:
+            self._cancel_plans_started += 1
+
+    def cancel_plans_started(self) -> int:
+        with self._lock:
+            return self._cancel_plans_started
+
+
+probe_signals = ProbeSignals()
+
+
 class FixedPlanner:
     def plan(self, question: str) -> QueryPlan:
-        delay_ms = (float(os.environ.get("IP3_CANCEL_DELAY_MS", "1500"))
-                    if question == "合成取消可靠性探针" else
-                    float(os.environ.get("IP3_PLANNER_DELAY_MS", "150")))
+        if question == "合成取消可靠性探针":
+            probe_signals.mark_cancel_plan_started()
+            delay_ms = float(os.environ.get("IP3_CANCEL_DELAY_MS", "1500"))
+        else:
+            delay_ms = float(os.environ.get("IP3_PLANNER_DELAY_MS", "150"))
         time.sleep(delay_ms / 1000)
         return QueryPlan("approved_refund_amount_rate", "2026-10-05", "2026-10-12", "华东", None)
 
@@ -45,6 +65,14 @@ app = create_app(
     max_requests_per_minute=1000,
     request_timeout_seconds=5,
 )
+
+
+def cancellation_start_count() -> dict[str, int]:
+    return {"started_count": probe_signals.cancel_plans_started()}
+
+
+app.add_api_route("/_probe/cancellation-start-count", cancellation_start_count,
+                  methods=["GET"], include_in_schema=False)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080, access_log=False)

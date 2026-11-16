@@ -110,10 +110,30 @@ def cancellation_case() -> dict:
                "Idempotency-Key": new_idempotency_key("cancel")}
     payload = {"question": "合成取消可靠性探针"}
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        baseline_response = request("/_probe/cancellation-start-count")
+        baseline_count = baseline_response[1].get("started_count")
+        if baseline_response[0] != 200 or not isinstance(baseline_count, int):
+            raise RuntimeError("synthetic cancellation planner-start signal is unavailable")
         initial = pool.submit(request, "/analysis", payload=payload, headers=headers)
-        deadline = time.monotonic() + 5
+        start_deadline = time.monotonic() + 3
+        while time.monotonic() < start_deadline:
+            if initial.done():
+                early_status, early_body, _early_headers = initial.result()
+                raise RuntimeError(
+                    "synthetic cancellation request completed before planner start was observed "
+                    f"(http_status={early_status}, stage={early_body.get('stage')}, "
+                    f"reason={early_body.get('reason')})")
+            started = request("/_probe/cancellation-start-count")
+            if (started[0] == 200 and isinstance(started[1].get("started_count"), int)
+                    and started[1]["started_count"] > baseline_count):
+                break
+            time.sleep(.025)
+        else:
+            raise TimeoutError("synthetic cancellation planner did not start before replay observation")
+
+        replay_deadline = time.monotonic() + 1
         replay = None
-        while time.monotonic() < deadline:
+        while time.monotonic() < replay_deadline:
             if initial.done():
                 early_status, early_body, _early_headers = initial.result()
                 raise RuntimeError(
