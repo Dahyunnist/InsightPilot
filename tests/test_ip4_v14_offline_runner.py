@@ -85,7 +85,7 @@ def test_cli_rejects_lock_replacement_and_invalid_lock_schema(tmp_path):
 
 def test_result_digest_rejects_forged_and_truncated_values_without_candidate_files():
     lock = load_lock(ROOT / "reports/ip4-v14-offline-only-lock-2026-11-15.json")
-    expected = "a" * 64
+    expected = lock["canonical_payload_sha256"]
     report = {
         "schema_version": 1,
         "suite_id": lock["suite_id"],
@@ -111,14 +111,11 @@ def test_result_digest_rejects_forged_and_truncated_values_without_candidate_fil
                           "marketing_roi": {"passed": 5, "total": 11}},
         },
     }
-    assert verify_result(report, lock, expected_payload_sha256=expected) is report
-    report["outbound_contract"]["payload_sha256"] = "b" * 64
-    with pytest.raises(PreflightError, match="payload hash"):
-        verify_result(report, lock, expected_payload_sha256=expected)
-    for malformed in ("a" * 63, "z" * 64):
-        report["outbound_contract"]["payload_sha256"] = malformed
-        with pytest.raises(PreflightError, match="outbound contract"):
-            verify_result(report, lock, expected_payload_sha256=expected)
+    assert verify_result(report, lock) is report
+    for forged in ("b" * 64, "a" * 63, "z" * 64):
+        report["outbound_contract"]["payload_sha256"] = forged
+        with pytest.raises(PreflightError, match="outbound contract|payload hash"):
+            verify_result(report, lock)
 
 
 def test_egress_worker_has_no_filesystem_or_network_capabilities_in_its_code():

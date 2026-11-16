@@ -141,3 +141,5 @@ IP-1/IP-3 宿主入口 `scripts/run_ip1_ip3_host_validation.ps1` 的 Docker 前�
 ## 2026-11-16 离线报告 digest 核验
 
 `payload_sha256` 现在要求 64 位小写 SHA-256，并与本次 canonical sanitized payload 重算值一致。伪造、截断和非十六进制 digest 均 fail closed。该 digest 只校验离线记录，不证明服务端网络收发；runner 没有网络调用，OS 层出站仍未隔离。定向用例 1 项通过；只读 lock，没有打开候选 gold。
+
+补充 API 修复：canonical digest 同时固定在 offline lock 中，`verify_result()` 与 `write_result()` 都必须匹配该值；`run_offline()` 重算当前 sanitized payload 并先与 lock 对照。完整 v14 离线相关测试组 22 passed、1 skipped。测试使用临时合成 fixture；没有读取外部候选 gold 或发起网络/模型请求。旧预检 JSON 保留原样，其 source hash 对应旧代码，不冒充当前 lock 下的新验收结果。

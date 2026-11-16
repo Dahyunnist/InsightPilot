@@ -87,6 +87,9 @@ def create_offline_lock(candidate: Path) -> dict:
     if (manifest.get("status") != "candidate_pending_owner_review" or
             manifest.get("synthetic_only") is not True or manifest.get("model_calls") != 0):
         raise PreflightError("candidate is not a zero-call synthetic owner-review candidate")
+    blind = [json.loads(line) for line in paths["blind.jsonl"].read_text(encoding="utf-8").splitlines()
+             if line.strip()]
+    payload = _canonical_payload_bytes(_payload_records(blind, manifest))
     return {
         "schema_version": 1,
         "status": "offline_only_not_authorized",
@@ -99,6 +102,7 @@ def create_offline_lock(candidate: Path) -> dict:
         "data_fingerprint": manifest["data_fingerprint"],
         "source_sha256": source_hashes(),
         "prompt_sha256": prompt_sha256(),
+        "canonical_payload_sha256": hashlib.sha256(payload).hexdigest(),
         "outbound_fields": ["question", "allowed_metric_ids"],
         "gold_access_boundary": "parent evaluator only; child receives sanitized records on stdin",
         "network_calls": 0,
@@ -142,7 +146,7 @@ def validate_payload(payload: object) -> dict:
 def validate_lock(lock: dict) -> None:
     required = {"schema_version", "status", "external_calls_authorized", "network_boundary",
                 "suite_id", "candidate_manifest_sha256", "candidate_sha256", "data_version",
-                "data_fingerprint", "source_sha256", "prompt_sha256", "outbound_fields",
+                "data_fingerprint", "source_sha256", "prompt_sha256", "canonical_payload_sha256", "outbound_fields",
                 "gold_access_boundary", "network_calls", "model_calls"}
     if not isinstance(lock, dict) or set(lock) != required:
         raise PreflightError("offline lock schema mismatch")
@@ -159,6 +163,7 @@ def validate_lock(lock: dict) -> None:
             set(lock["source_sha256"]) != set(SOURCE_FILES)):
         raise PreflightError("offline lock hash schema mismatch")
     hashes = [lock.get("candidate_manifest_sha256"), lock.get("prompt_sha256"),
+              lock.get("canonical_payload_sha256"),
               *lock["candidate_sha256"].values(), *lock["source_sha256"].values()]
     if any(not isinstance(value, str) or not re.fullmatch(r"[a-f0-9]{64}", value)
            for value in hashes):
@@ -251,7 +256,12 @@ def _payload_records(blind: list[dict], manifest: dict) -> list[dict]:
     return records
 
 
-def verify_result(report: dict, lock: dict, *, expected_payload_sha256: str) -> dict:
+def _canonical_payload_bytes(records: list[dict]) -> bytes:
+    return json.dumps(records, ensure_ascii=False, sort_keys=True,
+                      separators=(",", ":")).encode("utf-8")
+
+
+def verify_result(report: dict, lock: dict) -> dict:
     allowed = {"schema_version", "suite_id", "status", "external_calls_authorized", "network_calls",
                "model_calls", "candidate_sha256", "source_sha256", "prompt_sha256",
                "outbound_contract", "offline_baseline"}
@@ -281,8 +291,8 @@ def verify_result(report: dict, lock: dict, *, expected_payload_sha256: str) -> 
             not isinstance(contract.get("payload_sha256"), str) or
             not re.fullmatch(r"[a-f0-9]{64}", contract["payload_sha256"])):
         raise PreflightError("result outbound contract is invalid")
-    if contract["payload_sha256"] != expected_payload_sha256:
-        raise PreflightError("result payload hash differs from canonical sanitized payload")
+    if contract["payload_sha256"] != lock["canonical_payload_sha256"]:
+        raise PreflightError("result payload hash differs from locked canonical payload")
     baseline = report["offline_baseline"]
     if not isinstance(baseline, dict):
         raise PreflightError("offline baseline result is malformed")
@@ -308,8 +318,10 @@ def run_offline(candidate: Path, lock: dict) -> dict:
     records = _payload_records(blind, manifest)
     # The child receives no candidate root, gold file, SQL, result rows, or environment secrets.
     sanitized = [_run_egress_worker(record) for record in records]
-    payload_bytes = json.dumps(sanitized, ensure_ascii=False, sort_keys=True,
-                               separators=(",", ":")).encode("utf-8")
+    payload_bytes = _canonical_payload_bytes(sanitized)
+    payload_sha256 = hashlib.sha256(payload_bytes).hexdigest()
+    if payload_sha256 != lock["canonical_payload_sha256"]:
+        raise PreflightError("constructed payload hash differs from offline lock")
 
     # Gold is opened only after the isolated payload worker has exited.
     root = candidate.resolve(strict=True)
@@ -353,7 +365,7 @@ def run_offline(candidate: Path, lock: dict) -> dict:
             "by_domain": by_domain,
         },
     }
-    return verify_result(report, lock, expected_payload_sha256=hashlib.sha256(payload_bytes).hexdigest())
+    return verify_result(report, lock)
 
 
 def write_result(report: dict, output: Path, lock: dict) -> None:
