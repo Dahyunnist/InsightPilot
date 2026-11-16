@@ -70,4 +70,3 @@ def test_inventory_turnover_sqlite_postgres_parity_and_tenant_scope():
                             "(tenant_id, snapshot_id, category, snapshot_at, local_date, inventory_value_cents) "
                             "VALUES ('tenant-a', 'permission-probe', 'test', "
                             "'2026-11-01T00:00:00Z', '2026-11-01', 1)")
-
