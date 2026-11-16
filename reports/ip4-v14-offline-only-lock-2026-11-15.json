@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "status": "offline_only_not_authorized",
+  "external_calls_authorized": false,
+  "network_access": "disabled",
+  "suite_id": "insightpilot-ip4-v14-private-candidate",
+  "candidate_manifest_sha256": "060cbdf6e17563d3873b934819c79538b0d74d1c88a01bc58ce905136e02835d",
+  "candidate_sha256": {
+    "blind.jsonl": "aecba9db0a9c977fa7f95378815965218707b53b68b705530673ad3aeed4e080",
+    "gold.jsonl": "8c01a8cb71f38c4c1885cb8ef59cb4ce7defaa01848d4c9efb09b6cf6e9558c3",
+    "synthetic.sqlite": "50ae1d417a72c20699ab2c53775b3e530010f7e7f51a2cf66ef6ffcebd041b34"
+  },
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "3cb91c8cd3bba15d3083bdd188f23d22d246d8f6adfd40eb6e4d1e9f8a29ab14",
+  "source_sha256": {
+    "candidate_builder": "2f6f29ad352440ed5fa530b2584be1bbc4176f3da2f92d703fadaa1b1b3b2142",
+    "case_generator": "2f6f29ad352440ed5fa530b2584be1bbc4176f3da2f92d703fadaa1b1b3b2142",
+    "dataset_builder": "9c2dcad7e1ef3c6cbf25ffd4efde773ad3dba5286d9855587aee00840ac9113d",
+    "refund_oracle": "761653fa692bb6081db524306c343ef45e1e6368a2316574c3f36eaa04cfb580",
+    "row_parity": "5f928dbc3d1f105043498b9b1964890ab3268d210f957a6b9a5de668d9f0f0cb",
+    "marketing_oracle": "e85d9cb75bf5091498a1e6d42382e5ca4adf482fa626068c0cf1a44041c14493",
+    "data_identity": "5104881b15a2055a078bec0410d499972be49f0e0cd28d058ab64c414a407647",
+    "marketing_calculation": "68d370df51ef105643f3f77b53f0a5a4d31359b225dd1ace9fd4af48db5459c1",
+    "planner_prompt_source": "78f3d980309ab7048b2c2b1fcfa7a4a4fd11a530f494119b5baa8bb14678aecc",
+    "metric_catalog": "c6841bf22b9e2c20236fc0e3a0d1a47b5674406749a3a582675cf40399b53a1b",
+    "readonly_runner": "b1e5555c484a6f129eb1228891314507a7973588ef2eb3a25154f91de6d2954f",
+    "query_compiler_runtime": "7a748a33553268d2931203e24d16bb19cee3fdac1bbdc8e12f339cebd54d1ec3",
+    "scorer": "e1cb44704c3c0b6a46e8a594490da8030cef2688b8544b3457c97cab05fe9eb8",
+    "shared_scorer": "d3f2126b1ab088d9d96852bb2e23a609752220eaf5863c96c9cc0296a0beacd8",
+    "agent_runtime": "fa134158cec40e38f0fdc7d4403faf46be286755d96d6ec111fe16c54ce761ed",
+    "rule_planner": "60c31663398eca933bfba676e2394e7a4ceccff1028f5cd74f79bf99777812a0",
+    "query_engine": "052a758e1561bc37e26a247111aeaad793d01f01a8960e37642eeca46bfbc355",
+    "offline_runner_module": "32ba92be70fc531af923576efaeb021d569cc66772a810470625b6f6bb82b3d2",
+    "offline_runner_cli": "f4a00053f35f191ecad484b48c969d7912174ddbd20b31112aaeb03446ff60c5",
+    "egress_worker": "f712168bb63b00c43bfb119a985f7636bbeaaedbef015f8120537f9a4212c12c"
+  },
+  "prompt_sha256": "a92994a54316c1a7127e0bc53160da1585bd869488e3fcf9cd3e10a3701e74d6",
+  "outbound_fields": [
+    "question",
+    "allowed_metric_ids"
+  ],
+  "gold_access_boundary": "parent evaluator only; child receives sanitized records on stdin",
+  "network_calls": 0,
+  "model_calls": 0
+}

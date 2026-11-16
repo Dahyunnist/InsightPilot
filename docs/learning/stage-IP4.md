@@ -131,3 +131,9 @@ IP-1/IP-3 宿主入口 `scripts/run_ip1_ip3_host_validation.ps1` 的 Docker 前�
 先前授权存档绑定 v13 blind hash；v14 使用新 blind/gold hash，因此授权不能视为完全相同。字段约束相同，但 v14 没有专用模型 runner、runner hash 或独立 prompt hash，也没有将所有运行参数锁在一份 v14 执行 manifest。Gold 与 blind 同处仓库外候选目录，当前无 ACL 隔离证据。负责人需先决定是否接受候选/口径、是否将授权扩展到 v14 hash、调用上限/重试/预算及 gold 访问边界。详情见 [`ip4-v14-owner-review-2026-11-15.md`](ip4-v14-owner-review-2026-11-15.md)。
 
 离线候选与摘要测试 7/7 通过，0 模型调用。未改候选、gold 或 `.tmp`。IP-1 `data_meta` 宿主复验通过的独立 SHA 核验也记于该审阅包；OpsPilot 的 `verify-bad-release` 未混入 InsightPilot 阶段证据。
+
+## 2026-11-16 v14 默认禁网预检切片
+
+增加独立 offline-only lock、runner 与 stdin/stdout 子进程 payload worker。lock 固定 candidate manifest、blind/gold/SQLite、生成器/数据源、prompt/planner、scorer、查询运行时代码与 worker 哈希，且显式标记未授权外发。runner 无 provider/network 调用；本地只执行 synthetic SQLite RulePlanner 基线。worker 接收的 payload 只有合成问题和允许指标 ID；拒绝路径、gold、SQL、查询结果字段及未知字段。原 blind/gold 未改、未移动；gold 在父进程本地评分，worker 不接收其路径或内容。该边界是子进程数据契约，不是 OS ACL 沙箱。
+
+定向失败/通过测试 10/10。报告核验、哈希失配、payload 污染和禁网静态检查均覆盖。v14 仍未获模型调用授权；不复用 v13 授权。详情见 [`ip4-v14-owner-review-2026-11-15.md`](ip4-v14-owner-review-2026-11-15.md)。
