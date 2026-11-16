@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 import time
@@ -74,6 +75,29 @@ def _wait_health(timeout: float = 30) -> None:
     raise TimeoutError("Compose API health did not recover within 30 seconds")
 
 
+def _wait_planner_start(baseline: int, request_future, timeout: float = 8) -> None:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if request_future.done():
+            raise RuntimeError("initial analysis request completed before planner-start signal")
+        status, body, _headers = api("GET", "/_probe/planner-start-count", timeout=1)
+        if status == 200 and body.get("count", 0) > baseline:
+            return
+        time.sleep(0.1)
+    raise TimeoutError("synthetic planner did not start before restart probe deadline")
+
+
+def _safe_exception_message(exc: Exception) -> str:
+    message = str(exc)
+    message = re.sub(r"(?i)bearer\s+\S+", "Bearer [REDACTED]", message)
+    message = re.sub(
+        r"(?i)(api[_-]?key|access[_-]?token|token|password|secret)(\s*[=:]\s*)[^\s,;]+",
+        r"\1\2[REDACTED]", message,
+    )
+    message = re.sub(r"(?i)([?&](?:token|key|password|secret)=)[^&\s]+", r"\1[REDACTED]", message)
+    return message[:240]
+
+
 def _container_id() -> str:
     result = compose("ps", "-q")
     ids = [line.strip() for line in result.stdout.splitlines() if line.strip()]
@@ -92,12 +116,8 @@ def _image_id() -> str:
 
 def verify() -> dict:
     started_at = time.perf_counter()
-    image_id = _image_id()
-    existing = compose("ps", "-q")
-    if existing.stdout.strip():
-        raise RuntimeError(f"Compose project {PROJECT} already has a container; refusing to touch it")
-
     started = False
+    phase = "inspect_local_image"
     report = {
         "synthetic_only": True,
         "model_calls": 0,
@@ -107,21 +127,44 @@ def verify() -> dict:
         "termination_signal": "SIGKILL",
     }
     try:
+        _image_id()
+        phase = "check_dedicated_project_empty"
+        existing = compose("ps", "-q")
+        if existing.stdout.strip():
+            raise RuntimeError(f"Compose project {PROJECT} already has a container; refusing to touch it")
+
+        phase = "start_compose_service"
         compose("up", "-d", "--wait", "--pull", "never")
         started = True
+        phase = "wait_initial_health"
         _wait_health()
+        phase = "read_initial_container_id"
         before_id = _container_id()
 
         from concurrent.futures import ThreadPoolExecutor
 
+        phase = "read_planner_start_baseline"
+        baseline_status, baseline_body, _headers = api("GET", "/_probe/planner-start-count")
+        if baseline_status != 200 or not isinstance(baseline_body.get("count"), int):
+            raise RuntimeError("synthetic planner-start signal unavailable")
         with ThreadPoolExecutor(max_workers=1) as executor:
+            phase = "send_initial_analysis_request"
             request_future = executor.submit(_initial_request)
-            deadline = time.monotonic() + 10
+            phase = "wait_for_initial_planner_start"
+            _wait_planner_start(baseline_body["count"], request_future)
+            phase = "observe_running_idempotent_replay"
+            deadline = time.monotonic() + 8
             pending = None
             while time.monotonic() < deadline:
-                status, body, headers = api(
-                    "POST", "/analysis", payload={"question": QUESTION}, idempotency=True,
-                )
+                try:
+                    status, body, headers = api(
+                        "POST", "/analysis", payload={"question": QUESTION}, idempotency=True,
+                    )
+                except (OSError, TimeoutError, urllib.error.URLError):
+                    if request_future.done():
+                        raise RuntimeError("initial analysis request ended before replay was observed")
+                    time.sleep(0.1)
+                    continue
                 if status == 202 and body.get("status") == "running":
                     pending = {"run_id": body.get("run_id"), "replay_header": headers.get("idempotency-replay")}
                     break
@@ -132,13 +175,20 @@ def verify() -> dict:
                 raise TimeoutError("did not observe an idempotent replay of the active run")
 
             report["pending_replay"] = {"http_status": 202, **pending}
+            phase = "kill_dedicated_api_container"
             compose("kill", "--signal", "SIGKILL", "api-probe")
+            phase = "collect_interrupted_initial_request"
             interrupted_request = request_future.result(timeout=10)
+            phase = "restart_dedicated_compose_service"
             compose("up", "-d", "--wait", "--pull", "never")
+            phase = "wait_recovered_health"
             _wait_health()
+            phase = "read_recovered_container_id"
             after_id = _container_id()
 
+        phase = "read_interrupted_run_state"
         status, record, _headers = api("GET", f"/runs/{pending['run_id']}")
+        phase = "verify_idempotent_retry"
         replay_status, replay_body, replay_headers = api(
             "POST", "/analysis", payload={"question": QUESTION}, idempotency=True,
         )
@@ -165,7 +215,11 @@ def verify() -> dict:
             report["failure"] = "recovered state or replay did not match interrupted-run contract"
     except Exception as exc:
         report["passed"] = False
+        report["failure_phase"] = phase
         report["failure_class"] = type(exc).__name__
+        safe_message = _safe_exception_message(exc)
+        if safe_message:
+            report["failure_message"] = safe_message
     finally:
         if started:
             cleanup = compose("down", check=False)

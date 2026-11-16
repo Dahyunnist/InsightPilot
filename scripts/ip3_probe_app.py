@@ -25,9 +25,19 @@ from insightpilot.run_store import RunStore
 
 
 class ProbeSignals:
-    def __init__(self):
+class ProbeSignals:
+    def __init__(self) -> None:
         self._lock = threading.Lock()
+        self._planner_starts = 0
         self._cancel_plans_started = 0
+
+    def planner_started(self) -> None:
+        with self._lock:
+            self._planner_starts += 1
+
+    def planner_start_count(self) -> int:
+        with self._lock:
+            return self._planner_starts
 
     def mark_cancel_plan_started(self) -> None:
         with self._lock:
@@ -39,10 +49,16 @@ class ProbeSignals:
 
 
 probe_signals = ProbeSignals()
+signals = probe_signals
+
+
+def planner_start_status() -> dict[str, int]:
+    return {"count": signals.planner_start_count()}
 
 
 class FixedPlanner:
     def plan(self, question: str) -> QueryPlan:
+        signals.planner_started()
         if question == "合成取消可靠性探针":
             probe_signals.mark_cancel_plan_started()
             delay_ms = float(os.environ.get("IP3_CANCEL_DELAY_MS", "1500"))
@@ -64,6 +80,12 @@ app = create_app(
     max_concurrent=8,
     max_requests_per_minute=1000,
     request_timeout_seconds=5,
+)
+app.add_api_route(
+    "/_probe/planner-start-count",
+    planner_start_status,
+    methods=["GET"],
+    include_in_schema=False,
 )
 
 
