@@ -10,7 +10,22 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from insightpilot.ip4_v14_offline import DEFAULT_LOCK, PreflightError, run_offline, write_result
+from insightpilot.ip4_v14_offline import (
+    DEFAULT_LOCK, PreflightError, run_offline, sha256_file, validate_lock, write_result,
+)
+
+CANONICAL_LOCK_SHA256 = "9c0ff185f48f63b65c97575a28ee5bac3c6195fb19e6959ebd310bbb1f623238"
+
+
+def load_lock(path: Path) -> dict:
+    resolved = path.resolve(strict=True)
+    if resolved != DEFAULT_LOCK.resolve(strict=True):
+        raise PreflightError("--lock replacement is forbidden; only the reviewed canonical lock is accepted")
+    if sha256_file(resolved) != CANONICAL_LOCK_SHA256:
+        raise PreflightError("canonical offline lock hash mismatch")
+    lock = json.loads(resolved.read_text(encoding="utf-8"))
+    validate_lock(lock)
+    return lock
 
 
 def main() -> int:
@@ -22,7 +37,7 @@ def main() -> int:
                         help="new sanitized result path; existing reports are never overwritten")
     args = parser.parse_args()
     try:
-        lock = json.loads(args.lock.read_text(encoding="utf-8"))
+        lock = load_lock(args.lock)
         report = run_offline(args.candidate, lock)
         if args.report:
             write_result(report, args.report, lock)

@@ -2,7 +2,6 @@
   "schema_version": 1,
   "status": "offline_only_not_authorized",
   "external_calls_authorized": false,
-  "network_access": "disabled",
   "suite_id": "insightpilot-ip4-v14-private-candidate",
   "candidate_manifest_sha256": "060cbdf6e17563d3873b934819c79538b0d74d1c88a01bc58ce905136e02835d",
   "candidate_sha256": {
@@ -30,8 +29,7 @@
     "agent_runtime": "fa134158cec40e38f0fdc7d4403faf46be286755d96d6ec111fe16c54ce761ed",
     "rule_planner": "60c31663398eca933bfba676e2394e7a4ceccff1028f5cd74f79bf99777812a0",
     "query_engine": "052a758e1561bc37e26a247111aeaad793d01f01a8960e37642eeca46bfbc355",
-    "offline_runner_module": "32ba92be70fc531af923576efaeb021d569cc66772a810470625b6f6bb82b3d2",
-    "offline_runner_cli": "f4a00053f35f191ecad484b48c969d7912174ddbd20b31112aaeb03446ff60c5",
+    "offline_runner_module": "c955a3aac69930877539b031e1dddb36f21bfd57f739700335a2f38214fe1d69",
     "egress_worker": "f712168bb63b00c43bfb119a985f7636bbeaaedbef015f8120537f9a4212c12c"
   },
   "prompt_sha256": "a92994a54316c1a7127e0bc53160da1585bd869488e3fcf9cd3e10a3701e74d6",
@@ -41,5 +39,6 @@
   ],
   "gold_access_boundary": "parent evaluator only; child receives sanitized records on stdin",
   "network_calls": 0,
-  "model_calls": 0
+  "model_calls": 0,
+  "network_boundary": "code_has_no_network_client_os_egress_not_blocked"
 }

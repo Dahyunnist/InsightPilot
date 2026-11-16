@@ -134,6 +134,6 @@ IP-1/IP-3 宿主入口 `scripts/run_ip1_ip3_host_validation.ps1` 的 Docker 前�
 
 ## 2026-11-16 v14 默认禁网预检切片
 
-增加独立 offline-only lock、runner 与 stdin/stdout 子进程 payload worker。lock 固定 candidate manifest、blind/gold/SQLite、生成器/数据源、prompt/planner、scorer、查询运行时代码与 worker 哈希，且显式标记未授权外发。runner 无 provider/network 调用；本地只执行 synthetic SQLite RulePlanner 基线。worker 接收的 payload 只有合成问题和允许指标 ID；拒绝路径、gold、SQL、查询结果字段及未知字段。原 blind/gold 未改、未移动；gold 在父进程本地评分，worker 不接收其路径或内容。该边界是子进程数据契约，不是 OS ACL 沙箱。
+增加独立 offline-only lock、runner 与 stdin/stdout 子进程 payload worker。这是离线校验工具，不是授权模型 runner。代码路径不发网络请求；未建立 OS 级出站阻断。lock 固定 candidate manifest、blind/gold/SQLite、生成器/数据源、prompt/planner、scorer、查询运行时代码与 worker 哈希，显式标记未授权外发。worker 接收的 payload 只有合成问题和允许指标 ID；拒绝路径、gold、SQL、查询结果字段及未知字段。原 blind/gold 未改、未移动；gold 在父进程本地评分，worker 不接收其路径或内容。该边界是子进程数据契约，不是 OS ACL 沙箱。CLI 固定 canonical lock 路径和哈希；替换锁及无效锁 fail closed。
 
 定向失败/通过测试 10/10。报告核验、哈希失配、payload 污染和禁网静态检查均覆盖。v14 仍未获模型调用授权；不复用 v13 授权。详情见 [`ip4-v14-owner-review-2026-11-15.md`](ip4-v14-owner-review-2026-11-15.md)。

@@ -15,9 +15,11 @@ from insightpilot.ip4_v14_offline import (
     create_offline_lock,
     run_offline,
     validate_payload,
+    validate_lock,
     verify_result,
     write_result,
 )
+from scripts.run_ip4_v14_offline import load_lock
 
 
 def _candidate(parent: Path) -> Path:
@@ -32,7 +34,7 @@ def test_v14_offline_runner_scores_synthetic_fixture_and_never_enables_network()
         lock = create_offline_lock(candidate)
         assert lock["status"] == "offline_only_not_authorized"
         assert lock["external_calls_authorized"] is False
-        assert lock["network_access"] == "disabled"
+        assert lock["network_boundary"] == "code_has_no_network_client_os_egress_not_blocked"
         result = run_offline(candidate, lock)
         assert result["status"] == "offline_preflight_passed"
         assert result["model_calls"] == result["network_calls"] == 0
@@ -67,6 +69,18 @@ def test_independent_worker_rejects_paths_and_sensitive_fields():
         )
         assert result.returncode == 2
         assert result.stdout == ""
+
+
+def test_cli_rejects_lock_replacement_and_invalid_lock_schema(tmp_path):
+    canonical = ROOT / "reports/ip4-v14-offline-only-lock-2026-11-15.json"
+    replacement = tmp_path / "replacement-lock.json"
+    replacement.write_bytes(canonical.read_bytes())
+    with pytest.raises(PreflightError, match="--lock replacement"):
+        load_lock(replacement)
+    invalid = json.loads(canonical.read_text(encoding="utf-8"))
+    invalid["network_boundary"] = "disabled"
+    with pytest.raises(PreflightError):
+        validate_lock(invalid)
 
 
 def test_egress_worker_has_no_filesystem_or_network_capabilities_in_its_code():

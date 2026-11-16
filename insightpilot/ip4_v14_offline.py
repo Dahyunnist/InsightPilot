@@ -42,7 +42,6 @@ SOURCE_FILES = {
     "rule_planner": "insightpilot/rule_baseline.py",
     "query_engine": "insightpilot/query_engine.py",
     "offline_runner_module": "insightpilot/ip4_v14_offline.py",
-    "offline_runner_cli": "scripts/run_ip4_v14_offline.py",
     "egress_worker": "scripts/ip4_v14_egress_worker.py",
 }
 
@@ -92,7 +91,7 @@ def create_offline_lock(candidate: Path) -> dict:
         "schema_version": 1,
         "status": "offline_only_not_authorized",
         "external_calls_authorized": False,
-        "network_access": "disabled",
+        "network_boundary": "code_has_no_network_client_os_egress_not_blocked",
         "suite_id": manifest["suite_id"],
         "candidate_manifest_sha256": sha256_file(paths["manifest.json"]),
         "candidate_sha256": {name: sha256_file(paths[name]) for name in names[1:]},
@@ -140,17 +139,40 @@ def validate_payload(payload: object) -> dict:
     return {"question": question, "allowed_metric_ids": metric_ids}
 
 
-def _validate_lock(lock: dict) -> None:
+def validate_lock(lock: dict) -> None:
+    required = {"schema_version", "status", "external_calls_authorized", "network_boundary",
+                "suite_id", "candidate_manifest_sha256", "candidate_sha256", "data_version",
+                "data_fingerprint", "source_sha256", "prompt_sha256", "outbound_fields",
+                "gold_access_boundary", "network_calls", "model_calls"}
+    if not isinstance(lock, dict) or set(lock) != required:
+        raise PreflightError("offline lock schema mismatch")
+    if lock.get("schema_version") != 1:
+        raise PreflightError("unsupported offline lock schema")
     if lock.get("status") != "offline_only_not_authorized":
         raise PreflightError("lock does not explicitly prohibit external calls")
-    if lock.get("external_calls_authorized") is not False or lock.get("network_access") != "disabled":
-        raise PreflightError("network authorization must remain disabled")
+    if (lock.get("external_calls_authorized") is not False or
+            lock.get("network_boundary") != "code_has_no_network_client_os_egress_not_blocked"):
+        raise PreflightError("offline tool boundary or authorization mismatch")
+    if (not isinstance(lock.get("candidate_sha256"), dict) or
+            set(lock["candidate_sha256"]) != {"blind.jsonl", "gold.jsonl", "synthetic.sqlite"} or
+            not isinstance(lock.get("source_sha256"), dict) or
+            set(lock["source_sha256"]) != set(SOURCE_FILES)):
+        raise PreflightError("offline lock hash schema mismatch")
+    hashes = [lock.get("candidate_manifest_sha256"), lock.get("prompt_sha256"),
+              *lock["candidate_sha256"].values(), *lock["source_sha256"].values()]
+    if any(not isinstance(value, str) or not re.fullmatch(r"[a-f0-9]{64}", value)
+           for value in hashes):
+        raise PreflightError("offline lock hash schema mismatch")
+    if (lock.get("network_calls") != 0 or lock.get("model_calls") != 0 or
+            lock.get("outbound_fields") != ["question", "allowed_metric_ids"] or
+            lock.get("suite_id") != "insightpilot-ip4-v14-private-candidate" or
+            not isinstance(lock.get("data_version"), str) or
+            not re.fullmatch(r"[a-f0-9]{64}", str(lock.get("data_fingerprint")))):
+        raise PreflightError("offline lock policy fields mismatch")
     if lock.get("prompt_sha256") != prompt_sha256():
         raise PreflightError("prompt hash mismatch")
     if lock.get("source_sha256") != source_hashes():
         raise PreflightError("source hash mismatch")
-    if lock.get("outbound_fields") != ["question", "allowed_metric_ids"]:
-        raise PreflightError("outbound field contract mismatch")
 
 
 def _load_candidate(candidate: Path, lock: dict) -> tuple[dict, list[dict], list[dict]]:
@@ -278,7 +300,7 @@ def verify_result(report: dict, lock: dict) -> dict:
 
 
 def run_offline(candidate: Path, lock: dict) -> dict:
-    _validate_lock(lock)
+    validate_lock(lock)
     manifest, blind, _ = _load_candidate(candidate, lock)
     records = _payload_records(blind, manifest)
     # The child receives no candidate root, gold file, SQL, result rows, or environment secrets.
