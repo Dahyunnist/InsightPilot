@@ -20,6 +20,10 @@ def test_ip4_release_audit_proves_frozen_two_backend_parity_and_keeps_scope_boun
         "tenant-b": {"passed": 22, "total": 22},
     }
     assert audit["model_ablation_backend_scope"]["status"] == "not_recorded_in_run_evidence"
+    assert audit["model_ablation_artifact_integrity"]["status"] == "mismatch"
+    assert audit["model_ablation_artifact_integrity"]["checks"]["report_matches_run_manifest_manifest"] is True
+    assert audit["model_ablation_artifact_integrity"]["checks"]["report_manifest_matches_current_bundle"] is False
+    assert audit["model_ablation_artifact_integrity"]["checks"]["run_manifest_matches_current_bundle"] is False
     assert audit["v13_model_execution_gate"]["status"] == "blocked_pending_code_lock_review"
     fields = audit["model_run_manifest"]["field_status"]
     assert fields["model_id"] == {"value": None, "status": "not_recorded"}

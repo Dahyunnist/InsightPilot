@@ -27,6 +27,8 @@
 
 gold-free 库存、权限与 IP3 定向组在隔离网络的 Python 3.12 容器中 39 项通过、6 项因需要专用 PostgreSQL 和显式 opt-in 跳过。9 项 PowerShell 专项在 Windows 宿主复跑均通过。MCP 取消异步组在 Python 3.12 容器 2/2 通过；模型调用与外网请求均为 0。Gold-reading 测试不在本组范围内。
 
+同轮离线审计单测发现，模型报告与 run manifest 彼此记录的 bundle manifest SHA 一致，但二者都与当前工作树 manifest SHA 不同。审计器现将此项报告为 `model_ablation_artifact_integrity=mismatch`，不再因它中止确定性 parity 审计。新版审计见 `reports/ip4-release-requirement-audit-2026-11-16-r2.json`；旧报告保留。确定性 parity 仍通过，36-call 模型消融不得绑定到当前 bundle；未读取 gold 内容，也没有模型调用。
+
 ## 未完成项
 
 1. v13：同一 frozen hash 的 SQLite、PostgreSQL tenant-a、tenant-b 确定性逐题 parity 已通过。模型消融报告未记录 backend，执行代码锁仍不匹配；模型评测仍受锁、实时预算快照和审批门槛约束。

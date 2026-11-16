@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "audit_status": "deterministic_parity_passed_model_evidence_incomplete",
+  "model_calls_for_this_audit": 0,
+  "two_domain_requirement": {
+    "status": "passed",
+    "case_count": 22,
+    "domain_counts": {
+      "marketing_roi": 10,
+      "refunds": 12
+    },
+    "model_ablation_suite_id": "insightpilot-ip4-offline-prep-v1"
+  },
+  "model_ablation_backend_scope": {
+    "status": "not_recorded_in_run_evidence",
+    "report_backend_field": "not_recorded",
+    "run_manifest_backend_field": "not_in_schema",
+    "model_calls": 36,
+    "configured_model": "deepseek-v4-flash",
+    "actual_model_id_status": "not_recorded",
+    "claim_boundary": "Deterministic PostgreSQL parity does not prove that model requests ran against PostgreSQL."
+  },
+  "model_ablation_artifact_integrity": {
+    "status": "mismatch",
+    "checks": {
+      "report_matches_run_manifest": true,
+      "run_manifest_matches_sidecar": true,
+      "report_manifest_matches_current_bundle": false,
+      "run_manifest_matches_current_bundle": false,
+      "report_matches_run_manifest_manifest": true
+    },
+    "report_manifest_sha256": "94aadf46f508f23a58dbff01b1ceff2fa2f342a3e9a18453814e3e7d19bd246f",
+    "run_manifest_source_sha256": "94aadf46f508f23a58dbff01b1ceff2fa2f342a3e9a18453814e3e7d19bd246f",
+    "current_bundle_manifest_sha256": "34e08c382f96ba4b9e82af9d2a12d6470bd3e44ab43c5f403e534087189dafdf",
+    "interpretation": "Stored model artifacts do not match the current offline bundle manifest; do not bind the model ablation to the current bundle."
+  },
+  "v13_model_execution_gate": {
+    "status": "blocked_pending_code_lock_review",
+    "execution_code_lock_matches": false,
+    "model_evaluation_allowed": false,
+    "model_calls_for_this_audit": 0
+  },
+  "frozen_deterministic_two_backend_parity": {
+    "status": "passed",
+    "report_path": "reports/ip4-v13-postgres-parity-a2ea8ab495c14543afab476f0496ae65.json",
+    "report_sha256": "1d09c9f00a2c7955f255964de053b7ce07cc4708980fdb762ffbd18f58642c10",
+    "run_id": "a2ea8ab495c14543afab476f0496ae65",
+    "suite_id": "insightpilot-ip4-independent-v13",
+    "case_count": 22,
+    "domains": {
+      "marketing_roi": 10,
+      "refunds": 12
+    },
+    "postgresql_server_version": "16.15",
+    "tenant_results": {
+      "tenant-a": {
+        "passed": 22,
+        "total": 22
+      },
+      "tenant-b": {
+        "passed": 22,
+        "total": 22
+      }
+    },
+    "ruleplanner_score_vector": {
+      "ruleplanner_with_independent_verifier": {
+        "passed": 15,
+        "total": 22,
+        "failure_case_ids": [
+          "IP4V13-R02",
+          "IP4V13-R04",
+          "IP4V13-R05",
+          "IP4V13-R06",
+          "IP4V13-R07",
+          "IP4V13-M01",
+          "IP4V13-M09"
+        ]
+      },
+      "ruleplanner_without_independent_verifier": {
+        "passed": 15,
+        "total": 22,
+        "failure_case_ids": [
+          "IP4V13-R02",
+          "IP4V13-R04",
+          "IP4V13-R05",
+          "IP4V13-R06",
+          "IP4V13-R07",
+          "IP4V13-M01",
+          "IP4V13-M09"
+        ]
+      }
+    },
+    "model_calls": 0,
+    "frozen_hashes": {
+      "manifest_sha256": "c7b7875dcf01380fc6f9da32c7ad8593f9f19f5ca5fc38f32a3521236e349932",
+      "blind_sha256": "c7c8ecdd498cdaae44e7744457b54a2ade850c47e0340f5d3acb66c4f33bfa66",
+      "gold_sha256": "f10959a4be664a69f39d6ff3079b6d3d93705e310e09be5abdc6c2b0fe335df2"
+    },
+    "execution_environment": {
+      "run_id": "a2ea8ab495c14543afab476f0496ae65",
+      "compose_project": "insightpilot-v13-a2ea8ab495c1",
+      "env_file_autoload_disabled": true,
+      "host_binding": "127.0.0.1",
+      "postgres_storage": "tmpfs",
+      "host_data_volume": false,
+      "project_cleanup": "passed_project_only",
+      "remaining_project_containers": 0,
+      "remaining_project_networks": 0
+    },
+    "scoring_method": "Independent local frozen-gold scorer; gold was never passed to a model."
+  },
+  "superseded_intermediate_attempts": [
+    {
+      "path": "reports/ip4-v13-postgres-parity-bf75136a9a7e4d8294d51124f5a29a50.json",
+      "recorded_sha256": "8ea43d534220870cfa46b0cf1f84a2c5921c711028d047d78da92d76b702966f",
+      "wrapper_status": "failed_after_report_generation",
+      "observed_parity": "passed_22_of_22_per_tenant",
+      "artifact_recovery_status": "not_recoverable_in_current_workspace",
+      "release_candidate_action": "exclude_superseded_intermediate"
+    },
+    {
+      "path": "reports/ip4-v13-postgres-parity-ea44b24e4f9240c0b74883f6863b29c6.json",
+      "recorded_sha256": "51df2a24ba01b72242c6766e5f823c9b5021538c1baf32d380d2b25ab4ce2477",
+      "wrapper_status": "failed_after_report_generation",
+      "observed_parity": "passed_22_of_22_per_tenant",
+      "recorded_postgresql_version": "16.15",
+      "artifact_recovery_status": "not_recoverable_in_current_workspace",
+      "release_candidate_action": "exclude_superseded_intermediate"
+    }
+  ],
+  "intermediate_attempt_recovery": {
+    "exact_original_files_present": false,
+    "recovery_attempts": {
+      "workspace_and_temp_search": "not_found",
+      "unreachable_git_blobs_checked": 8,
+      "exact_sha256_matches": 0
+    },
+    "reconstructed_json": false,
+    "release_candidate_action": "exclude_missing_intermediate_artifacts; retain this loss record and final passing evidence"
+  },
+  "model_run_manifest": {
+    "path": "reports/ip4-retrieval-ablation-run-manifest-2026-11-16-r2.json",
+    "sha256": "44ad86c3f4ac714ba7dd03776a8cc110c2b843148b120757c3a7e4a339ae99ca",
+    "schema_version": 2,
+    "validator_status": "passed",
+    "field_status": {
+      "project": {
+        "value": "InsightPilot",
+        "status": "recorded"
+      },
+      "git_sha": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "run_id": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "trace_id": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "span_id": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "evaluation_id": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "environment": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "dataset_id": {
+        "value": "insightpilot-ip4-offline-prep-v1",
+        "status": "recorded"
+      },
+      "dataset_sha256": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "data_fingerprint": {
+        "value": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
+        "status": "recorded"
+      },
+      "split": {
+        "value": "frozen_synthetic_retrieval_ablation",
+        "status": "recorded"
+      },
+      "model_id": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "prompt_sha256": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "tool_schema_sha256": {
+        "value": null,
+        "status": "not_applicable"
+      },
+      "scorer_sha256": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "gold_source": {
+        "value": "independent_synthetic_local_only",
+        "status": "recorded"
+      },
+      "gold_sha256": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "max_steps": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "max_tokens": {
+        "value": 960,
+        "status": "recorded"
+      },
+      "started_at": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "completed_at": {
+        "value": "2026-11-16T07:46:58.499616+00:00",
+        "status": "recorded"
+      },
+      "runtime.digest_sha256": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "runtime.python": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "runtime.platform": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "runtime.lock_sha256": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "budget.cap_usd": {
+        "value": 0.1873344,
+        "status": "recorded"
+      },
+      "budget.spent_usd": {
+        "value": null,
+        "status": "not_recorded"
+      },
+      "budget.reserved_usd": {
+        "value": 0.155232,
+        "status": "recorded"
+      },
+      "cost_usd": {
+        "value": null,
+        "status": "unconfirmed"
+      },
+      "budget.price_estimate_usd": {
+        "value": 0.0323598,
+        "status": "recorded_separately_from_actual_cost"
+      },
+      "budget.remaining_before_usd": {
+        "value": 2.86483355,
+        "status": "recorded_separately_from_actual_cost"
+      },
+      "budget.remaining_after_usd": {
+        "value": 2.83247375,
+        "status": "recorded_separately_from_actual_cost"
+      },
+      "request_outcome": {
+        "value": {
+          "attempted": 36,
+          "provider_responses_received": 36,
+          "cost_status": "unconfirmed"
+        },
+        "status": "recorded"
+      },
+      "normalizer_sha256": {
+        "value": "006599c86910ac35cc8839baa7d754a59f5a3cda0ad7f24582ff4d12a13349ec",
+        "status": "recorded"
+      },
+      "schema_sha256": {
+        "value": "3d6fac5bc6563ec0e17afd0da323f84d70ccfc4a72644091f76f6d0e6d07b760",
+        "status": "recorded"
+      },
+      "backend_execution": {
+        "value": null,
+        "status": "not_recorded",
+        "run_manifest_status": "not_in_schema"
+      }
+    },
+    "model_calls": 36,
+    "trace_evidence_status": "unavailable",
+    "trace_events_recorded": false,
+    "provider_cost_actual_status": "unconfirmed",
+    "report_sha256": "6b4d9611b4fcd3b08778c48d99144e363768f8a92a1a045e4b3e4aae48fb7a59",
+    "offline_bundle_manifest_sha256": "34e08c382f96ba4b9e82af9d2a12d6470bd3e44ab43c5f403e534087189dafdf",
+    "recorded_offline_bundle_manifest_sha256": "94aadf46f508f23a58dbff01b1ceff2fa2f342a3e9a18453814e3e7d19bd246f"
+  },
+  "interpretation": "IP-4 frozen synthetic deterministic evaluation now covers refunds and marketing ROI on SQLite and both PostgreSQL tenants. The separate 36-call model ablation has no run-bound backend field; its recorded bundle manifest hash differs from the current checkout; do not bind it to this bundle or describe it as a PostgreSQL model run."
+}

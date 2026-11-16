@@ -38,12 +38,15 @@ def build_audit(parity_path: Path) -> dict[str, Any]:
     manifest_sha = _sha(RUN_MANIFEST)
     parity_sha = _sha(parity_path)
     bundle_sha = _sha(OFFLINE_MANIFEST)
-    if manifest["source_artifacts"]["report_sha256"] != model_sha:
-        raise ValueError("model report hash does not match its run manifest source")
-    if model_audit["run_manifest_sidecar"]["sha256"] != manifest_sha:
-        raise ValueError("model audit hash does not match run manifest sidecar")
-    if model.get("manifest_sha256") != bundle_sha or bundle_sha != manifest["source_artifacts"]["manifest_sha256"]:
-        raise ValueError("model report, sidecar, and offline bundle manifest hashes differ")
+    manifest_source_hash = manifest["source_artifacts"]["manifest_sha256"]
+    report_manifest_hash = model.get("manifest_sha256")
+    artifact_hash_checks = {
+        "report_matches_run_manifest": manifest["source_artifacts"]["report_sha256"] == model_sha,
+        "run_manifest_matches_sidecar": model_audit["run_manifest_sidecar"]["sha256"] == manifest_sha,
+        "report_manifest_matches_current_bundle": report_manifest_hash == bundle_sha,
+        "run_manifest_matches_current_bundle": manifest_source_hash == bundle_sha,
+        "report_matches_run_manifest_manifest": report_manifest_hash == manifest_source_hash,
+    }
     if bundle.get("source_v13") != v13_audit.get("hashes"):
         raise ValueError("offline bundle provenance does not match the v13 audit hashes")
     if parity.get("frozen_hashes") != v13_audit.get("hashes"):
@@ -137,6 +140,19 @@ def build_audit(parity_path: Path) -> dict[str, Any]:
             "actual_model_id_status": field_status.get("model_id"),
             "claim_boundary": "Deterministic PostgreSQL parity does not prove that model requests ran against PostgreSQL.",
         },
+        "model_ablation_artifact_integrity": {
+            "status": "matched" if all(artifact_hash_checks.values()) else "mismatch",
+            "checks": artifact_hash_checks,
+            "report_manifest_sha256": report_manifest_hash,
+            "run_manifest_source_sha256": manifest_source_hash,
+            "current_bundle_manifest_sha256": bundle_sha,
+            "interpretation": (
+                "Stored model artifacts do not match the current offline bundle manifest; "
+                "do not bind the model ablation to the current bundle."
+                if not all(artifact_hash_checks.values()) else
+                "Stored model artifacts match the current offline bundle manifest."
+            ),
+        },
         "v13_model_execution_gate": {
             "status": "blocked_pending_code_lock_review",
             "execution_code_lock_matches": v13_audit["execution_code_lock"]["matches"],
@@ -208,11 +224,13 @@ def build_audit(parity_path: Path) -> dict[str, Any]:
             "provider_cost_actual_status": manifest["cost_status"],
             "report_sha256": model_sha,
             "offline_bundle_manifest_sha256": bundle_sha,
+            "recorded_offline_bundle_manifest_sha256": manifest_source_hash,
         },
         "interpretation": (
             "IP-4 frozen synthetic deterministic evaluation now covers refunds and marketing ROI on SQLite "
             "and both PostgreSQL tenants. The separate 36-call model ablation has no run-bound backend field; "
-            "do not describe it as a PostgreSQL model run."
+            "its recorded bundle manifest hash differs from the current checkout; do not bind it to this bundle "
+            "or describe it as a PostgreSQL model run."
         ),
     }
 
