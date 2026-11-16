@@ -29,7 +29,7 @@
     "agent_runtime": "fa134158cec40e38f0fdc7d4403faf46be286755d96d6ec111fe16c54ce761ed",
     "rule_planner": "60c31663398eca933bfba676e2394e7a4ceccff1028f5cd74f79bf99777812a0",
     "query_engine": "052a758e1561bc37e26a247111aeaad793d01f01a8960e37642eeca46bfbc355",
-    "offline_runner_module": "c955a3aac69930877539b031e1dddb36f21bfd57f739700335a2f38214fe1d69",
+    "offline_runner_module": "b64f4833af67378afe7987816ba377193b3e03f22f7b5d2b3cccb05991e5fd3d",
     "egress_worker": "f712168bb63b00c43bfb119a985f7636bbeaaedbef015f8120537f9a4212c12c"
   },
   "prompt_sha256": "a92994a54316c1a7127e0bc53160da1585bd869488e3fcf9cd3e10a3701e74d6",

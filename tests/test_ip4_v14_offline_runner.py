@@ -83,6 +83,44 @@ def test_cli_rejects_lock_replacement_and_invalid_lock_schema(tmp_path):
         validate_lock(invalid)
 
 
+def test_result_digest_rejects_forged_and_truncated_values_without_candidate_files():
+    lock = load_lock(ROOT / "reports/ip4-v14-offline-only-lock-2026-11-15.json")
+    expected = "a" * 64
+    report = {
+        "schema_version": 1,
+        "suite_id": lock["suite_id"],
+        "status": "offline_preflight_passed",
+        "external_calls_authorized": False,
+        "network_calls": 0,
+        "model_calls": 0,
+        "candidate_sha256": {
+            "manifest.json": lock["candidate_manifest_sha256"],
+            "questions": lock["candidate_sha256"]["blind.jsonl"],
+            "sealed_data": lock["candidate_sha256"]["gold.jsonl"],
+            "synthetic_database": lock["candidate_sha256"]["synthetic.sqlite"],
+        },
+        "source_sha256": lock["source_sha256"],
+        "prompt_sha256": lock["prompt_sha256"],
+        "outbound_contract": {
+            "fields": lock["outbound_fields"], "records": 22, "payload_sha256": expected,
+        },
+        "offline_baseline": {
+            "mode": "offline_rule_baseline_no_model_calls", "case_count": 22,
+            "passed": 8,
+            "by_domain": {"refunds": {"passed": 3, "total": 11},
+                          "marketing_roi": {"passed": 5, "total": 11}},
+        },
+    }
+    assert verify_result(report, lock, expected_payload_sha256=expected) is report
+    report["outbound_contract"]["payload_sha256"] = "b" * 64
+    with pytest.raises(PreflightError, match="payload hash"):
+        verify_result(report, lock, expected_payload_sha256=expected)
+    for malformed in ("a" * 63, "z" * 64):
+        report["outbound_contract"]["payload_sha256"] = malformed
+        with pytest.raises(PreflightError, match="outbound contract"):
+            verify_result(report, lock, expected_payload_sha256=expected)
+
+
 def test_egress_worker_has_no_filesystem_or_network_capabilities_in_its_code():
     sources = [EGRESS_WORKER, ROOT / "scripts/run_ip4_v14_offline.py",
                ROOT / "insightpilot/ip4_v14_offline.py"]

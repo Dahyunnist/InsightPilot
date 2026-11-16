@@ -56,6 +56,8 @@ v14 v5 是独立合成候选，不是正式冻结评测集。候选清单、题�
 
 新增 `scripts/run_ip4_v14_offline.py`、`insightpilot/ip4_v14_offline.py` 和 `scripts/ip4_v14_egress_worker.py`。这是离线校验工具，不是授权模型 runner。代码路径不发网络请求；未建立 OS 级出站阻断。默认锁 `reports/ip4-v14-offline-only-lock-2026-11-15.json` 标记 `external_calls_authorized=false`、`network_calls=0`、`model_calls=0`。runner 只做 hash/source/prompt 门禁、独立本地 worker payload 检查和 RulePlanner/SQLite 结果核验。CLI 固定 canonical lock 路径和 SHA-256；替换锁或锁内容变化会 fail closed。
 
+结果报告里的 `payload_sha256` 必须是 64 位小写 SHA-256，并与本次 runner 重算的 sanitized payload 字节匹配。这证明离线 payload 记录一致，不证明模型服务收到或未收到请求；本 runner 不发网络请求。
+
 锁定 v14 manifest、blind、gold、synthetic SQLite、candidate/dataset/oracle/planner/prompt/scorer/SQL/runtime/runner/worker 源码 SHA-256。候选题由锁定 seed 与 builder 重建后逐条匹配；发送投影只含合成 `question` 和 `allowed_metric_ids`。worker 是单独子进程，只从 stdin 收到这两个字段；它没有文件系统或网络 API，环境变量不含候选目录或凭据。路径、gold/SQL/query result 字段、额外字段、未知 metric ID 均 fail closed。原候选的 blind 与 gold 文件仍同目录且未移动、未改写；权限边界在 runner 父子进程数据流，不声称建立了 NTFS ACL 或抵御同用户恶意代码的 OS 沙箱。
 
 runner 在隔离测试 fixture 验证 source/prompt/data hash、输入字段、运行结果 schema 和不可覆盖输出。定向测试覆盖敏感字段/路径拒绝、伪造结果拒绝、gold hash 变更拒绝、worker 独立字段边界、锁替换与无效锁拒绝。没有访问真实数据库、真实租户、`.env` 或外部服务；模型调用 0。离线锁不是正式评测冻结或外部授权。

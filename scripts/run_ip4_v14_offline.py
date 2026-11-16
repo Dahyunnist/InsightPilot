@@ -14,7 +14,7 @@ from insightpilot.ip4_v14_offline import (
     DEFAULT_LOCK, PreflightError, run_offline, sha256_file, validate_lock, write_result,
 )
 
-CANONICAL_LOCK_SHA256 = "9c0ff185f48f63b65c97575a28ee5bac3c6195fb19e6959ebd310bbb1f623238"
+CANONICAL_LOCK_SHA256 = "ced656bb14ffee9b04203823051f6822eb7a9315c2fd646281cbabbec4657577"
 
 
 def load_lock(path: Path) -> dict:

@@ -251,7 +251,7 @@ def _payload_records(blind: list[dict], manifest: dict) -> list[dict]:
     return records
 
 
-def verify_result(report: dict, lock: dict) -> dict:
+def verify_result(report: dict, lock: dict, *, expected_payload_sha256: str) -> dict:
     allowed = {"schema_version", "suite_id", "status", "external_calls_authorized", "network_calls",
                "model_calls", "candidate_sha256", "source_sha256", "prompt_sha256",
                "outbound_contract", "offline_baseline"}
@@ -278,8 +278,11 @@ def verify_result(report: dict, lock: dict) -> dict:
     contract = report["outbound_contract"]
     if (not isinstance(contract, dict) or contract.get("fields") != lock["outbound_fields"] or
             contract.get("records") != 22 or
-            contract.get("payload_sha256") is None):
+            not isinstance(contract.get("payload_sha256"), str) or
+            not re.fullmatch(r"[a-f0-9]{64}", contract["payload_sha256"])):
         raise PreflightError("result outbound contract is invalid")
+    if contract["payload_sha256"] != expected_payload_sha256:
+        raise PreflightError("result payload hash differs from canonical sanitized payload")
     baseline = report["offline_baseline"]
     if not isinstance(baseline, dict):
         raise PreflightError("offline baseline result is malformed")
@@ -350,7 +353,7 @@ def run_offline(candidate: Path, lock: dict) -> dict:
             "by_domain": by_domain,
         },
     }
-    return verify_result(report, lock)
+    return verify_result(report, lock, expected_payload_sha256=hashlib.sha256(payload_bytes).hexdigest())
 
 
 def write_result(report: dict, output: Path, lock: dict) -> None:
