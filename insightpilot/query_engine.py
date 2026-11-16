@@ -215,8 +215,12 @@ class PostgresQueryEngine:
             sqlstate = getattr(exc, "sqlstate", None)
             if sqlstate == "57014":
                 raise QueryTimeoutError("PostgreSQL 数据身份读取超过 statement_timeout 限制。") from None
-            code = ("schema_error" if isinstance(sqlstate, str) and sqlstate.startswith(("42", "3F"))
-                    else "database_execution")
+            if sqlstate == "42501":
+                code = "permission_denied"
+            elif isinstance(sqlstate, str) and sqlstate.startswith(("42", "3F")):
+                code = "schema_error"
+            else:
+                code = "database_execution"
             raise QueryExecutionError(f"PostgreSQL 数据身份读取失败：{exc.__class__.__name__}",
                                       failure_code=code) from None
 

@@ -129,6 +129,17 @@ class QueryEngineTests(unittest.TestCase):
         self.assertEqual(raised.exception.failure_code, "statement_timeout")
         self.assertIn(("SELECT set_config('statement_timeout', %s, true)", ("75ms",)), connection.calls)
 
+    def test_postgres_data_identity_maps_rls_permission_failure_separately_from_schema_errors(self):
+        denied = RuntimeError("permission denied for table data_meta")
+        denied.sqlstate = "42501"
+        engine = PostgresQueryEngine("unused", tenant_id="tenant-a",
+                                     pool=FakePool(MetadataConnection(error=denied)))
+
+        with self.assertRaises(QueryExecutionError) as raised:
+            engine.read_data_identity()
+
+        self.assertEqual(raised.exception.failure_code, "permission_denied")
+
     def test_postgres_requires_trusted_tenant_and_rejects_mutations_before_pool(self):
         pool = MagicMock()
         engine = PostgresQueryEngine("unused", pool=pool)

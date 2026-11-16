@@ -161,6 +161,12 @@ MCP Streamable HTTP 取消测试确认 client cancel 到达核心、取消事件
 
 本机定向回归通过 2/2。第一次受限执行停在 Windows asyncio socketpair 初始化；在本机授权运行后测试进入断言并通过。没有启动 Docker、模型、外部服务，也没有读取 `.env`。本轮未覆盖真实供应商 HTTP 取消、长时间持续负载、真实生产 Collector 配置或生产数据；连接池耗尽结论引用既有隔离合成 PostgreSQL 报告，不代表生产容量或 SLA。
 
+## 2026-11-16 IP-3 错误分类复核
+
+离线复核确认同键幂等、并发去重、取消标记、请求超时、429 限流及连接池断开/恢复已有针对性回归。发现数据身份读取路径把 PostgreSQL `42501`（权限拒绝）按 `42*` 通配规则归为 `schema_error`；普通查询路径则已正确返回 `permission_denied`。这会让 API 在 dataset 阶段把 RLS/列权限配置错误报告成 schema 问题。
+
+现将 `42501` 单独映射到 `permission_denied`，保留缺表/缺列的 `schema_error` 映射。新增 SQLSTATE 回归覆盖该分支；`tests/test_query_engine.py` 与 `tests/test_ip3_database_recovery.py` 共 `18 passed`。本次只做离线测试，没有连接 PostgreSQL、调用模型或读取 gold。此前各类 API 生命周期验证仍按已有报告描述，不将本次小修复外推为生产可靠性证明。
+
 ## 2026-11-15 IP-3 本地复核边界
 
 Compose runner、宿主入口和 Docker smoke 报告解析的离线测试通过 9/9。尝试运行 `scripts/load_api.py` 的固定合成负载时，20 并发 `TestClient` 测试在 30 秒内没有输出或报告；进程已中断，该次没有负载结果。该脚本走进程内 TestClient，不是 TCP HTTP 测试。
