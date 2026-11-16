@@ -245,3 +245,9 @@ $artifact = Join-Path $env:TEMP ('ip3 reliability retry ' + [guid]::NewGuid().To
 最终宿主矩阵通过，完整证据保存在 `reports/ip3-reliability-host-2026-11-16.json` 与 `reports/ip3-reliability-host-cleanup-2026-11-16.json`。HTTP 并发 1/5/20 分别为 1×200、5×200、8×200+12×429、均无 503；20 并发 429 均因 concurrency limit。26/26 个 request ID 匹配。p95 分别为 204.089、255.122、297.997 ms。取消与幂等冲突通过。PostgreSQL 连接中断后查询恢复；服务停机返回 502、恢复后返回 200。API 进程重启后原运行状态为 `interrupted`，重放返回 409 `result_unavailable`，与持久运行语义一致。模型/API 外呼为 0。`cleanup.json` 核验三个专用 Compose 项目的容器和网络均为 0；数据卷保留。此矩阵只覆盖本次合成样本和有限请求。
 
 包含本阶段改动的离线定向回归：上述四组 IP-3 测试与 `tests/test_ip3_postgres_fixture.py`，`17 passed`；`git diff --check` 通过。
+
+## 2026-11-16 修复后离线复核
+
+后续修复后的 gold-free 库存、权限与 IP3 定向回归在 Python 3.12 容器中 39 项通过；6 项专用 PostgreSQL 集成测试按默认 opt-in 门禁跳过。9 项 PowerShell runner 专项已在 Windows 宿主单独复跑，全部通过。MCP 取消异步组在 Python 3.12 容器 2/2 通过。网络隔离，合成配置，模型调用 0。
+
+此前 2026-11-16 的宿主完整矩阵报告仍保留；修复后的完整 Compose/PostgreSQL/进程重启矩阵尚待普通 PowerShell 环境重跑。本次没有覆盖或删除任何失败报告，也没有以定向离线通过替代宿主矩阵结果。
