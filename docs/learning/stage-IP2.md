@@ -1,5 +1,11 @@
 # IP-2：指标目录 v2 与第二业务域
 
+## 2026-11-16 目录契约复核
+
+目录审计现检查 definition source 的 Markdown 标题锚点、lineage 表与 `source_tables` 一致性，以及发布的数据版本和支持列表一致。补齐多触点归因、营销 ROI 契约标题，并移除归因指标未使用的 `data_meta.snapshot_at` lineage。检查仅调用内存目录校验，不读取评测集或报告；PostgreSQL parity 仍待真实宿主验收。
+
+`tests/test_ip2_catalog_metadata_contract.py` 覆盖当前目录与缺锚点/缺源表反例；与查询引擎、库存周转、IP-1 静态检查及 opt-in integration 模块合跑为 `27 passed, 1 skipped, 23 subtests passed`。直接执行 `_catalog_errors()` 返回 `IP2_CATALOG_METADATA_OK`。未运行会构建报告并读取冻结评测材料的完整 catalog audit。
+
 后续目录字段审计、v3 版本和跨域开发边界见 [IP-2 指标目录与开发边界审计](stage-IP2-catalog-audit-2026-11-13.md)。
 
 ## 2026-11-13 库存周转离线切片

@@ -108,7 +108,7 @@ METRICS = {
         "下单时间（UTC）", "仅 approved", grain="订单 × campaign attribution",
         source_tables=("orders", "refunds", "campaign_attributions", "campaigns"),
         lineage=("orders.order_id", "refunds.amount_cents", "refunds.status", "refunds.refunded_at",
-                 "refunds.recorded_at", "data_meta.snapshot_at",
+                 "refunds.recorded_at",
                  "campaign_attributions.weight", "campaigns.campaign_name"),
         valid_dimensions=("campaign",), definition_source="docs/product-contract.md#多触点活动归因",
         example_question="比较各活动带来的批准退款金额贡献？",

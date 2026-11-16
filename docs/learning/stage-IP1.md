@@ -1,5 +1,11 @@
 # IP-1：查询引擎与 PostgreSQL 适配
 
+## 2026-11-16 离线回归复核
+
+复核确认 PostgreSQL 宿主集成仍未在当前环境重跑；历史失败报告保持原样，不作为通过证据。本轮只增加 RLS bootstrap 静态契约检查，覆盖十张租户表的 ENABLE/FORCE RLS、可信 tenant context policy、reader SELECT 授权，并确认全局 `data_meta` 不启用 RLS。静态检查不证明 PostgreSQL 实际隔离；需要 Docker 可用宿主运行合成 canary 与查询验收。
+
+无 gold 定向运行：查询引擎、库存周转 SQLite 契约、RLS bootstrap、canary、宿主 runner 静态检查及 IP-2 PostgreSQL integration 模块共 `27 passed, 1 skipped, 23 subtests passed`。集成测试因未设置 `INSIGHTPILOT_RUN_IP2_INVENTORY_POSTGRES_INTEGRATION=1` 跳过；未连接数据库、未启动容器。当前真实 tenant 隔离与 SQLite/PostgreSQL parity 仍未验证。
+
 ## 2026-11-14 查询数据身份超时补强
 
 离线审查发现 PostgreSQL `read_data_identity()` 在身份查询事务内已绑定只读角色和 tenant RLS，但没有设置 `statement_timeout`；与普通查询不同，读取 `data_meta` 若被数据库锁或延迟，也可能让分析入口长时间等待。现对身份读取同样应用引擎配置的超时，并将 SQLSTATE `57014` 映射为 `QueryTimeoutError(statement_timeout)`，使运行记录准确归类。新增 75 ms 可控超时回归并核对事务设置；`tests.test_query_engine`、`tests.test_s2_policy`、`tests.test_ip1_rls_runner` 共 18 项通过。此为离线 fake connection 证据，不替代宿主 PostgreSQL 实测。

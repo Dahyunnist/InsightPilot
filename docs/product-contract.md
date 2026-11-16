@@ -31,6 +31,14 @@
 | `approved_refund_campaign_attribution` | campaign touch 归因权重 × 订单批准退款金额；缺少 touch 的退款放入“未归因” | 仅 enterprise v1 扩展数据集；campaign 多触点权重和为 1 |
 | `inventory_turnover` | 期间销售成本 / 本地日均库存账面金额；Asia/Shanghai 本地日期 | 仅 `insightpilot-inventory-v1` 合成 fixture；零或缺失分母返回 NULL |
 
+### 多触点活动归因
+
+`approved_refund_campaign_attribution@1.0.0` 按有效 campaign touch 权重分摊订单批准退款金额；缺失 touch 的金额进入“未归因”。仅适用于 enterprise v1 与 multidomain v1 扩展数据。
+
+### 营销净投资回报率
+
+`marketing_net_roi@1.0.0` 按触点权重分摊订单净收入，扣除去重后的有效活动费用，再除以有效费用。口径、快照截断、修订去重和澄清边界见下文第二业务域定义。
+
 ### 库存周转率（IP-2 离线切片）
 
 `inventory_turnover@1.0.0` 自 `2026-11-01` 生效，仅适用于 `insightpilot-inventory-v1` 合成数据。定义为所选 Asia/Shanghai 本地日期区间内销售成本之和，除以区间内有有效快照的本地日库存账面金额均值；每天先汇总品类库存，再对有效日取均值。快照写入时须按 Asia/Shanghai 生成唯一的 `local_date`，同时保留 UTC `snapshot_at`；区间按本地午夜左闭右开换算成 UTC 查询边界。NULL 快照日不进入均值，零库存日进入均值；分母为零或不存在时结果为 NULL，不伪造零周转率。仅支持按商品类别切片，不提供地区、渠道、实时性或第二数据库后端验收承诺。

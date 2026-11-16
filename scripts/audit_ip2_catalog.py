@@ -34,9 +34,21 @@ def _canonical_sha(value: object) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _heading_slug(heading: str) -> str:
+    heading = re.sub(r"`([^`]*)`", r"\1", heading).strip().casefold()
+    heading = re.sub(r"[^\w\-\s]", "", heading, flags=re.UNICODE)
+    return re.sub(r"\s+", "-", heading)
+
+
 def _catalog_errors() -> list[str]:
     errors = []
     semver = re.compile(r"^\d+\.\d+\.\d+$")
+    published = catalog_document()
+    published_versions = set(published["data_contract_versions"])
+    if published.get("data_contract_version") not in published_versions:
+        errors.append("catalog: default data contract version is not published")
+    if published_versions != KNOWN_DATA_VERSIONS:
+        errors.append("catalog: published data contract versions differ from supported versions")
     for metric_id, metric in METRICS.items():
         prefix = f"{metric_id}: "
         if not semver.fullmatch(metric.definition_version):
@@ -55,9 +67,22 @@ def _catalog_errors() -> list[str]:
                              ("required_data_versions", metric.required_data_versions)):
             if not value:
                 errors.append(prefix + f"missing {field}")
-        source_path = ROOT / metric.definition_source.split("#", 1)[0]
-        if "#" not in metric.definition_source or not source_path.is_file():
+        source_parts = metric.definition_source.split("#", 1)
+        source_path = ROOT / source_parts[0]
+        if len(source_parts) != 2 or not source_parts[1] or not source_path.is_file():
             errors.append(prefix + "definition source file or anchor missing")
+        else:
+            headings = {
+                _heading_slug(match.group(1))
+                for match in re.finditer(r"^#{1,6}\s+(.+?)\s*#*\s*$", source_path.read_text(encoding="utf-8"), re.M)
+            }
+            if _heading_slug(source_parts[1]) not in headings:
+                errors.append(prefix + "definition source file or anchor missing")
+        source_tables = set(metric.source_tables)
+        lineage_tables = {field.split(".", 1)[0] for field in metric.lineage if "." in field}
+        if not lineage_tables <= source_tables:
+            errors.append(prefix + "lineage table missing from source_tables: " +
+                          ",".join(sorted(lineage_tables - source_tables)))
         unsupported = set(metric.required_data_versions) - KNOWN_DATA_VERSIONS
         if unsupported:
             errors.append(prefix + "unsupported data versions: " + ",".join(sorted(unsupported)))
