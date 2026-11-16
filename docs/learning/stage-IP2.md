@@ -42,3 +42,11 @@ fixture 覆盖 Asia/Shanghai 日期左闭右开边界（边界前一刻/恰好�
 新增确定性测试覆盖币种/gross ROI 澄清与缺失 attribution schema 失败；`tests/test_multidomain.py`：14 passed、5 subtests passed。已有 IP-1 PostgreSQL 宿主报告用同一 synthetic multidomain fixture：两租户各 12/12，含 6 道营销 ROI answerable；每题 SQL 结果与 SQLite verifier 及独立 Python gold 对齐。此次没有重新启动 PostgreSQL；跨库依据为 2026-11-15 已归档临时容器实测。
 
 未测边界：多币种/FX、production accounting currency、历史快照 point-in-time 完整性、真实数据和模型回答质量均未验收；0 模型调用。
+
+## 2026-11-16 库存周转 PostgreSQL 接入
+
+核对升级路线 IP-2 的“库存周转或营销 ROI 第二业务域”和 IP-4 的“两种数据库后端”要求后，确认库存 SQL 可直接复用共享 `QueryEngine`：同一个 `QueryPlan` 经 `compile_query` 生成只读参数化 SQL，`PostgresQueryEngine` 已负责占位符转译、SQL AST 检查、只读事务、超时与租户上下文。没有新增独立库存执行器。
+
+PostgreSQL bootstrap 现为 `inventory_daily_snapshots` 与 `inventory_cogs_events` 增加最小列级 SELECT、`FORCE ROW LEVEL SECURITY` 和租户策略。新增 opt-in 集成测试会用固定合成库存 fixture 重建专用 `insightpilot_ip4` 测试库，比较 SQLite/PostgreSQL 逐组分子、分母、周转率，并检查缺租户上下文拒绝、两租户隔离。测试使用 `INSIGHTPILOT_RUN_IP2_INVENTORY_POSTGRES_INTEGRATION=1` 才会运行，因为 fixture loader 会清空并重建该专用测试库。
+
+离线验收：库存周转、共享引擎契约与新集成测试共 `12 passed, 1 skipped`；SQLGlot 成功验证并转译四个绑定参数。PostgreSQL 实测尚未执行，本次未读取 `.env` 来启动具破坏性的数据库重建。当前结果证明可接入共享契约，不代表 PostgreSQL parity 已通过。

@@ -12,7 +12,8 @@ GRANT USAGE ON SCHEMA public TO insightpilot_reader;
 REVOKE CREATE ON SCHEMA public FROM PUBLIC, insightpilot_reader;
 REVOKE ALL PRIVILEGES ON TABLE public.orders, public.refunds, public.products,
     public.customers, public.campaign_attributions, public.campaigns,
-    public.campaign_spend_events, public.refund_reversals, public.data_meta
+    public.campaign_spend_events, public.refund_reversals, public.data_meta,
+    public.inventory_daily_snapshots, public.inventory_cogs_events
     FROM PUBLIC, insightpilot_reader;
 GRANT SELECT (tenant_id, order_id, product_id, region, channel, ordered_at, status, paid_amount_cents)
     ON TABLE public.orders TO insightpilot_reader;
@@ -28,6 +29,10 @@ GRANT SELECT (tenant_id, event_id, business_event_id, revision, recorded_at,
 GRANT SELECT (tenant_id, refund_id, recorded_at, amount_cents)
     ON TABLE public.refund_reversals TO insightpilot_reader;
 GRANT SELECT (key, value) ON TABLE public.data_meta TO insightpilot_reader;
+GRANT SELECT (tenant_id, snapshot_id, category, snapshot_at, local_date, inventory_value_cents)
+    ON TABLE public.inventory_daily_snapshots TO insightpilot_reader;
+GRANT SELECT (tenant_id, event_id, category, sold_at, cogs_cents)
+    ON TABLE public.inventory_cogs_events TO insightpilot_reader;
 
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders FORCE ROW LEVEL SECURITY;
@@ -45,6 +50,10 @@ ALTER TABLE public.refund_reversals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.refund_reversals FORCE ROW LEVEL SECURITY;
 ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customers FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.inventory_daily_snapshots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.inventory_daily_snapshots FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.inventory_cogs_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.inventory_cogs_events FORCE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS insightpilot_tenant_isolation ON public.orders;
 DROP POLICY IF EXISTS insightpilot_tenant_isolation ON public.refunds;
@@ -54,6 +63,8 @@ DROP POLICY IF EXISTS insightpilot_tenant_isolation ON public.campaigns;
 DROP POLICY IF EXISTS insightpilot_tenant_isolation ON public.campaign_spend_events;
 DROP POLICY IF EXISTS insightpilot_tenant_isolation ON public.refund_reversals;
 DROP POLICY IF EXISTS insightpilot_tenant_isolation ON public.customers;
+DROP POLICY IF EXISTS insightpilot_tenant_isolation ON public.inventory_daily_snapshots;
+DROP POLICY IF EXISTS insightpilot_tenant_isolation ON public.inventory_cogs_events;
 
 CREATE POLICY insightpilot_tenant_isolation ON public.orders TO insightpilot_reader
     USING (tenant_id = current_setting('app.tenant_id', true));
@@ -70,4 +81,8 @@ CREATE POLICY insightpilot_tenant_isolation ON public.campaign_spend_events TO i
 CREATE POLICY insightpilot_tenant_isolation ON public.refund_reversals TO insightpilot_reader
     USING (tenant_id = current_setting('app.tenant_id', true));
 CREATE POLICY insightpilot_tenant_isolation ON public.customers TO insightpilot_reader
+    USING (tenant_id = current_setting('app.tenant_id', true));
+CREATE POLICY insightpilot_tenant_isolation ON public.inventory_daily_snapshots TO insightpilot_reader
+    USING (tenant_id = current_setting('app.tenant_id', true));
+CREATE POLICY insightpilot_tenant_isolation ON public.inventory_cogs_events TO insightpilot_reader
     USING (tenant_id = current_setting('app.tenant_id', true));
