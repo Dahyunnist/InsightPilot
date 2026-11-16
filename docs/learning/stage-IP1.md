@@ -6,6 +6,14 @@
 
 无 gold 定向运行：查询引擎、库存周转 SQLite 契约、RLS bootstrap、canary、宿主 runner 静态检查及 IP-2 PostgreSQL integration 模块共 `27 passed, 1 skipped, 23 subtests passed`。集成测试因未设置 `INSIGHTPILOT_RUN_IP2_INVENTORY_POSTGRES_INTEGRATION=1` 跳过；未连接数据库、未启动容器。当前真实 tenant 隔离与 SQLite/PostgreSQL parity 仍未验证。
 
+## 2026-11-16 库存周转 PostgreSQL parity 与 RLS 实跑
+
+修复库存 PostgreSQL 集成测试的隔离边界：旧测试会重建固定名 `insightpilot_ip4` 数据库。新入口 `scripts/run_ip2_inventory_postgres.ps1 -Execute` 为每次运行生成随机 Compose project、随机数据库名与临时凭据；Compose 禁止自动读取项目 `.env`，端口只绑定 `127.0.0.1`，数据目录仅用 tmpfs。loader 只复制 `data_meta` 与两张库存表，并仅允许固定 IP-4 专用库或符合随机格式的 IP-2 临时库；bootstrap 只给库存读角色所需列并强制两张库存表的 RLS。退出后只执行本次 project 的 `down --remove-orphans`，核对本次容器与网络均为零，不使用数据卷清理。
+
+PostgreSQL 16.15 实跑通过：库存周转 `group_value`、分子、分母和周转率在 SQLite 与 tenant-a、tenant-b PostgreSQL 逐组一致；缺失 tenant context 被拒；无 context 可见行数为 0；reader DML 被拒。独立双租户 canary 在同一连接池切换 tenant-a、tenant-b、tenant-a，均只见各自 marker；missing/unknown context 为 0 行，角色无 superuser/BYPASSRLS。模型调用 0。最终容器、网络均清理，报告 `reports/ip2-inventory-postgres-acceptance-5dc9bc4bf9.json`，canary 明细 `reports/ip2-inventory-postgres-canary-5dc9bc4bf9.json`。
+
+定向离线验证 `10 passed, 1 skipped`；跳过项是默认关闭的宿主集成测试，随后由上述隔离 runner 实跑并通过。两次初始实跑暴露了 fixture loader 的全库表假设和只读事务遮蔽 DML 权限错误；均已修正后完成最终通过。仅覆盖固定合成 fixture 与本机 PostgreSQL，不代表生产数据或部署。
+
 ## 2026-11-14 查询数据身份超时补强
 
 离线审查发现 PostgreSQL `read_data_identity()` 在身份查询事务内已绑定只读角色和 tenant RLS，但没有设置 `statement_timeout`；与普通查询不同，读取 `data_meta` 若被数据库锁或延迟，也可能让分析入口长时间等待。现对身份读取同样应用引擎配置的超时，并将 SQLSTATE `57014` 映射为 `QueryTimeoutError(statement_timeout)`，使运行记录准确归类。新增 75 ms 可控超时回归并核对事务设置；`tests.test_query_engine`、`tests.test_s2_policy`、`tests.test_ip1_rls_runner` 共 18 项通过。此为离线 fake connection 证据，不替代宿主 PostgreSQL 实测。
@@ -96,7 +104,7 @@ IP-1 使用 PostgreSQL/FastAPI/`PostgresQueryEngine` 与合成数据：两个 te
 
 ## 2026-11-15 PostgreSQL/RLS 宿主验收尝试
 
-命令：` .\scripts\run_ip1_rls.ps1 -Execute -ConfirmDatabaseCreation -ArtifactDirectory 'E:\job\insightpilot-ip1-acceptance-20261115' `。Docker Engine 29.1.3；镜像 `postgres:16-alpine` digest `sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36`。临时凭据由 runner 生成，PostgreSQL data dir 使用 Compose tmpfs；未用生产凭据、未调用模型。
+命令：` .\scripts\run_ip1_rls.ps1 -Execute -ConfirmDatabaseCreation -ArtifactDirectory '.tmp\insightpilot-ip1-acceptance-20261115' `。Docker Engine 29.1.3；镜像 `postgres:16-alpine` digest `sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36`。临时凭据由 runner 生成，PostgreSQL data dir 使用 Compose tmpfs；未用生产凭据、未调用模型。
 
 容器创建并报告 Started，但 `scripts/prepare_ip4_postgres.py` 的首次 psycopg 连接失败，runner exit 1：`connection to server at "127.0.0.1", port 55432 failed: server closed the connection unexpectedly`。因此双租户实际查询、越权、DDL/DML、超时和行预算本轮均未验收，不能称通过。Runner finally 已清理专用容器与 Compose 网络；无容器日志或校验报告生成。后续需先查 PostgreSQL 初始化/启动日志，再按相同命令重跑；本轮不自动重试。
 
@@ -104,11 +112,11 @@ IP-1 使用 PostgreSQL/FastAPI/`PostgresQueryEngine` 与合成数据：两个 te
 
 首轮容器启动后立即准备导致 psycopg 连接被服务端关闭；旧 runner 已清理容器，故启动日志无法追溯，根因未确认。runner 已改为 Compose `--wait --wait-timeout 60`、额外 `pg_isready`，失败时先保存 `ip1-postgres-startup.log` 再清理。`tests/test_ip1_rls_runner.py` 定向 5 passed。
 
-复验命令：` .\scripts\run_ip1_rls.ps1 -Execute -ConfirmDatabaseCreation -ArtifactDirectory 'E:\job\insightpilot-ip1-acceptance-20261115-r3' `，exit 0。Docker Engine 29.1.3；PostgreSQL 16.15，镜像 digest `sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36`。RLS bootstrap SQL SHA-256 `b8bf95cf1e3b474d4178445226a50c879f7985c6030e3481d2c31a187296017a`。临时凭据由 runner 生成；只用合成数据与 tmpfs。
+复验命令：` .\scripts\run_ip1_rls.ps1 -Execute -ConfirmDatabaseCreation -ArtifactDirectory '.tmp\insightpilot-ip1-acceptance-20261115-r3' `，exit 0。Docker Engine 29.1.3；PostgreSQL 16.15，镜像 digest `sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36`。RLS bootstrap SQL SHA-256 `b8bf95cf1e3b474d4178445226a50c879f7985c6030e3481d2c31a187296017a`。临时凭据由 runner 生成；只用合成数据与 tmpfs。
 
 最终 `ip1-ip2-postgres-verification.json` 状态 passed：tenant-a 与 tenant-b 各 12/12；每租户 6 道可答题与 6 道 guard 全通过，PG 答案经独立 Python gold 和 SQLite 交叉核对。Canary 通过同一连接池切换 tenant-a、tenant-b、missing、unknown context；缺 tenant 在应用层拒绝，unknown/missing RLS 可见行 0。只读角色 DML 与 DDL 均拒绝；statement_timeout 实测超时，池耗尽后恢复。`ip1-data-meta-timeout.json` 100ms 超时 123.31ms，随后读取恢复。0 模型调用。
 
-Artifacts 位于仓库外 `E:\job\insightpilot-ip1-acceptance-20261115-r3`。验收后专用容器和 Compose network 均无残留。边界：验证的是本地 PostgreSQL 16.15 与固定合成 fixture，不代表生产部署；首轮失败根因仍未知，不能归因于代码或容器竞态。
+Artifacts 位于仓库外的本机临时目录。验收后专用容器和 Compose network 均无残留。边界：验证的是本地 PostgreSQL 16.15 与固定合成 fixture，不代表生产部署；首轮失败根因仍未知，不能归因于代码或容器竞态。
 
 ## 2026-11-15 `data_meta` 超时宿主复验
 

@@ -24,8 +24,11 @@ from insightpilot.run_store import RunStore
 
 
 class FixedPlanner:
-    def plan(self, _question: str) -> QueryPlan:
-        time.sleep(float(os.environ.get("IP3_PLANNER_DELAY_MS", "150")) / 1000)
+    def plan(self, question: str) -> QueryPlan:
+        delay_ms = (float(os.environ.get("IP3_CANCEL_DELAY_MS", "1500"))
+                    if question == "合成取消可靠性探针" else
+                    float(os.environ.get("IP3_PLANNER_DELAY_MS", "150")))
+        time.sleep(delay_ms / 1000)
         return QueryPlan("approved_refund_amount_rate", "2026-10-05", "2026-10-12", "华东", None)
 
 

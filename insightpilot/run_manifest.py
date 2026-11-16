@@ -96,14 +96,14 @@ def validate_public_run_manifest(value: dict) -> list[str]:
     if not isinstance(field_status, dict):
         errors.append("field_status must be an object")
         field_status = {}
-    for field in ("git_sha", "run_id", "trace_id", "span_id", "evaluation_id", "environment", "dataset_id",
+    for field in ("git_sha", "run_id", "trace_id", "span_id", "evaluation_id", "environment", "dataset_id", "model_id",
                   "dataset_sha256", "data_fingerprint", "split", "prompt_sha256", "tool_schema_sha256", "scorer_sha256",
                   "runtime.digest_sha256", "runtime.python", "runtime.platform", "runtime.lock_sha256",
                   "budget.cap_usd", "budget.spent_usd", "gold_sha256", "started_at", "completed_at"):
         state = field_status.get(field)
         if state not in PUBLIC_FIELD_STATES:
             errors.append(f"invalid or missing field status: {field}")
-    nullable = ("git_sha", "run_id", "trace_id", "span_id", "evaluation_id", "environment", "dataset_id",
+    nullable = ("git_sha", "run_id", "trace_id", "span_id", "evaluation_id", "environment", "dataset_id", "model_id",
                 "dataset_sha256", "data_fingerprint", "split", "prompt_sha256", "tool_schema_sha256", "scorer_sha256",
                 "gold_sha256", "started_at", "completed_at")
     for field in nullable:
@@ -120,9 +120,15 @@ def validate_public_run_manifest(value: dict) -> list[str]:
             errors.append(f"invalid {field}")
     if value.get("git_sha") is not None and not HASH40.fullmatch(value["git_sha"]):
         errors.append("invalid git_sha")
-    for field in ("project", "model_id", "gold_source", "source_status", "status"):
+    for field in ("project", "gold_source", "source_status", "status"):
         if not isinstance(value.get(field), str) or not value[field].strip():
             errors.append(f"{field} must be non-empty string")
+    model_id = value.get("model_id")
+    if model_id is None:
+        if field_status.get("model_id") not in {"not_recorded", "blocked"}:
+            errors.append("null model_id requires unavailable field status")
+    elif not isinstance(model_id, str) or not model_id.strip():
+        errors.append("model_id must be a non-empty string or null")
     if value.get("model_id") == "none" and value.get("cost_usd") != 0:
         errors.append("no-model run must have zero cost")
     calls = value.get("model_calls")
@@ -184,7 +190,8 @@ def validate_public_run_manifest(value: dict) -> list[str]:
             errors.append(f"{key} must match declared event vocabulary")
             continue
         for event, entry in coverage.items():
-            if (not isinstance(entry, dict) or not isinstance(entry.get("count"), int)
+            if (not isinstance(entry, dict) or set(entry) != {"count", "coverage"}
+                    or not isinstance(entry.get("count"), int)
                     or isinstance(entry.get("count"), bool) or entry["count"] < 0
                     or entry.get("coverage") != ("covered" if entry["count"] > 0 else "not_covered")):
                 errors.append(f"invalid event coverage: {event}")

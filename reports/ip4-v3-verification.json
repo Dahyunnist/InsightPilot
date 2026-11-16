@@ -49,7 +49,7 @@
   "commands": {
     "targeted_tests": "python -m unittest -v tests.test_ip4_v2_holdout tests.test_ip4_v3_holdout",
     "full_suite": "python -m unittest discover -s tests -q",
-    "docker_invocation": "docker run --rm --network none --tmpfs /tmp:rw,exec,size=2g -e PYTHONDONTWRITEBYTECODE=1 -e LLM_API_KEY=offline-test-key -e LLM_BASE_URL=http://127.0.0.1:1/v1 -e LLM_MODEL=offline-no-model --mount \"type=bind,source=E:\\job\\insightpilot,target=/workspace\" insightpilot-api-probe:latest python -c \"import pathlib,shutil,subprocess,sys; src=pathlib.Path('/workspace'); dst=pathlib.Path('/tmp/project'); dst.mkdir(); names=('insightpilot','data','evals','reports','docs','tests','scripts'); [shutil.copytree(src/name,dst/name) for name in names]; [shutil.copy2(src/name,dst/name) for name in ('README.md','requirements.txt')]; sys.exit(subprocess.run([sys.executable,'-m','unittest','discover','-s','tests','-q'],cwd=dst).returncode)\""
+    "docker_invocation": "docker run --rm --network none --tmpfs /tmp:rw,exec,size=2g -e PYTHONDONTWRITEBYTECODE=1 -e LLM_API_KEY=offline-test-key -e LLM_BASE_URL=http://127.0.0.1:1/v1 -e LLM_MODEL=offline-no-model --mount \"type=bind,source=<project-root>,target=/workspace\" insightpilot-api-probe:latest python -c \"import pathlib,shutil,subprocess,sys; src=pathlib.Path('/workspace'); dst=pathlib.Path('/tmp/project'); dst.mkdir(); names=('insightpilot','data','evals','reports','docs','tests','scripts'); [shutil.copytree(src/name,dst/name) for name in names]; [shutil.copy2(src/name,dst/name) for name in ('README.md','requirements.txt')]; sys.exit(subprocess.run([sys.executable,'-m','unittest','discover','-s','tests','-q'],cwd=dst).returncode)\""
   },
   "results": {
     "targeted_tests": {

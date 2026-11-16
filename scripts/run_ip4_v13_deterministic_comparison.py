@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,7 +80,7 @@ def _database_parity(raw: dict, postgres_requested: bool) -> dict:
 
 
 def run(database: Path = DEFAULT_DATABASE, output: Path | None = DEFAULT_OUTPUT,
-        postgres_dsn: str | None = None) -> dict:
+        postgres_dsn: str | None = None, run_id: str | None = None) -> dict:
     source_manifest_path = ROOT / "evals/ip4-v13-manifest.json"
     source_blind_path = ROOT / "evals/ip4-v13-blind.jsonl"
     source_gold_path = ROOT / "evals/ip4-v13-gold.jsonl"
@@ -98,7 +99,13 @@ def run(database: Path = DEFAULT_DATABASE, output: Path | None = DEFAULT_OUTPUT,
             or source_v13.get("gold_sha256") != frozen_hashes["gold_sha256"]):
         raise ValueError("Frozen v13 manifest/blind/gold hashes differ from offline bundle provenance")
 
-    raw = run_offline_audit(bundle=BUNDLE, database=database, output=None, postgres_dsn=postgres_dsn)
+    raw = run_offline_audit(bundle=BUNDLE, database=database, output=None, postgres_dsn=postgres_dsn,
+                            include_model_accounting=False)
+    postgres_version = None
+    if postgres_dsn:
+        import psycopg
+        with psycopg.connect(postgres_dsn) as connection:
+            postgres_version = connection.execute("SHOW server_version").fetchone()[0]
     gold_by_id = {}
     for domain, files in bundle_manifest["domains"].items():
         rows = [json.loads(line) for line in (BUNDLE / files["gold_path"]).read_text(encoding="utf-8").splitlines()
@@ -107,12 +114,25 @@ def run(database: Path = DEFAULT_DATABASE, output: Path | None = DEFAULT_OUTPUT,
 
     verifier_rows = raw["ruleplanner_sqlite"]["case_results"]
     no_verifier_rows = raw["ruleplanner_without_independent_verifier_sqlite"]["case_results"]
+    database_parity = _database_parity(raw, bool(postgres_dsn))
+    created_at = datetime.now(timezone.utc).isoformat()
     report = {
-        "report_id": "insightpilot-ip4-v13-deterministic-comparison-2026-11-15",
+        "report_id": "insightpilot-ip4-v13-deterministic-comparison-" +
+                     datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "status": raw["status"],
+        "deterministic_parity_status": database_parity["status"],
+        "run_id": run_id,
+        "created_at_utc": created_at,
         "evaluation_type": "deterministic_rule_policy_comparison_not_llm",
         "suite_id": source_manifest["suite_id"],
         "offline_bundle_suite_id": raw["suite_id"],
         "backend": "SQLite + PostgreSQL" if postgres_dsn else "SQLite",
+        "postgresql_server_version": postgres_version,
+        "backend_scope": {
+            "sqlite": "ruleplanner_with_independent_verifier",
+            "postgresql_tenants": ["tenant-a", "tenant-b"] if postgres_dsn else [],
+            "parity_basis": "same frozen question set and data fingerprint; deterministic result equality",
+        },
         "synthetic_only": True,
         "model_calls": 0,
         "model_requests_sent": 0,
@@ -124,7 +144,7 @@ def run(database: Path = DEFAULT_DATABASE, output: Path | None = DEFAULT_OUTPUT,
             "ruleplanner_with_independent_verifier": _arm_summary(verifier_rows, gold_by_id, verifier=True),
             "ruleplanner_without_independent_verifier": _arm_summary(no_verifier_rows, gold_by_id, verifier=False),
         },
-        "database_parity": _database_parity(raw, bool(postgres_dsn)),
+        "database_parity": database_parity,
         "metric_retrieval_candidate_coverage": raw["metric_retrieval_candidate_coverage"],
         "comparison_note": (
             "Both arms use the deterministic RulePlanner and the same frozen synthetic questions/database. "
@@ -132,6 +152,7 @@ def run(database: Path = DEFAULT_DATABASE, output: Path | None = DEFAULT_OUTPUT,
             "This is not a live-model result. PostgreSQL parity, when requested, compares deterministic outputs only."
         ),
         "payload_note": "No questions, gold values, SQL, parameters, query rows, or private data are emitted.",
+        "scoring_method": "Independent local frozen-gold scorer; gold was never passed to a model.",
     }
     if output:
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -144,8 +165,10 @@ def main() -> None:
     parser.add_argument("--database", type=Path, default=DEFAULT_DATABASE)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--postgres-dsn", default=os.environ.get("INSIGHTPILOT_IP4_APP_DSN"))
+    parser.add_argument("--run-id")
     args = parser.parse_args()
-    report = run(database=args.database, output=args.output, postgres_dsn=args.postgres_dsn)
+    report = run(database=args.database, output=args.output, postgres_dsn=args.postgres_dsn,
+                 run_id=args.run_id)
     print(json.dumps({
         "report_id": report["report_id"],
         "model_calls": report["model_calls"],

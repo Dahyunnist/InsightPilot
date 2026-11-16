@@ -2,7 +2,7 @@
 
 ## 结果
 
-v14 v3 原目录保持不变。生成 v5 到仓库外的 `E:\job\insightpilot-ip4-v14-candidate-20261115-v5`。v5 的 blind、gold、SQLite 数据库逐字节匹配 v3；只新增 planner、评分器和 PostgreSQL 身份/一致性证据。v5 仍为 `candidate_pending_owner_review`；PostgreSQL fixture 状态为 `provisioned_and_parity_passed`。
+v14 v3 原目录保持不变。生成 v5 到仓库外的临时候选目录。v5 的 blind、gold、SQLite 数据库逐字节匹配 v3；只新增 planner、评分器和 PostgreSQL 身份/一致性证据。v5 仍为 `candidate_pending_owner_review`；PostgreSQL fixture 状态为 `provisioned_and_parity_passed`。
 
 没有修改 v13 或 v14 的题文、gold，没有模型请求，也没有复制 `.env`。
 

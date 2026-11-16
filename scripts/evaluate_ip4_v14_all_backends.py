@@ -12,16 +12,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from insightpilot.ip4_v14_evaluate import evaluate
+from insightpilot.ip4_v14_evaluate import case_score_vector, evaluate
 from insightpilot.query_engine import PostgresQueryEngine, SQLiteQueryEngine
 
 
 def _parity_view(report: dict) -> dict[str, tuple]:
-    return {row["case_id"]: (row["passed"], row["actual_status"], row["actual_reason"],
-                             row.get("metric_ok"), row.get("dimension_ok"), row.get("region_ok"),
-                             row.get("date_window_ok"), row.get("numeric_ok"),
-                             row.get("independent_verifier_ok"))
-            for row in report["cases"]}
+    return case_score_vector(report)
 
 
 def evaluate_all(database: Path, blind: Path, gold: Path, manifest: Path, app_dsn: str) -> dict:

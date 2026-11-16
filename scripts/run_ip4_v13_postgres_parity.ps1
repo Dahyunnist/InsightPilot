@@ -11,6 +11,7 @@ $ComposeProject = 'insightpilot-v13-' + $RunId.Substring(0, 12)
 $ComposeSource = Join-Path $ProjectRoot 'docker-compose.ip4.yml'
 $Python = Join-Path $ProjectRoot '.venv\Scripts\python.exe'
 $Database = Join-Path $ProjectRoot 'data\insightpilot-ip4-v13.sqlite'
+$Bootstrap = Join-Path $ProjectRoot 'docs\postgresql-ip4-v13-bootstrap.sql'
 $BundleManifestPath = Join-Path $ProjectRoot 'benchmarks\ip4-offline-prep-v1\manifest.json'
 $V13ManifestPath = Join-Path $ProjectRoot 'evals\ip4-v13-manifest.json'
 $V13BlindPath = Join-Path $ProjectRoot 'evals\ip4-v13-blind.jsonl'
@@ -23,10 +24,12 @@ $TempCompose = Join-Path $TempRoot 'compose.yml'
 $Stage = 'confirmation'
 $Status = 'dry_run'
 $CleanupStatus = 'not_started'
+$FailureClass = $null
 $ComposeOwned = $false
 $ReportGenerated = $false
 $EnvironmentNames = @('INSIGHTPILOT_IP4_ADMIN_PASSWORD', 'INSIGHTPILOT_IP4_ADMIN_DSN',
-    'INSIGHTPILOT_IP4_APP_DSN', 'INSIGHTPILOT_IP4_APP_ROLE', 'INSIGHTPILOT_IP4_APP_PASSWORD')
+    'INSIGHTPILOT_IP4_APP_DSN', 'INSIGHTPILOT_IP4_APP_ROLE', 'INSIGHTPILOT_IP4_APP_PASSWORD',
+    'COMPOSE_DISABLE_ENV_FILE')
 $PreviousEnvironment = @{}
 foreach ($name in $EnvironmentNames) {
     $PreviousEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
@@ -57,8 +60,20 @@ function Invoke-BoundedProcess {
     $stdout = if ($CaptureStdout -and (Test-Path -LiteralPath $stdoutPath)) {
         [IO.File]::ReadAllText($stdoutPath).Trim()
     } else { '' }
+    $stderrClass = $null
+    if (Test-Path -LiteralPath $stderrPath) {
+        $stderrText = [IO.File]::ReadAllText($stderrPath)
+        foreach ($knownClass in @('UndefinedTable', 'UndefinedColumn', 'InsufficientPrivilege',
+                                  'InvalidSchemaName', 'DuplicateObject', 'OperationalError',
+                                  'ConnectionTimeout', 'TimeoutError', 'ValueError', 'RuntimeError',
+                                  'TypeError', 'KeyError', 'AssertionError', 'AttributeError',
+                                  'FileNotFoundError', 'ModuleNotFoundError', 'PermissionError')) {
+            if ($stderrText.Contains($knownClass)) { $stderrClass = $knownClass; break }
+        }
+    }
     Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
-    return [pscustomobject]@{ finished = $finished; exit_code = if ($finished) { $process.ExitCode } else { $null }; stdout = $stdout }
+    return [pscustomobject]@{ finished = $finished; exit_code = if ($finished) { $process.ExitCode } else { $null };
+        stdout = $stdout; error_class = $stderrClass }
 }
 
 function Get-SafeSummary {
@@ -69,6 +84,7 @@ function Get-SafeSummary {
         model_calls = 0
         cleanup = $CleanupStatus
     }
+    if ($FailureClass) { $summary.failure_class = $FailureClass }
     if ($ReportGenerated -and (Test-Path -LiteralPath $ReportPath)) {
         try {
             $report = Get-Content -LiteralPath $ReportPath -Raw | ConvertFrom-Json
@@ -98,10 +114,11 @@ if (-not $ConfirmDedicatedDatabase) {
 
 $Status = 'blocked'
 try {
+    [Environment]::SetEnvironmentVariable('COMPOSE_DISABLE_ENV_FILE', 'true', 'Process')
     $null = New-Item -ItemType Directory -Path $TempRoot -Force
     if (Test-Path -LiteralPath $ReportPath) { throw 'report_path_already_exists' }
     $Stage = 'frozen_artifacts'
-    foreach ($path in @($ComposeSource, $Python, $Database, $BundleManifestPath,
+    foreach ($path in @($ComposeSource, $Python, $Database, $Bootstrap, $BundleManifestPath,
                         $V13ManifestPath, $V13BlindPath, $V13GoldPath)) {
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'required_artifact_missing' }
     }
@@ -143,6 +160,8 @@ try {
         $composeText -notmatch '(?m)^\s*tmpfs\s*:') { throw 'isolated_compose_safety_check_failed' }
     $null = New-Item -ItemType Directory -Path (Split-Path -Parent $ReportPath) -Force
 
+    $adminPassword = [guid]::NewGuid().ToString('N') + [guid]::NewGuid().ToString('N')
+    [Environment]::SetEnvironmentVariable('INSIGHTPILOT_IP4_ADMIN_PASSWORD', $adminPassword, 'Process')
     $composeArgs = @('compose', '--project-name', $ComposeProject, '-f', $TempCompose)
     $config = Invoke-BoundedProcess $docker.Source ($composeArgs + @('config', '--quiet')) 15000 'compose-config'
     if (-not $config.finished -or $config.exit_code -ne 0) { throw 'compose_config_failed' }
@@ -150,10 +169,8 @@ try {
     if (-not $existing.finished -or $existing.exit_code -ne 0 -or $existing.stdout) { throw 'random_compose_project_not_empty' }
 
     $Stage = 'temporary_database'
-    $adminPassword = [guid]::NewGuid().ToString('N') + [guid]::NewGuid().ToString('N')
     $appPassword = [guid]::NewGuid().ToString('N') + [guid]::NewGuid().ToString('N')
     $appRole = 'insightpilot_v13_runner'
-    [Environment]::SetEnvironmentVariable('INSIGHTPILOT_IP4_ADMIN_PASSWORD', $adminPassword, 'Process')
     [Environment]::SetEnvironmentVariable('INSIGHTPILOT_IP4_APP_ROLE', $appRole, 'Process')
     [Environment]::SetEnvironmentVariable('INSIGHTPILOT_IP4_APP_PASSWORD', $appPassword, 'Process')
     $ComposeOwned = $true
@@ -171,18 +188,24 @@ try {
     [Environment]::SetEnvironmentVariable('INSIGHTPILOT_IP4_APP_DSN', $appDsn, 'Process')
 
     $Stage = 'load_synthetic_fixture'
-    $loader = Invoke-BoundedProcess $Python @('scripts/prepare_ip4_postgres.py', '--database', $Database) 180000 'fixture-load'
-    if (-not $loader.finished -or $loader.exit_code -ne 0) { throw 'synthetic_fixture_load_failed' }
+    $loader = Invoke-BoundedProcess $Python @('scripts/prepare_ip4_postgres.py', '--database', $Database,
+        '--bootstrap', $Bootstrap) 180000 'fixture-load'
+    if (-not $loader.finished -or $loader.exit_code -ne 0) {
+        $FailureClass = $loader.error_class
+        throw 'synthetic_fixture_load_failed'
+    }
 
     $Stage = 'sqlite_postgresql_parity'
     $audit = Invoke-BoundedProcess $Python @('scripts/run_ip4_v13_deterministic_comparison.py',
-        '--database', $Database, '--output', $ReportPath) 180000 'parity-audit'
+        '--database', $Database, '--output', $ReportPath, '--run-id', $RunId) 180000 'parity-audit'
     if (-not $audit.finished -or $audit.exit_code -ne 0 -or -not (Test-Path -LiteralPath $ReportPath)) {
+        $FailureClass = $audit.error_class
         throw 'offline_parity_audit_failed'
     }
     $ReportGenerated = $true
     $report = Get-Content -LiteralPath $ReportPath -Raw | ConvertFrom-Json
-    if ($report.model_calls -ne 0 -or $report.model_requests_sent -ne 0 -or
+    if ($report.status -ne 'completed' -or $report.deterministic_parity_status -ne 'passed' -or
+        $report.model_calls -ne 0 -or $report.model_requests_sent -ne 0 -or
         $report.database_parity.status -ne 'passed') { throw 'sqlite_postgresql_parity_failed' }
     $Status = 'passed'
 } catch {
@@ -195,7 +218,15 @@ try {
         if ($docker -and (Test-Path -LiteralPath $TempCompose)) {
             $downArgs = @('compose', '--project-name', $ComposeProject, '-f', $TempCompose, 'down', '--remove-orphans')
             $cleanup = Invoke-BoundedProcess $docker.Source $downArgs 30000 'compose-cleanup'
-            $CleanupStatus = if ($cleanup.finished -and $cleanup.exit_code -eq 0) { 'passed_project_only' } else { 'blocked_project_cleanup' }
+            if ($cleanup.finished -and $cleanup.exit_code -eq 0) {
+                $leftContainers = Invoke-BoundedProcess $docker.Source @('ps', '-a', '--filter',
+                    "label=com.docker.compose.project=$ComposeProject", '--format', '{{.ID}}') 15000 'container-cleanup-check' -CaptureStdout
+                $leftNetworks = Invoke-BoundedProcess $docker.Source @('network', 'ls', '--filter',
+                    "label=com.docker.compose.project=$ComposeProject", '--format', '{{.ID}}') 15000 'network-cleanup-check' -CaptureStdout
+                $CleanupStatus = if ($leftContainers.finished -and $leftContainers.exit_code -eq 0 -and
+                    -not $leftContainers.stdout -and $leftNetworks.finished -and $leftNetworks.exit_code -eq 0 -and
+                    -not $leftNetworks.stdout) { 'passed_project_only' } else { 'blocked_project_cleanup' }
+            } else { $CleanupStatus = 'blocked_project_cleanup' }
         } else {
             $CleanupStatus = 'blocked_compose_file_missing'
         }
@@ -204,6 +235,23 @@ try {
     }
     foreach ($name in $EnvironmentNames) {
         [Environment]::SetEnvironmentVariable($name, $PreviousEnvironment[$name], 'Process')
+    }
+    if ($ReportGenerated -and $CleanupStatus -eq 'passed_project_only' -and
+        (Test-Path -LiteralPath $ReportPath)) {
+        $report = Get-Content -LiteralPath $ReportPath -Raw | ConvertFrom-Json
+        $report | Add-Member -NotePropertyName execution_environment -NotePropertyValue ([ordered]@{
+            run_id = $RunId
+            compose_project = $ComposeProject
+            env_file_autoload_disabled = $true
+            host_binding = '127.0.0.1'
+            postgres_storage = 'tmpfs'
+            host_data_volume = $false
+            project_cleanup = 'passed_project_only'
+            remaining_project_containers = 0
+            remaining_project_networks = 0
+        }) -Force
+        [IO.File]::WriteAllText($ReportPath, ($report | ConvertTo-Json -Depth 20) + "`n",
+            [Text.UTF8Encoding]::new($false))
     }
     if ($CleanupStatus -eq 'passed_project_only' -and (Test-Path -LiteralPath $TempCompose)) {
         Remove-Item -LiteralPath $TempCompose -Force -ErrorAction SilentlyContinue

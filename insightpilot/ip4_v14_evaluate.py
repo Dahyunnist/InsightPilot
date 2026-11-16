@@ -3,13 +3,40 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import re
 from pathlib import Path
 
 from .agent import InsightPilot
-from .freeze import sha256_text
 from .ip4_evaluate import compare as compare_ip4
 from .query_engine import QueryEngine, SQLiteQueryEngine
 from .rule_baseline import RulePlanner
+
+
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _semantic_result_sha256(result: dict) -> str:
+    metric = result.get("metric")
+    projection = {
+        "status": result.get("status"), "reason": result.get("reason"),
+        "stage": result.get("stage"), "failure_detail": result.get("failure_detail"),
+        "metric_id": metric.get("id") if isinstance(metric, dict) else None,
+        "plan": result.get("plan"), "rows": result.get("rows"),
+        "verification_passed": (result.get("verification", {}).get("passed")
+                                 if isinstance(result.get("verification"), dict) else None),
+    }
+    payload = json.dumps(projection, ensure_ascii=False, sort_keys=True,
+                         separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def case_score_vector(report: dict) -> dict[str, tuple]:
+    fields = ("passed", "actual_status", "actual_reason", "metric_ok", "dimension_ok",
+              "region_ok", "date_window_ok", "numeric_ok", "independent_verifier_ok",
+              "actual_result_sha256")
+    return {row["case_id"]: tuple(row.get(field) for field in fields) for row in report["cases"]}
 
 
 def adapt_gold(gold: dict) -> dict:
@@ -28,16 +55,23 @@ def adapt_gold(gold: dict) -> dict:
 
 
 def compare(case: dict, gold: dict, result: dict) -> dict:
-    return compare_ip4(case, adapt_gold(gold), result)
+    compared = compare_ip4(case, adapt_gold(gold), result)
+    compared["actual_result_sha256"] = _semantic_result_sha256(result)
+    return compared
 
 
 def evaluate(database: Path, blind_path: Path, gold_path: Path, manifest_path: Path, *,
              query_engine: QueryEngine | None = None, tenant_id: str | None = None) -> dict:
     """Score a candidate using RulePlanner only; never creates a model planner."""
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if (sha256_text(blind_path) != manifest["blind_sha256"] or
-            sha256_text(gold_path) != manifest["gold_sha256"]):
-        raise ValueError("v14 blind/gold file hash does not match the candidate manifest")
+    for path, field in ((blind_path, "blind_sha256"), (gold_path, "gold_sha256"),
+                        (database, "database_sha256")):
+        expected = manifest.get(field)
+        if not isinstance(expected, str) or not re.fullmatch(r"[a-f0-9]{64}", expected):
+            raise ValueError(f"v14 manifest has invalid {field}")
+        if _sha256_file(path) != expected:
+            artifact = field.removesuffix("_sha256")
+            raise ValueError(f"v14 {artifact} file hash does not match the candidate manifest")
     cases = [json.loads(line) for line in blind_path.read_text(encoding="utf-8").splitlines() if line.strip()]
     gold_rows = [json.loads(line) for line in gold_path.read_text(encoding="utf-8").splitlines() if line.strip()]
     gold_by_id = {row["case_id"]: row for row in gold_rows}

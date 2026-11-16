@@ -22,16 +22,17 @@ services:
       - "127.0.0.1:58082:8080"
     volumes:
       - ./insightpilot:/workspace/insightpilot:ro
-      - ./data/insightpilot-multidomain.sqlite:/workspace/data/insightpilot-multidomain.sqlite:ro
+      - ${IP3_RELIABILITY_FIXTURE_PATH:?set a unique empty synthetic fixture path}:/workspace/data/fixture.sqlite:ro
       - ./scripts/ip3_postgres_probe_app.py:/workspace/scripts/ip3_postgres_probe_app.py:ro
     environment:
       PYTHONPATH: /workspace
       LLM_API_KEY: ip3-db-outage-no-model
       LLM_BASE_URL: http://127.0.0.1:9/v1
       LLM_MODEL: ip3-db-outage-fixed-planner
-      INSIGHTPILOT_DATABASE_PATH: /workspace/data/insightpilot-multidomain.sqlite
+      INSIGHTPILOT_DATABASE_PATH: /workspace/data/fixture.sqlite
       INSIGHTPILOT_DATABASE_URL: ""
       IP3_TEST_DSN: postgresql://insightpilot_ip3_app:ip3-app-test-only@postgres:5432/insightpilot_ip4
+      IP3_ADMIN_DSN: postgresql://postgres:ip3-db-outage-test-only@postgres:5432/insightpilot_ip4
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"]
       interval: 1s

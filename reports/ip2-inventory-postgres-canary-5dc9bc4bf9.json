@@ -1,0 +1,54 @@
+{
+  "status": "passed",
+  "database": "insightpilot_ip2_inventory_5dc9bc4bf9",
+  "postgres_version": "16.15",
+  "roles": {
+    "ip2_inventory_reader": {
+      "superuser": false,
+      "bypassrls": false
+    },
+    "insightpilot_reader": {
+      "superuser": false,
+      "bypassrls": false
+    }
+  },
+  "observations": {
+    "tenant_a": {
+      "visible_count": 1,
+      "visibility_matches_context": true,
+      "backend_pid": 78,
+      "session_role_matches": true,
+      "effective_role_is_reader": true
+    },
+    "tenant_b": {
+      "visible_count": 1,
+      "visibility_matches_context": true,
+      "backend_pid": 78,
+      "session_role_matches": true,
+      "effective_role_is_reader": true
+    },
+    "tenant_a_reused": {
+      "visible_count": 1,
+      "visibility_matches_context": true,
+      "backend_pid": 78,
+      "session_role_matches": true,
+      "effective_role_is_reader": true
+    },
+    "missing": {
+      "visible_count": 0,
+      "visibility_matches_context": true,
+      "backend_pid": 78,
+      "session_role_matches": true,
+      "effective_role_is_reader": true
+    },
+    "unknown": {
+      "visible_count": 0,
+      "visibility_matches_context": true,
+      "backend_pid": 78,
+      "session_role_matches": true,
+      "effective_role_is_reader": true
+    }
+  },
+  "pool_connection_reused": true,
+  "model_calls": 0
+}

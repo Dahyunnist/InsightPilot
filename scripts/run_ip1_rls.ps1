@@ -7,11 +7,14 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $compose = Join-Path $root 'docker-compose.ip4.yml'
-$composeProject = 'insightpilot-ip1-host-acceptance'
+$runId = [guid]::NewGuid().ToString('N').Substring(0, 10)
+$composeProject = "insightpilot-ip1-$runId"
+$containerName = "insightpilot-ip4-$runId"
 $artifactRoot = if ($ArtifactDirectory) { $ArtifactDirectory } else { Join-Path $root 'reports' }
 $null = New-Item -ItemType Directory -Path $artifactRoot -Force
 $envNames = @('INSIGHTPILOT_IP4_ADMIN_PASSWORD','INSIGHTPILOT_IP4_ADMIN_DSN',
-    'INSIGHTPILOT_IP4_APP_ROLE','INSIGHTPILOT_IP4_APP_PASSWORD','INSIGHTPILOT_IP4_APP_DSN')
+    'INSIGHTPILOT_IP4_APP_ROLE','INSIGHTPILOT_IP4_APP_PASSWORD','INSIGHTPILOT_IP4_APP_DSN',
+    'INSIGHTPILOT_IP4_CONTAINER_NAME','INSIGHTPILOT_RUN_IP1_POSTGRES_RLS_INTEGRATION')
 $oldValues = @{}
 foreach ($name in $envNames) { $oldValues[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
 $started = $false
@@ -20,6 +23,7 @@ try {
     Push-Location $root
     if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { throw 'Docker CLI is required.' }
     if (-not $env:INSIGHTPILOT_IP4_ADMIN_PASSWORD) { $env:INSIGHTPILOT_IP4_ADMIN_PASSWORD = [guid]::NewGuid().ToString('N') }
+    $env:INSIGHTPILOT_IP4_CONTAINER_NAME = $containerName
     & docker compose --project-name $composeProject -f $compose config --quiet
     if ($LASTEXITCODE -ne 0) { throw 'Compose configuration is invalid.' }
     $rendered = @(& docker compose --project-name $composeProject -f $compose config --format json)
@@ -35,7 +39,7 @@ try {
     }
     & docker info --format '{{.ServerVersion}}' *> $null
     if ($LASTEXITCODE -ne 0) { throw 'Docker daemon unavailable. Start Docker Desktop, then rerun scripts\run_ip1_rls.ps1.' }
-    $existing = @(& docker ps -a --filter 'name=^insightpilot-ip4-postgres$' --format '{{.Names}}')
+    $existing = @(& docker ps -a --filter "name=^$containerName$" --format '{{.Names}}')
     if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect Docker containers.' }
     if ($existing) { throw 'Container name conflict; refusing to touch existing service.' }
     $password = [guid]::NewGuid().ToString('N')
@@ -54,6 +58,9 @@ try {
     & (Join-Path $root '.venv\Scripts\python.exe') scripts\prepare_ip4_postgres.py
     if ($LASTEXITCODE -ne 0) { throw 'Synthetic PostgreSQL preparation failed.' }
     $python = Join-Path $root '.venv\Scripts\python.exe'
+    $env:INSIGHTPILOT_RUN_IP1_POSTGRES_RLS_INTEGRATION = '1'
+    & $python -m pytest -p no:cacheprovider tests\test_ip1_postgres_rls_integration.py -q
+    if ($LASTEXITCODE -ne 0) { throw 'Two-tenant PostgreSQL RLS integration tests failed.' }
     $canaryReport = Join-Path $artifactRoot 'ip1-tenant-rls-canary.json'
     & $python scripts\verify_ip1_rls_canary.py --output $canaryReport
     if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL tenant RLS canary acceptance failed.' }

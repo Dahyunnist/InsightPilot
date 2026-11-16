@@ -1,0 +1,149 @@
+{
+  "audit_status": "passed",
+  "report_path": "reports/ip4-retrieval-ablation-model-2026-11-16-r2.json",
+  "report_sha256": "6b4d9611b4fcd3b08778c48d99144e363768f8a92a1a045e4b3e4aae48fb7a59",
+  "report_created_at_utc": "2026-11-16T07:46:58.499616+00:00",
+  "run_id_present": false,
+  "artifact_identity": "report path + created_at_utc + report_sha256; no explicit run_id in report or ledger summary",
+  "freeze_match": {
+    "manifest_sha256": true,
+    "blind_sha256": true,
+    "gold_sha256_local_only": true,
+    "data_fingerprint": true
+  },
+  "sample_boundary": {
+    "case_count": 22,
+    "domains": [
+      "refunds",
+      "marketing_roi"
+    ],
+    "data_kind": "synthetic",
+    "generalization_claim": false
+  },
+  "requests": {
+    "case_runs": 44,
+    "maximum_api_calls": 66,
+    "observed_api_calls": 36,
+    "payload_fields": [
+      "question",
+      "candidate_metrics",
+      "allowed_metric_ids"
+    ],
+    "excluded_fields": [
+      "case_id",
+      "gold",
+      "expected_status",
+      "database_rows",
+      "SQL",
+      "query_results"
+    ],
+    "exclusion_attested_by_report": true
+  },
+  "cost_and_ledger": {
+    "reserve_usd": 0.155232,
+    "observed_peak_price_estimate_usd": 0.0323598,
+    "remaining_before_usd": 2.86483355,
+    "remaining_after_usd": 2.83247375,
+    "ledger_matches_report": true
+  },
+  "arms": {
+    "retrieval_on": {
+      "passed": 21,
+      "total": 22,
+      "answerable_passed": 13,
+      "answerable_total": 14,
+      "guard_passed": 8,
+      "guard_total": 8,
+      "failure_count": 1,
+      "failure_case_ids": [
+        "IP4V13-M03"
+      ],
+      "failed_assertion_counts": {
+        "status_ok": 1,
+        "metric_ok": 1,
+        "dimension_ok": 1,
+        "numeric_ok": 1,
+        "date_window_ok": 1
+      }
+    },
+    "retrieval_off": {
+      "passed": 9,
+      "total": 22,
+      "answerable_passed": 2,
+      "answerable_total": 14,
+      "guard_passed": 7,
+      "guard_total": 8,
+      "failure_count": 13,
+      "failure_case_ids": [
+        "IP4V13-R01",
+        "IP4V13-R02",
+        "IP4V13-R03",
+        "IP4V13-R04",
+        "IP4V13-R05",
+        "IP4V13-R06",
+        "IP4V13-R07",
+        "IP4V13-R08",
+        "IP4V13-M01",
+        "IP4V13-M03",
+        "IP4V13-M04",
+        "IP4V13-M06",
+        "IP4V13-M08"
+      ],
+      "failed_assertion_counts": {
+        "status_ok": 12,
+        "metric_ok": 12,
+        "dimension_ok": 11,
+        "numeric_ok": 12,
+        "date_window_ok": 11,
+        "region_ok": 1
+      }
+    }
+  },
+  "retained_content_check": {
+    "questions": false,
+    "gold_content": false,
+    "raw_model_responses": false,
+    "sql": false,
+    "query_result_rows": false
+  },
+  "agent_model_requests_for_this_audit": 0,
+  "run_manifest_sidecar": {
+    "path": "reports/ip4-retrieval-ablation-run-manifest-2026-11-16-r2.json",
+    "sha256": "44ad86c3f4ac714ba7dd03776a8cc110c2b843148b120757c3a7e4a339ae99ca",
+    "schema_version": 2,
+    "validator_status": "passed",
+    "actual_ids": {
+      "run_id": null,
+      "trace_id": null,
+      "span_id": null,
+      "evaluation_id": null
+    },
+    "planned_model_id": "deepseek-v4-flash",
+    "model_id_status": "not_recorded"
+  },
+  "trace_event_audit": {
+    "source_status": "unavailable",
+    "source_logs_recorded": false,
+    "zero_count_interpretation": "0 means not observed in retained trace evidence; it does not prove the event did not occur.",
+    "unavailable_events": [
+      "timeout",
+      "retry",
+      "budget_exceeded",
+      "cancel",
+      "unsafe_action_blocked",
+      "checkpoint_resume",
+      "analysis.started",
+      "analysis.completed",
+      "analysis.failed"
+    ],
+    "calls_over_planned_analyses_unclassified": {
+      "retrieval_on": 0,
+      "retrieval_off": 3
+    },
+    "budget_control_check": {
+      "calls_within_cap": true,
+      "estimate_within_reserve": true,
+      "estimate_within_authorized_cap": true
+    }
+  }
+}

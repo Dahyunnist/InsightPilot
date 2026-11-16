@@ -10,7 +10,7 @@ IP-1/2 的 2026-10-23 路线要求 PostgreSQL 权限、双租户 RLS 与故障�
 
 ## 宿主命令
 
-在 `E:\job\insightpilot` 的 PowerShell 运行：
+在项目根目录的 PowerShell 运行：
 
 ```powershell
 .\scripts\run_ip1_database_truth.ps1

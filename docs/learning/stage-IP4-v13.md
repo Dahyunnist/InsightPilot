@@ -63,3 +63,19 @@ amount 全表同算法为 ¥10.91277486，与 cost 全表 CNY 总额 ¥10.912774
 失败分类审计确认历史 r5 为 15 次请求尝试、0 provider response；15 条均标 `not_scored_transport_error`，score 为 null，不计作模型失败分或成功分。runner 另将错误澄清、错误拒答、数值错、guard 错误响应、拒答题被接受分开记录；本次没有可评分模型响应。预算测试覆盖逐请求先预留、调用数/成本超限即停；新增 dry-run 回归验证超出 `$0.1873344` reserve 上限时在请求前拒绝。离线预检状态仍为 `blocked_pre_model_balance_unverified`，余额未查询。模型 runner 的 22 次计划、单题单次上限、$5 总 cap 和已登记预留硬门禁通过静态/离线审查。
 
 **阻塞项：**本机 Docker Engine 权限不可用。现有 PostgreSQL 报告仅有旧 12 题套件且无 v13 hash，不能证明这份 22 题 v13 gold 的 PostgreSQL 一致性或双租户逐题覆盖；审计明确标记 `postgres_22_case_v13_gold_parity` blocked。通用 API 跨租户读取/取消测试存在，但不能替代 v13 双租户全套验收。v14 仍是候选，未运行模型；所有者审题与实时余额预检未完成。审计结论为 blocked，不得宣称 IP-4 双后端验收完成。
+
+## 2026-11-16 v13 双后端确定性复验
+
+本节更新前文“缺 v13 PostgreSQL 同哈希报告”的历史状态。使用独立随机 Compose 项目，在 PostgreSQL 16.15 tmpfs 临时库上重跑 v13 固定 22 题；SQLite 与 PostgreSQL tenant-a、tenant-b 的确定性结果逐题一致，各 22/22。领域组成 refunds 12 题、marketing ROI 10 题。manifest、blind、gold 的 SHA-256 与 2026-11-15 冻结审计一致；gold 只由本地独立 scorer 读取，没有进入模型请求。模型调用 0。
+
+实跑报告 `reports/ip4-v13-postgres-parity-a2ea8ab495c14543afab476f0496ae65.json` 记录 run ID、PG 版本、冻结哈希、随机 Compose project、禁用 `.env` 自动加载、loopback 端口、tmpfs/no volume 与项目级清理结果。清理后该 project 容器和网络均为 0。字段审计见 `reports/ip4-release-requirement-audit-2026-11-16.json`。
+
+22 题模型检索消融本身有 36 次模型调用，但其报告/清单没有记录 backend，也没有与运行绑定的代码 SHA。确定性 PG parity 不证明模型请求曾在 PostgreSQL 执行。因此计划中的双域、双后端确定性一致性已通过；模型消融的后端范围仍不能从留存运行证据确认。v13 模型执行代码锁仍不匹配，模型执行 gate 继续 blocked；本次没有发模型请求，也没有放行模型评测。
+
+运行清单字段已逐项审计：project、dataset_id、data_fingerprint、split、planned_model_id、max_tokens、预算上限/预留与完成时间有记录；git SHA、run/trace/span/evaluation ID、环境、单一 dataset SHA、实际 model_id、prompt/scorer SHA、runtime、max_steps、启动时间和实际账单成本均未记录或不适用。实际成本保持 `null/unconfirmed`；每域 gold 哈希和 data fingerprint 单独保留，不能替代缺失的统一字段。trace stream 未保存，事件覆盖仍不可观测。
+
+### 中间报告保全说明
+
+本轮两份中间 parity JSON 在整理时被误删：`ip4-v13-postgres-parity-bf75136a9a7e4d8294d51124f5a29a50.json`（SHA-256 `8ea43d534220870cfa46b0cf1f84a2c5921c711028d047d78da92d76b702966f`）与 `ip4-v13-postgres-parity-ea44b24e4f9240c0b74883f6863b29c6.json`（SHA-256 `51df2a24ba01b72242c6766e5f823c9b5021538c1baf32d380d2b25ab4ce2477`）。当时 wrapper 在 parity 阶段返回失败；可见摘要显示两租户 parity 各 22/22，第二份记录 PostgreSQL 16.15。原文件无法从工作区、临时目录或 8 个 Git unreachable blob 中按哈希精确恢复；没有按记忆重建 JSON。
+
+最终完整报告仍保留本次 RulePlanner 15/22 的失败 case ID 与检查类别，并证明这些失败结果在 SQLite、两个 PostgreSQL tenant 之间逐题一致。上述中间报告的丢失已写入 release requirement audit；干净候选排除这两份缺失/不完整 artifact，只保留损失记录和最终完整报告。

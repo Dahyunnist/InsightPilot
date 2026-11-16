@@ -2626,7 +2626,7 @@
     },
     "replay_note": "No live-model verifier on/off replay is included. The deterministic no-verifier arm uses RulePlanner and adds no API calls.",
     "data_artifacts": {
-      "bundle_root": "E:\\job\\insightpilot\\benchmarks\\ip4-offline-prep-v1",
+      "bundle_root": "benchmarks/ip4-offline-prep-v1",
       "agent_visible_files": [
         "agent-visible/refunds-blind.jsonl",
         "agent-visible/marketing_roi-blind.jsonl"

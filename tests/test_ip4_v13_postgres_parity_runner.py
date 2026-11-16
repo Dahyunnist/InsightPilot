@@ -23,6 +23,8 @@ class IP4V13PostgresParityRunnerTests(unittest.TestCase):
         self.assertIn("bundle.source_v13.gold_sha256", self.script)
         self.assertIn("$bundle.data.sqlite_sha256 -ne $dbHash", self.script)
         self.assertIn("$source.case_count -ne 22", self.script)
+        self.assertIn("$Bootstrap = Join-Path $ProjectRoot 'docs\\postgresql-ip4-v13-bootstrap.sql'", self.script)
+        self.assertIn("'--bootstrap', $Bootstrap", self.script)
 
     def test_compose_is_random_loopback_tmpfs_and_cleanup_is_project_scoped(self):
         self.assertIn("$ComposeProject = 'insightpilot-v13-' + $RunId.Substring(0, 12)", self.script)
@@ -41,6 +43,8 @@ class IP4V13PostgresParityRunnerTests(unittest.TestCase):
         self.assertIn("30000 'compose-cleanup'", self.script)
         self.assertLess(self.script.index("$ComposeOwned = $true"), self.script.index("'up', '-d'"))
         self.assertIn("foreach ($name in $EnvironmentNames)", self.script)
+        self.assertIn("'COMPOSE_DISABLE_ENV_FILE'", self.script)
+        self.assertIn("SetEnvironmentVariable('COMPOSE_DISABLE_ENV_FILE', 'true', 'Process')", self.script)
         self.assertIn("if (Test-Path -LiteralPath $ReportPath) { throw 'report_path_already_exists' }", self.script)
         self.assertIn("if ($ReportGenerated -and (Test-Path -LiteralPath $ReportPath))", self.script)
 
@@ -54,6 +58,10 @@ class IP4V13PostgresParityRunnerTests(unittest.TestCase):
         self.assertNotIn("Write-Output $appDsn", self.script)
         self.assertNotIn("Write-Output $composeText", self.script)
         self.assertIn("$report.model_requests_sent -ne 0", self.script)
+        self.assertIn("'--run-id', $RunId", self.script)
+        self.assertIn("env_file_autoload_disabled = $true", self.script)
+        self.assertIn("remaining_project_containers = 0", self.script)
+        self.assertIn("remaining_project_networks = 0", self.script)
 
     def test_script_parses_with_windows_powershell(self):
         powershell = shutil.which("powershell") or shutil.which("pwsh")

@@ -60,6 +60,9 @@ class IP1RlsRunnerTests(unittest.TestCase):
         self.assertLess(script.index("scripts\\verify_ip4_postgres.py"),
                         script.index("scripts\\verify_ip1_data_meta_timeout.py"))
         self.assertIn("dedicated test PostgreSQL container/network", script)
+        self.assertIn("test_ip1_postgres_rls_integration.py", script)
+        self.assertIn("[guid]::NewGuid()", script)
+        self.assertIn("INSIGHTPILOT_IP4_CONTAINER_NAME", compose)
         self.assertNotIn("volumes:", compose.lower())
         for name in ("INSIGHTPILOT_IP4_ADMIN_PASSWORD", "INSIGHTPILOT_IP4_ADMIN_DSN",
                      "INSIGHTPILOT_IP4_APP_ROLE", "INSIGHTPILOT_IP4_APP_PASSWORD",

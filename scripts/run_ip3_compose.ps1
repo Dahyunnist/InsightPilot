@@ -17,6 +17,19 @@ function Stop-WithFallback {
     throw "$Reason`nIP-3 Compose 测量未运行。功能冒烟回退（不测容器性能）：.\.venv\Scripts\python.exe scripts\smoke_local.py"
 }
 
+function Invoke-HttpProbe {
+    param(
+        [Parameter(Mandatory = $true)][string]$Python,
+        [Parameter(Mandatory = $true)][string]$ProbeScript,
+        [Parameter(Mandatory = $true)][string]$ReportPath
+    )
+    $probeArguments = @($ProbeScript, '--output', $ReportPath)
+    & $Python @probeArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "IP-3 HTTP 验收失败（退出码 $LASTEXITCODE）。"
+    }
+}
+
 try {
     Push-Location $ProjectRoot
     $PushedLocation = $true
@@ -65,10 +78,7 @@ try {
         throw "IP-3 Compose 启动失败（退出码 $LASTEXITCODE）。检查 Docker 构建输出和包索引网络。"
     }
     $SmokeReport = Join-Path $ArtifactRoot 'ip3-compose-http.json'
-    & $Python scripts\probe_ip3_http.py --output $SmokeReport
-    if ($LASTEXITCODE -ne 0) {
-        throw "IP-3 HTTP 验收失败（退出码 $LASTEXITCODE）。"
-    }
+    Invoke-HttpProbe -Python $Python -ProbeScript 'scripts\probe_ip3_http.py' -ReportPath $SmokeReport
     $McpReport = Join-Path $ArtifactRoot 'ip3-mcp-cancellation.json'
     $McpRawOut = Join-Path $ArtifactRoot 'ip3-mcp-cancellation.stdout.raw'
     $McpRawErr = Join-Path $ArtifactRoot 'ip3-mcp-cancellation.stderr.raw'

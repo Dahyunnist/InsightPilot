@@ -27,6 +27,7 @@ def verify() -> dict:
     admin_dsn = os.environ.get("INSIGHTPILOT_IP4_ADMIN_DSN")
     app_dsn = os.environ.get("INSIGHTPILOT_IP4_APP_DSN")
     app_role = os.environ.get("INSIGHTPILOT_IP4_APP_ROLE")
+    expected_database = os.environ.get("INSIGHTPILOT_RLS_EXPECTED_DATABASE", "insightpilot_ip4")
     if not admin_dsn or not app_dsn or not app_role:
         raise RuntimeError("Set the dedicated IP-4 admin/app DSNs and app role")
 
@@ -35,8 +36,9 @@ def verify() -> dict:
     try:
         with psycopg.connect(admin_dsn) as admin:
             database = admin.execute("SELECT current_database()").fetchone()[0]
-            if database != "insightpilot_ip4":
-                raise RuntimeError("Refusing canary outside dedicated insightpilot_ip4 test database")
+            server_version = admin.execute("SHOW server_version").fetchone()[0]
+            if database != expected_database:
+                raise RuntimeError("Refusing canary outside the explicitly named dedicated test database")
             if admin.execute("SELECT to_regclass('public.ip1_rls_canary')").fetchone()[0] is not None:
                 raise RuntimeError("Canary table already exists; refusing to overwrite it")
             roles = {}
@@ -79,7 +81,7 @@ def verify() -> dict:
                     session_user, database = connection.execute(
                         "SELECT session_user, current_database()"
                     ).fetchone()
-                    if session_user != app_role or database != "insightpilot_ip4":
+                    if session_user != app_role or database != expected_database:
                         raise RuntimeError("Application DSN role or database mismatch")
                     connection.execute("SET LOCAL ROLE insightpilot_reader")
                     connection.execute("SELECT set_config('app.tenant_id', %s, true)", (tenant_id or "",))
@@ -109,16 +111,16 @@ def verify() -> dict:
                       item["effective_role_is_reader"] for item in observations.values())
                   and pids[0] == pids[1] == pids[2]
                   and all(not value["superuser"] and not value["bypassrls"] for value in roles.values()))
-        return {"status": "passed" if passed else "failed", "database": "insightpilot_ip4",
-                "roles": roles, "observations": observations,
+        return {"status": "passed" if passed else "failed", "database": expected_database,
+                "postgres_version": server_version, "roles": roles, "observations": observations,
                 "pool_connection_reused": pids[0] == pids[1] == pids[2], "model_calls": 0}
     finally:
         if pool is not None:
             pool.close()
         if table_created:
             with psycopg.connect(admin_dsn) as admin:
-                if admin.execute("SELECT current_database()").fetchone()[0] != "insightpilot_ip4":
-                    raise RuntimeError("Refusing canary cleanup outside dedicated test database")
+                if admin.execute("SELECT current_database()").fetchone()[0] != expected_database:
+                    raise RuntimeError("Refusing canary cleanup outside the explicitly named dedicated test database")
                 admin.execute("DROP TABLE public.ip1_rls_canary")
 
 

@@ -1,0 +1,82 @@
+{
+  "status": "passed",
+  "completed_at_utc": "2026-11-16T09:27:39.4514837+00:00",
+  "compose_project": "insightpilot-ip2-inventory-5dc9bc4bf9",
+  "database": "insightpilot_ip2_inventory_5dc9bc4bf9",
+  "postgres_version": "16.15",
+  "synthetic_data_only": true,
+  "model_calls": 0,
+  "isolation": {
+    "host_binding": "127.0.0.1",
+    "storage": "tmpfs",
+    "host_data_volume": false
+  },
+  "inventory_sqlite_postgres_parity": {
+    "status": "passed",
+    "tenants": [
+      "tenant-a",
+      "tenant-b"
+    ],
+    "compared": [
+      "group_value",
+      "numerator_cents",
+      "denominator_cents",
+      "value"
+    ]
+  },
+  "inventory_rls": {
+    "status": "passed",
+    "missing_tenant_rejected": true,
+    "no_context_visible_rows": 0,
+    "cross_tenant_rows_visible": 0,
+    "reader_dml_denied": true
+  },
+  "tenant_rls_canary": {
+    "status": "passed",
+    "pool_connection_reused": true,
+    "observations": {
+      "tenant_a": {
+        "visible_count": 1,
+        "visibility_matches_context": true,
+        "backend_pid": 78,
+        "session_role_matches": true,
+        "effective_role_is_reader": true
+      },
+      "tenant_b": {
+        "visible_count": 1,
+        "visibility_matches_context": true,
+        "backend_pid": 78,
+        "session_role_matches": true,
+        "effective_role_is_reader": true
+      },
+      "tenant_a_reused": {
+        "visible_count": 1,
+        "visibility_matches_context": true,
+        "backend_pid": 78,
+        "session_role_matches": true,
+        "effective_role_is_reader": true
+      },
+      "missing": {
+        "visible_count": 0,
+        "visibility_matches_context": true,
+        "backend_pid": 78,
+        "session_role_matches": true,
+        "effective_role_is_reader": true
+      },
+      "unknown": {
+        "visible_count": 0,
+        "visibility_matches_context": true,
+        "backend_pid": 78,
+        "session_role_matches": true,
+        "effective_role_is_reader": true
+      }
+    },
+    "report_path": "ip2-inventory-postgres-canary-5dc9bc4bf9.json",
+    "report_sha256": "5cffbf1794f24ff755aa8752b35b952edbb307cc10a31333a2d892e17e67aad4"
+  },
+  "cleanup": {
+    "status": "passed",
+    "remaining_containers": 0,
+    "remaining_networks": 0
+  }
+}

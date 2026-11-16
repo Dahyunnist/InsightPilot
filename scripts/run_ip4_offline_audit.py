@@ -190,7 +190,8 @@ def _require_local_postgres_dsn(dsn: str) -> None:
 
 
 def run(bundle: Path = BUNDLE, database: Path = DEFAULT_DATABASE, output: Path | None = None,
-        postgres_dsn: str | None = None, tenant_ids: tuple[str, str] = ("tenant-a", "tenant-b")) -> dict:
+        postgres_dsn: str | None = None, tenant_ids: tuple[str, str] = ("tenant-a", "tenant-b"),
+        include_model_accounting: bool = True) -> dict:
     manifest_path = bundle / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     cases, gold = _load_cases(manifest, bundle)
@@ -205,11 +206,23 @@ def run(bundle: Path = BUNDLE, database: Path = DEFAULT_DATABASE, output: Path |
     preflight_blocked_ids = [case["case_id"] for case in cases if _preflight(case["question"])]
     call_cap_after_preflight = ((len(cases) - len(preflight_blocked_ids)) * len(arms)
                                 * _MAX_CALLS_PER_ANALYSIS)
-    ledger = json.loads((ROOT / "reports/model-experiment-cost-ledger.json").read_text(encoding="utf-8"))
-    legacy_audit = json.loads((ROOT / "reports/cost-audit-v9.json").read_text(encoding="utf-8"))
-    retrieval_eval_path = ROOT / "reports/ip4-retrieval-ablation-model.json"
-    retrieval_eval = (json.loads(retrieval_eval_path.read_text(encoding="utf-8"))
-                      if retrieval_eval_path.exists() else None)
+    if include_model_accounting:
+        ledger = json.loads((ROOT / "reports/model-experiment-cost-ledger.json").read_text(encoding="utf-8"))
+        legacy_audit = json.loads((ROOT / "reports/cost-audit-v9.json").read_text(encoding="utf-8"))
+        retrieval_eval_path = ROOT / "reports/ip4-retrieval-ablation-model.json"
+        retrieval_eval = (json.loads(retrieval_eval_path.read_text(encoding="utf-8"))
+                          if retrieval_eval_path.exists() else None)
+    else:
+        ledger = {"cap_usd": 0.0, "remaining_global_cap_after_ip4_v13_model_usd": 0.0,
+                  "ip4_v13_model_evaluation": {"historical_uncertain_reserve_usd": 0.0,
+                                                "peak_list_price_estimate_usd": 0.0,
+                                                "model_calls": 0},
+                  **{key: {"peak_list_price_estimate_usd": 0.0} for key in (
+                      "v9_independent_holdout", "v10_independent_holdout", "v11_independent_holdout",
+                      "v12_independent_holdout", "ip4_v3_model_run")}}
+        legacy_audit = {"named_usage_estimates_after_v8_usd": 0.0,
+                        "prior_reserve_or_unreconciled_usage_usd": 0.0}
+        retrieval_eval = None
     project_cap = float(ledger["cap_usd"])
     latest_remaining = float(ledger["remaining_global_cap_after_ip4_v13_model_usd"])
     planned_reserve = round(budgeted_max_calls * per_request_usd, 8)
@@ -360,6 +373,13 @@ def run(bundle: Path = BUNDLE, database: Path = DEFAULT_DATABASE, output: Path |
             },
         },
     }
+    if not include_model_accounting:
+        report["model_ablation"] = {
+            "status": "not_evaluated",
+            "scope": "deterministic_sqlite_postgresql_parity_only",
+            "model_calls": 0,
+            "reason": "This comparison does not read or validate model budget/accounting artifacts.",
+        }
     if output:
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

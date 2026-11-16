@@ -13,7 +13,6 @@
 这些离线/mock 测试只证明应用正确绑定上下文，不证明 PostgreSQL RLS 实际生效。RLS 现场门禁仍是 `scripts/run_ip1_rls.ps1`；IP-4 parity 现场门禁仍是：
 
 ```powershell
-Set-Location E:\job\insightpilot
 .\scripts\run_ip4_v13_postgres_parity.ps1 -Execute -ConfirmDedicatedDatabase
 ```
 

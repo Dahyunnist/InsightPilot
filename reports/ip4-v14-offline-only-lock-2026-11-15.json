@@ -2,6 +2,7 @@
   "schema_version": 1,
   "status": "offline_only_not_authorized",
   "external_calls_authorized": false,
+  "network_boundary": "code_has_no_network_client_os_egress_not_blocked",
   "suite_id": "insightpilot-ip4-v14-private-candidate",
   "candidate_manifest_sha256": "060cbdf6e17563d3873b934819c79538b0d74d1c88a01bc58ce905136e02835d",
   "candidate_sha256": {
@@ -21,25 +22,24 @@
     "data_identity": "5104881b15a2055a078bec0410d499972be49f0e0cd28d058ab64c414a407647",
     "marketing_calculation": "68d370df51ef105643f3f77b53f0a5a4d31359b225dd1ace9fd4af48db5459c1",
     "planner_prompt_source": "78f3d980309ab7048b2c2b1fcfa7a4a4fd11a530f494119b5baa8bb14678aecc",
-    "metric_catalog": "c6841bf22b9e2c20236fc0e3a0d1a47b5674406749a3a582675cf40399b53a1b",
+    "metric_catalog": "55a5c34e2bfcc94bf4cfc44466e3b20b4b000ca41e313d45a9f098aa209233f0",
     "readonly_runner": "b1e5555c484a6f129eb1228891314507a7973588ef2eb3a25154f91de6d2954f",
     "query_compiler_runtime": "7a748a33553268d2931203e24d16bb19cee3fdac1bbdc8e12f339cebd54d1ec3",
-    "scorer": "e1cb44704c3c0b6a46e8a594490da8030cef2688b8544b3457c97cab05fe9eb8",
+    "scorer": "cb028764ea71131ffc96d35e83644e0a292ca913ad4b6b7805f6b5418767c663",
     "shared_scorer": "d3f2126b1ab088d9d96852bb2e23a609752220eaf5863c96c9cc0296a0beacd8",
     "agent_runtime": "fa134158cec40e38f0fdc7d4403faf46be286755d96d6ec111fe16c54ce761ed",
     "rule_planner": "60c31663398eca933bfba676e2394e7a4ceccff1028f5cd74f79bf99777812a0",
-    "query_engine": "052a758e1561bc37e26a247111aeaad793d01f01a8960e37642eeca46bfbc355",
-    "offline_runner_module": "568f3f63ccce65885a5dbc812e0a24777ab2e1c364a08310be0494302fadab80",
+    "query_engine": "76287a2c8fae3128a0cb67971f4cc6243e04bd56e9bcbd236850caefbfbe11bf",
+    "offline_runner_module": "34d95c650c449090b783961d6bf956a338a7e801458089095722c419c84fff38",
     "egress_worker": "f712168bb63b00c43bfb119a985f7636bbeaaedbef015f8120537f9a4212c12c"
   },
   "prompt_sha256": "a92994a54316c1a7127e0bc53160da1585bd869488e3fcf9cd3e10a3701e74d6",
+  "canonical_payload_sha256": "b65633c3cbd6bdcf319705e956e787a72d6b90ea17102389c40c925d1a132f7b",
   "outbound_fields": [
     "question",
     "allowed_metric_ids"
   ],
   "gold_access_boundary": "parent evaluator only; child receives sanitized records on stdin",
   "network_calls": 0,
-  "model_calls": 0,
-  "network_boundary": "code_has_no_network_client_os_egress_not_blocked",
-  "canonical_payload_sha256": "b65633c3cbd6bdcf319705e956e787a72d6b90ea17102389c40c925d1a132f7b"
+  "model_calls": 0
 }

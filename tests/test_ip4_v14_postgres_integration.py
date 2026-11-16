@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from data.build_ip4_v14_candidate import build_candidate
-from insightpilot.ip4_v14_evaluate import evaluate
+from insightpilot.ip4_v14_evaluate import case_score_vector, evaluate
 from insightpilot.query_engine import PostgresQueryEngine
 from scripts.prepare_ip4_postgres import prepare
 
@@ -29,15 +29,13 @@ def test_v14_sqlite_and_postgres_tenant_scores_match():
         paths = (candidate / "synthetic.sqlite", candidate / "blind.jsonl",
                  candidate / "gold.jsonl", candidate / "manifest.json")
         sqlite_report = evaluate(*paths)
-        sqlite_view = {row["case_id"]: (row["passed"], row["actual_status"], row["actual_reason"])
-                       for row in sqlite_report["cases"]}
+        sqlite_view = case_score_vector(sqlite_report)
         for tenant_id in ("tenant-a", "tenant-b"):
             engine = PostgresQueryEngine(os.environ["INSIGHTPILOT_IP4_APP_DSN"], tenant_id=tenant_id)
             try:
                 pg_report = evaluate(*paths, query_engine=engine, tenant_id=tenant_id)
             finally:
                 engine.close()
-            pg_view = {row["case_id"]: (row["passed"], row["actual_status"], row["actual_reason"])
-                       for row in pg_report["cases"]}
+            pg_view = case_score_vector(pg_report)
             assert pg_view == sqlite_view, tenant_id
         assert manifest["model_calls"] == 0

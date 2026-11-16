@@ -199,3 +199,49 @@ MCP 日志有取消后的 SSE `ClosedResourceError`，同时记录 session DELET
 发现无效幂等键和同键异题冲突响应缺少 `run_id` / `X-Request-ID`。现两条 422/409 拒绝响应都返回匹配 ID；回归确认不会规划。新增限流回归确认同键重放不消耗新任务额度，下一条无键请求返回 429 与 `Retry-After`；RunStore 启动故障返回 503、带匹配 ID 且不调用规划器。
 
 IP-3 定向组：`48 passed`、7 个 subtests。全量 `tests/` 受禁止读取 gold 限制，排除 32 个引用 gold 的模块后运行其余离线测试：`146 passed, 1 skipped, 50 subtests passed`。唯一 skip 为需显式启用 PostgreSQL 的集成测试。无模型请求、无外网、无容器。此结果是 gold-free 子集，不等于完整 `tests/` 全套通过，也不代表生产 SLA。
+
+补充 API 并发幂等边界：既有并发用例只直接竞争 `RunStore.start`，没有让两个 HTTP 路由请求同时越过首次 `find_idempotent`。新增屏障回归强制两请求都先读到 key 不存在，再同时完成 reservation；期望一个 200、一个 202 replay、同一 `run_id`、一条持久记录和一次 planner 执行。用例只用本地合成 SQLite 与固定阻塞 planner，不发模型请求。
+
+本轮重跑 API 幂等竞态、RunStore 并发 reservation、取消/超时、429 与 503 相关的选定回归：`8 passed`。完整两文件组在 Windows 首次运行出现停滞后中断；没有把该次计入通过，也未启动容器或外部数据库。
+
+可复现的 gold-free 本机命令：`.venv\Scripts\python.exe -m pytest -p no:cacheprovider -vv tests\test_ip3_database_recovery.py`。该组全项 `10 passed`；只创建测试管理的临时合成 SQLite，使用固定/阻塞 fake planner，不连接 provider、网络或外部 DB。另一个历史 `tests/test_s6_runtime.py` 在本机 Windows Python 3.14 的首个 FastAPI `TestClient` 用例挂起，本轮已中断且不计通过；其同步路由可靠性由上述 IP-3 故障注入组覆盖。该本机只有 Python 3.14，未改用 Docker 或其他运行环境规避。
+
+下一轮宿主阶梯报告须按并发档位给出样本数、p50/p95 延迟、HTTP 200/429/503 数量与拒绝原因；另报告 PostgreSQL 连接池耗尽时的等待/失败状态，以及释放连接后的恢复探针结果。历史短突发结果不得代替本轮宿主报告，也不代表生产 SLA。
+
+## 2026-11-16 IP-3 可选宿主可靠性矩阵
+
+新增可选宿主入口 `scripts/run_ip3_reliability_matrix.ps1`。默认只显示未执行状态；必须同时带 `-Execute -ConfirmSyntheticMatrix` 才运行。启动前检查固定端口、三个专用 Compose 项目为空、Compose 配置有效，以及本地基础镜像和 PostgreSQL 镜像已缓存。入口不自动拉取镜像，不覆盖已有产物目录，不删除卷；默认产物落入系统临时目录的随机新目录。
+
+矩阵顺序运行 Compose HTTP 并发 1/5/20、首次/重放/冲突幂等、HTTP 取消、固定 planner 与极小合成 SQLite/PostgreSQL 夹具上的连接中断和服务恢复、API 进程重启与失败重放。每阶段报告只保留 HTTP 状态、延迟、run ID 和恢复状态；汇总器检查状态数、request ID 对应关系及阶段清理结果。模型调用为 0。矩阵是有限合成故障注入，不代表持续吞吐或生产 SLA。
+
+在有 Docker Desktop 权限的宿主，从项目根目录执行：
+
+```powershell
+.\scripts\run_ip3_reliability_matrix.ps1 -Execute -ConfirmSyntheticMatrix
+```
+
+报告写入脚本输出的唯一临时目录。矩阵是有限次合成故障注入，不代表持续吞吐、生产数据表现或生产 SLA。
+
+### 2026-11-16 宿主运行参数故障与 runner 修复
+
+用户宿主首次运行在 HTTP probe 阶段失败：`probe_ip3_http.py: argument --output: expected one argument`。宿主只读检查确认专用 Compose 容器和网络均为空；该次不计为矩阵通过。故障表明 probe 没有收到 `--output` 的路径值；本地未能复现其原始触发环境。runner 现将子阶段调用改为显式命名参数及 `string[]` 参数数组，并新增带空格目录/报告路径的真实 PowerShell 子进程回归。
+
+矩阵汇总新增 `cleanup.json`：逐一查询三个专用 Compose 项目的容器与带项目标签的网络，只有查询成功且资源数均为 0 才通过。汇总状态要求清理证据通过；若阶段提前失败，runner 的 finally 仍尝试写清理核验结果。runner 只核验，不删除核验中发现的残留资源；各子 runner 仍负责清理自己创建的容器和网络，不删卷。
+
+离线定向回归：`tests/test_ip3_reliability_matrix.py`、`tests/test_ip3_reliability_runner.py`、`tests/test_ip3_compose_runner.py`、`tests/test_ip3_docker_smoke_report.py`，`15 passed`。当时未启动 Docker、PostgreSQL 或模型。宿主复跑使用带空格的唯一临时目录：
+
+```powershell
+$artifact = Join-Path $env:TEMP ('ip3 reliability retry ' + [guid]::NewGuid().ToString('N')); .\scripts\run_ip3_reliability_matrix.ps1 -Execute -ConfirmSyntheticMatrix -ArtifactDirectory $artifact
+```
+
+需把最终输出中的 `summary.json` 和 `cleanup.json` 路径及内容带回核验；前次失败不计入结果。
+
+第二次宿主重跑仍在 `probe_ip3_http.py --output` 失败，证明上一轮只修外层 `Invoke-Checked` 不够；`run_ip3_compose.ps1` 当时仍直接调用 Python。用户只读核验三个 Compose 项目容器和相关网络均为空，没有残留。内层现由 `Invoke-HttpProbe` 显式传参，清理报告用 UTF-8 无 BOM。
+
+第三次宿主复测通过参数传递并运行 HTTP 场景，但取消请求偶发地在重放观察前完成。外层的 `Invoke-Checked` 把 `-Arguments` 数组当成子脚本的位置参数，丢失 `-ArtifactDirectory` 的名称和值；现改为直接使用命名参数，并加 Windows PowerShell 5.1 带空格路径回归。合成取消 planner 的延迟从 1.5 秒增到 4 秒，留足宿主调度窗口，仍低于 API 5 秒请求超时。该次矩阵未通过；`cleanup.json` 显示三个项目容器与网络均已清空，卷保留。
+
+下一次宿主执行的 PostgreSQL 阶段发现装载器会为 `refund_reversals`、`campaign_attributions`、`campaign_spend_events` 建索引，但空夹具缺少三表，导致 `42P01 UndefinedTable`。夹具已补齐三张空表。独立 PostgreSQL 复测随后发现无订单的空数据只能得到 `clarify`，不满足数据库恢复后的成功验收；夹具现加入 1 笔固定合成华东订单、1 笔批准退款和 `snapshot_at`，期望退款金额率为 0.1。报告明确标为合成夹具，不是生产数据。数据版本使用受支持的 `insightpilot-enterprise-v1`，数据指纹独立反映该合成夹具内容。之前失败矩阵均不计通过。
+
+最终宿主矩阵通过，完整证据保存在 `reports/ip3-reliability-host-2026-11-16.json` 与 `reports/ip3-reliability-host-cleanup-2026-11-16.json`。HTTP 并发 1/5/20 分别为 1×200、5×200、8×200+12×429、均无 503；20 并发 429 均因 concurrency limit。26/26 个 request ID 匹配。p95 分别为 204.089、255.122、297.997 ms。取消与幂等冲突通过。PostgreSQL 连接中断后查询恢复；服务停机返回 502、恢复后返回 200。API 进程重启后原运行状态为 `interrupted`，重放返回 409 `result_unavailable`，与持久运行语义一致。模型/API 外呼为 0。`cleanup.json` 核验三个专用 Compose 项目的容器和网络均为 0；数据卷保留。此矩阵只覆盖本次合成样本和有限请求。
+
+包含本阶段改动的离线定向回归：上述四组 IP-3 测试与 `tests/test_ip3_postgres_fixture.py`，`17 passed`；`git diff --check` 通过。

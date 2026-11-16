@@ -15,9 +15,10 @@ BASE = "http://127.0.0.1:58080"
 TOKEN = "ip3-compose-synthetic-token"
 
 
-def request(path: str, *, payload: dict | None = None, headers: dict | None = None) -> tuple[int, dict, dict]:
+def request(path: str, *, payload: dict | None = None, headers: dict | None = None,
+            method: str | None = None) -> tuple[int, dict, dict]:
     data = None if payload is None else json.dumps(payload).encode()
-    req = urllib.request.Request(BASE + path, data=data, headers={"Content-Type": "application/json", **(headers or {})}, method="GET" if data is None else "POST")
+    req = urllib.request.Request(BASE + path, data=data, headers={"Content-Type": "application/json", **(headers or {})}, method=method or ("GET" if data is None else "POST"))
     try:
         with urllib.request.urlopen(req, timeout=15) as response:
             return response.status, json.loads(response.read()), {key.lower(): value for key, value in response.headers.items()}
@@ -30,27 +31,130 @@ def percentile(values: list[float], fraction: float) -> float:
     return round(ordered[min(len(ordered) - 1, int((len(ordered) - 1) * fraction))], 3)
 
 
+def summarize_pressure(concurrency: int, results: list[tuple[int, float, dict, dict]]) -> dict:
+    counts: dict[str, int] = {}
+    rejection_reasons: dict[str, int] = {}
+    for status, _latency, _body, _headers in results:
+        key = str(status)
+        counts[key] = counts.get(key, 0) + 1
+        if status == 429:
+            reason = _body.get("reason")
+            reason = reason if reason in {"requests_per_minute_limit", "concurrency_limit"} else "other"
+            rejection_reasons[reason] = rejection_reasons.get(reason, 0) + 1
+    latencies = [latency for _, latency, _, _ in results]
+    run_evidence = [{
+        "request_index": index,
+        "http_status": status,
+        "run_id": body.get("run_id"),
+        "request_id_matches": bool(body.get("run_id") and headers.get("x-request-id") == body.get("run_id")),
+    } for index, (status, _latency, body, headers) in enumerate(results)]
+    run_ids = [item["run_id"] for item in run_evidence if item["run_id"]]
+    return {
+        "concurrency": concurrency,
+        "requests": len(results),
+        "status_counts": counts,
+        "latency_ms": {"p50": percentile(latencies, .50), "p95": percentile(latencies, .95),
+                       "max": round(max(latencies), 3)},
+        "success_count": counts.get("200", 0),
+        "http_429_count": counts.get("429", 0),
+        "http_503_count": counts.get("503", 0),
+        "http_429_reason_counts": rejection_reasons,
+        "run_id_evidence": run_evidence,
+        "run_id_count": len(run_ids),
+        "unique_run_id_count": len(set(run_ids)),
+        "request_id_match_count": sum(item["request_id_matches"] for item in run_evidence),
+        "mode": "real_http_synthetic_sqlite_fixed_planner_no_model_calls",
+    }
+
+
 def pressure(concurrency: int) -> dict:
     headers = {"Authorization": f"Bearer {TOKEN}"}
 
     def send(index: int):
         started = time.perf_counter()
-        status, body, _ = request("/analysis", payload={"question": f"合成退款压测 {concurrency}-{index}"}, headers=headers)
-        return status, (time.perf_counter() - started) * 1000, body
+        status, body, response_headers = request(
+            "/analysis", payload={"question": f"合成可靠性压测 {concurrency}-{index}"}, headers=headers)
+        return status, (time.perf_counter() - started) * 1000, body, response_headers
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
         results = list(pool.map(send, range(concurrency)))
-    counts: dict[str, int] = {}
-    for status, _, _ in results:
-        counts[str(status)] = counts.get(str(status), 0) + 1
-    latencies = [lat for _, lat, _ in results]
-    return {"concurrency": concurrency, "requests": len(results), "status_counts": counts,
-            "latency_ms": {"p50": percentile(latencies, .50), "p95": percentile(latencies, .95),
-                           "max": round(max(latencies), 3)},
-            "success_count": counts.get("200", 0), "http_429_count": counts.get("429", 0),
-            "http_503_count": counts.get("503", 0),
-            "successful_responses": sum(status == 200 for status, _, _ in results),
-            "mode": "real_http_synthetic_sqlite_fixed_planner_no_model_calls"}
+    return summarize_pressure(concurrency, results)
+
+
+def idempotency_case() -> dict:
+    headers = {"Authorization": f"Bearer {TOKEN}", "Idempotency-Key": "ip3-matrix-idempotency"}
+    first = request("/analysis", payload={"question": "合成幂等可靠性探针"}, headers=headers)
+    replay = request("/analysis", payload={"question": "合成幂等可靠性探针"}, headers=headers)
+    conflict = request("/analysis", payload={"question": "合成幂等冲突探针"}, headers=headers)
+    ids = [first[1].get("run_id"), replay[1].get("run_id")]
+    return {
+        "first_status": first[0],
+        "replay_status": replay[0],
+        "same_run_id": bool(ids[0] and ids[0] == ids[1]),
+        "run_id": ids[0],
+        "replay_header": replay[2].get("idempotency-replay"),
+        "request_id_matches": all(item[1].get("run_id") == item[2].get("x-request-id") for item in (first, replay, conflict)),
+        "conflict_status": conflict[0],
+        "conflict_run_id": conflict[1].get("run_id"),
+    }
+
+
+def cancellation_case() -> dict:
+    headers = {"Authorization": f"Bearer {TOKEN}", "Idempotency-Key": "ip3-matrix-cancel"}
+    payload = {"question": "合成取消可靠性探针"}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        initial = pool.submit(request, "/analysis", payload=payload, headers=headers)
+        deadline = time.monotonic() + 5
+        replay = None
+        while time.monotonic() < deadline:
+            if initial.done():
+                early_status, early_body, _early_headers = initial.result()
+                raise RuntimeError(
+                    "synthetic cancellation request completed before replay observation "
+                    f"(http_status={early_status}, stage={early_body.get('stage')}, "
+                    f"reason={early_body.get('reason')})")
+            replay = request("/analysis", payload=payload, headers=headers)
+            if replay[0] == 202 and replay[1].get("status") == "running":
+                break
+            time.sleep(.025)
+        if replay is None or replay[0] != 202 or replay[1].get("status") != "running":
+            raise TimeoutError("synthetic cancellation request did not enter running state")
+        run_id = replay[1].get("run_id")
+        cancel = request(f"/runs/{run_id}/cancel", payload={}, headers=headers, method="POST")
+        final = initial.result(timeout=8)
+        state = request(f"/runs/{run_id}", headers=headers)
+    return {
+        "running_replay_status": replay[0],
+        "run_id": run_id,
+        "replay_header": replay[2].get("idempotency-replay"),
+        "cancel_status": cancel[0],
+        "cancel_run_id_matches": cancel[1].get("run_id") == run_id,
+        "final_http_status": final[0],
+        "final_status": final[1].get("status"),
+        "final_run_id_matches": final[1].get("run_id") == run_id,
+        "persisted_status": state[1].get("status"),
+        "cancel_requested": state[1].get("cancel_requested"),
+    }
+
+
+def matrix_passes(idempotency: dict, cases: list[dict], cancellation: dict) -> bool:
+    return bool(
+        idempotency["first_status"] == idempotency["replay_status"] == 200
+        and idempotency["same_run_id"] and idempotency["replay_header"] == "true"
+        and idempotency["conflict_status"] == 409 and idempotency["request_id_matches"]
+        and all(case["requests"] == sum(int(case["status_counts"].get(code, 0))
+                                         for code in ("200", "429", "503")) for case in cases)
+        and all(case["status_counts"].get("503", 0) == 0 and
+                case["run_id_count"] == case["requests"] and
+                case["request_id_match_count"] == case["requests"] for case in cases)
+        and cases[2]["status_counts"].get("429", 0) > 0
+        and cancellation["running_replay_status"] == 202
+        and cancellation["replay_header"] == "true"
+        and cancellation["cancel_status"] == 202 and cancellation["cancel_run_id_matches"]
+        and cancellation["final_http_status"] == 409 and cancellation["final_status"] == "cancelled"
+        and cancellation["final_run_id_matches"] and cancellation["persisted_status"] == "cancelled"
+        and cancellation["cancel_requested"] is True
+    )
 
 
 def main() -> None:
@@ -73,29 +177,20 @@ def main() -> None:
             "`.\\.venv\\Scripts\\python.exe scripts\\smoke_local.py`。本机冒烟只验证功能，不代表容器性能。"
         )
 
-    headers = {"Authorization": f"Bearer {TOKEN}", "Idempotency-Key": "ip3-replay-case"}
-    first = request("/analysis", payload={"question": "合成退款幂等验收"}, headers=headers)
-    replay = request("/analysis", payload={"question": "合成退款幂等验收"}, headers=headers)
-    conflict = request("/analysis", payload={"question": "合成退款幂等冲突"}, headers=headers)
-    idempotency = {"first_status": first[0], "replay_status": replay[0],
-                   "same_run_id": first[1].get("run_id") == replay[1].get("run_id"),
-                   "replay_header": replay[2].get("idempotency-replay"), "conflict_status": conflict[0]}
+    idempotency = idempotency_case()
     cases = [pressure(n) for n in (1, 5, 20)]
+    cancellation = cancellation_case()
     report = {"service": "FastAPI real HTTP via Docker Compose",
               "planner": "fixed synthetic planner with 150ms delay", "backend": "synthetic SQLite",
-              "model_calls": 0, "idempotency": idempotency, "cases": cases,
-              "interpretation": "Synchronous HTTP requests wait for analysis results; concurrency is a burst, not async job throughput. Rejected 429s are included in latency percentiles."}
+              "model_calls": 0, "idempotency": idempotency, "cancellation": cancellation,
+              "cases": cases,
+              "interpretation": "Synchronous HTTP requests wait for analysis results; concurrency is a burst, not async job throughput. Rejected 429s are included in latency percentiles. Report includes only statuses and run-ID evidence, not answers, rows, SQL, or bound parameters."}
     rendered = json.dumps(report, ensure_ascii=False, indent=2)
     print(rendered)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(rendered + "\n", encoding="utf-8")
-    if not (idempotency["first_status"] == idempotency["replay_status"] == 200 and
-            idempotency["same_run_id"] and idempotency["replay_header"] == "true" and
-            idempotency["conflict_status"] == 409 and
-            all(case["requests"] == sum(int(case["status_counts"].get(code, 0)) for code in ("200", "429", "503"))
-                for case in cases) and all(case["status_counts"].get("503", 0) == 0 for case in cases) and
-            cases[2]["status_counts"].get("429", 0) > 0):
+    if not matrix_passes(idempotency, cases, cancellation):
         raise SystemExit("IP-3 HTTP acceptance failed")
 
 

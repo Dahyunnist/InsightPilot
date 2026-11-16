@@ -489,7 +489,7 @@
     "model_calls": 0,
     "historical_exposure": "unknown"
   },
-  "remaining_global_cap_after_ip4_v13_model_usd": 4.50483355,
+  "remaining_global_cap_after_ip4_v13_model_usd": 2.83247375,
   "ip4_v13_model_evaluation": {
     "suite_id": "insightpilot-ip4-independent-v13",
     "evaluation_design": "single pass on frozen synthetic questions; historical exposure unknown",
@@ -514,24 +514,153 @@
   "ip4_retrieval_ablation_model": {
     "status": "completed",
     "suite_id": "insightpilot-ip4-offline-prep-v1",
-    "model_calls": 42,
+    "model_calls": 36,
     "passed": {
       "retrieval_on": "21/22",
-      "retrieval_off": "10/22"
+      "retrieval_off": "9/22"
     },
-    "reserve_usd": 0.159936,
-    "peak_price_estimate_usd": 0.0401622,
-    "released_unused_reserve_usd": 0.1197738,
-    "remaining_before_usd": 4.54499575,
-    "remaining_after_usd": 4.50483355,
-    "report": "reports/ip4-retrieval-ablation-model.json",
+    "reserve_usd": 0.155232,
+    "peak_price_estimate_usd": 0.0323598,
+    "released_unused_reserve_usd": 0.1228722,
+    "remaining_before_usd": 2.86483355,
+    "remaining_after_usd": 2.83247375,
+    "report": "reports/ip4-retrieval-ablation-model-2026-11-16-r2.json",
     "provider_balance_preflight": {
       "status": "passed",
       "currency_checked": "CNY",
-      "available": 9.23,
-      "required_cny": 1.19952,
+      "available": 29.06,
+      "required_cny": 1.405008,
       "conservative_cny_per_usd": 7.5,
-      "checked_at_utc": "2026-11-14T12:47:21.560165+00:00"
+      "checked_at_utc": "2026-11-16T07:44:35.287362+00:00"
     }
+  },
+  "ip4_v14_budget_reconciliation_2026_11_16": {
+    "status": "budget_arithmetic_passed_pending_live_provider_balance",
+    "as_of_utc": "2026-11-16T07:09:49.299565+00:00",
+    "prior_project_remaining_usd": 4.50483355,
+    "provider_account_period": "2026-10-19 through 2026-11-15",
+    "provider_account_total_cny": 10.91277486,
+    "usd_cny_approximate_rate": 6.6709,
+    "provider_account_conservative_usd": 1.64,
+    "scope_note": "Account-wide amount, not attributable to IP-4; charged fully on top of project ledger, so overlap may double-count.",
+    "remaining_after_conservative_account_charge_usd": 2.86483355,
+    "authorized_22_case_reserve_usd": 0.187,
+    "remaining_after_22_case_reserve_usd": 2.67783355,
+    "runner_full_reservation_usd": 0.0468336,
+    "raw_provider_csv_read_or_saved": false,
+    "provider_key_fields_read_or_saved": false,
+    "runner_budget_preflight_status": "not_run_requires_fresh_balance_snapshot",
+    "model_calls": 0,
+    "provider_requests": 0,
+    "projected_remaining_after_both_reserves_usd": 2.63099995
+  },
+  "projected_remaining_global_cap_after_ip4_v14_reserves_usd": 2.63099995,
+  "remaining_global_cap_after_provider_account_reconciliation_usd": 2.83247375,
+  "ip4_retrieval_ablation_budget_2026_11_16": {
+    "status": "completed_with_account_wide_conservative_reconciliation",
+    "suite_id": "insightpilot-ip4-offline-prep-v1",
+    "case_count": 22,
+    "manifest_sha256": "94aadf46f508f23a58dbff01b1ceff2fa2f342a3e9a18453814e3e7d19bd246f",
+    "blind_sha256": {
+      "refunds": "252993f200a1efb05ca0345ca36c233de3abc8f5e3907780e830b213969d1e7f",
+      "marketing_roi": "b1fc54513b86cf47d57b4d6e609c0bd4ca3e2acc9ee95d9021f6829328f16307"
+    },
+    "gold_sha256_local_only": {
+      "refunds": "088bcb677b189fb4d66b2f40be8a190fab331fdffc1c6c7a70d6e7da93222ae4",
+      "marketing_roi": "0c3dfb710f74820a9aa865b6e5df0395daab2550d9cc16a4431e9937ae8eb43b"
+    },
+    "data_version": "insightpilot-multidomain-v1",
+    "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
+    "max_authorized_calls": 88,
+    "planned_max_calls_after_deterministic_guards": 68,
+    "authorized_peak_cap_usd": 0.1873344,
+    "planned_worst_case_reserve_usd": 0.155232,
+    "project_remaining_before_run_usd": 2.86483355,
+    "projected_remaining_after_authorized_peak_cap_usd": 2.67749915,
+    "projected_remaining_after_planned_reserve_usd": 2.70489755,
+    "provider_balance_preflight": {
+      "status": "passed",
+      "currency": "CNY",
+      "available": 29.06,
+      "required_for_peak_cap": 1.405008,
+      "provider_requests": 1,
+      "model_calls": 0,
+      "source": "user-provided sanitized read-only balance result",
+      "checked_on_local_date": "2026-11-16",
+      "checked_at_utc": null
+    },
+    "request_policy": {
+      "retrieval_arms": [
+        "retrieval_on",
+        "retrieval_off"
+      ],
+      "max_input_content_bytes": 4000,
+      "max_completion_tokens": 960,
+      "prompt_fields": [
+        "question",
+        "candidate_metrics",
+        "allowed_metric_ids"
+      ],
+      "excluded_fields": [
+        "case_id",
+        "gold",
+        "expected_status",
+        "database_rows",
+        "SQL",
+        "query_results",
+        "private_data",
+        "credentials"
+      ]
+    },
+    "model_calls": 36,
+    "reservation_status": "not_started",
+    "planned_external_analyses_by_arm": {
+      "retrieval_on": 14,
+      "retrieval_off": 19
+    },
+    "planned_max_calls": 66,
+    "previous_plan_max_calls": 68,
+    "previous_worst_case_reserve_usd": 0.159936,
+    "remaining_after_planned_reserve_usd": 2.70960155,
+    "remaining_after_authorized_peak_cap_usd": 2.67749915,
+    "prompt_payload_fields": [
+      "question",
+      "candidate_metrics",
+      "allowed_metric_ids"
+    ],
+    "question_and_gold_hashes_unchanged": true,
+    "preflight_revision": {
+      "sample_id": "IP4V13-M09",
+      "prior_retrieval_on_model_calls": 1,
+      "current_retrieval_on_short_circuit": "NeedsClarification",
+      "reason_code": "multiple_metric_definitions",
+      "retrieval_off_plan_unchanged": true,
+      "authorized_question_gold_hashes_unchanged": true,
+      "outbound_fields_unchanged": true
+    },
+    "network_calls": 0,
+    "latest_runner_balance_recheck": {
+      "status": "check_failed",
+      "error_class": "URLError",
+      "checked_at_utc": "2026-11-16T07:39:02.887121+00:00",
+      "provider_requests": 1,
+      "model_requests": 0
+    },
+    "provider_balance_preflight_user_supplied": {
+      "status": "passed",
+      "currency": "CNY",
+      "available": 29.06,
+      "required_cny": 1.4025,
+      "provider_requests": 1,
+      "model_calls": 0,
+      "checked_at_utc": null
+    },
+    "network_calls_for_model": 0,
+    "remaining_after_latest_recheck_usd": 2.86483355,
+    "runner_budget_preflight_status": "passed_live_balance_and_project_cap",
+    "provider_balance_request_count": 1,
+    "remaining_after_peak_reserve_usd": 2.70960155,
+    "observed_peak_price_estimate_usd": 0.0323598,
+    "remaining_after_actual_model_usage_usd": 2.83247375
   }
 }

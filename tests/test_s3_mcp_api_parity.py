@@ -18,7 +18,7 @@ from insightpilot.run_store import RunStore
 from tests.test_s6_runtime import MarketingPlanner
 
 
-TOKEN = "local-test-token"
+TOKEN = "synthetic-local-test-token"
 MARKETING_QUESTION = "2026-10-01 到 2026-10-31 各营销活动投资回报率是多少？"
 
 

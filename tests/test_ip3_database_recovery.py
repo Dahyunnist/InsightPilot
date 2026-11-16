@@ -99,6 +99,17 @@ class PauseAfterStartRunStore(RunStore):
         return run_id
 
 
+class BarrierFindRunStore(RunStore):
+    def __init__(self, path: Path):
+        self.find_barrier = threading.Barrier(2)
+        super().__init__(path)
+
+    def find_idempotent(self, key: str, question: str) -> str | None:
+        existing_id = super().find_idempotent(key, question)
+        self.find_barrier.wait(timeout=3)
+        return existing_id
+
+
 class CountingSQLiteEngine(SQLiteQueryEngine):
     def __init__(self, path: Path):
         super().__init__(path)
@@ -122,12 +133,12 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
             planner = FixedPlanner()
             app = create_app(InsightPilot(planner, database, tracer=None),
                              run_store=RunStore(root / "runs.sqlite"),
-                             api_token="local-test-token", api_scopes={"refund:read"})
+                             api_token="synthetic-local-test-token", api_scopes={"refund:read"})
             analysis = route_endpoint(app, "/analysis")
 
             try:
                 response = analysis(AnalysisRequest(question=QUESTION),
-                                    authorization="Bearer local-test-token", idempotency_key="bad key")
+                                    authorization="Bearer synthetic-local-test-token", idempotency_key="bad key")
                 body = response_json(response)
 
                 self.assertEqual(response.status_code, 422)
@@ -144,10 +155,10 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
             planner = FixedPlanner()
             store = RunStore(root / "runs.sqlite")
             app = create_app(InsightPilot(planner, database, tracer=None), run_store=store,
-                             api_token="local-test-token", api_scopes={"refund:read"},
+                             api_token="synthetic-local-test-token", api_scopes={"refund:read"},
                              max_requests_per_minute=1)
             analysis = route_endpoint(app, "/analysis")
-            authorization = "Bearer local-test-token"
+            authorization = "Bearer synthetic-local-test-token"
 
             try:
                 first = analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
@@ -178,12 +189,12 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
             planner = FixedPlanner()
             store = FailingStartRunStore(root / "runs.sqlite")
             app = create_app(InsightPilot(planner, database, tracer=None), run_store=store,
-                             api_token="local-test-token", api_scopes={"refund:read"})
+                             api_token="synthetic-local-test-token", api_scopes={"refund:read"})
             analysis = route_endpoint(app, "/analysis")
 
             try:
                 response = analysis(AnalysisRequest(question=QUESTION),
-                                    authorization="Bearer local-test-token",
+                                    authorization="Bearer synthetic-local-test-token",
                                     idempotency_key="run-store-unavailable")
 
                 body = response_json(response)
@@ -201,7 +212,7 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
             planner = BlockingPlanner()
             store = RunStore(root / "runs.sqlite")
             app = create_app(InsightPilot(planner, database), run_store=store,
-                             api_token="local-test-token", api_scopes={"refund:read"},
+                             api_token="synthetic-local-test-token", api_scopes={"refund:read"},
                              request_timeout_seconds=0.05)
             analysis_endpoint = next(route.endpoint for route in app.routes
                                      if getattr(route, "path", None) == "/analysis")
@@ -209,7 +220,7 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
             try:
                 response = analysis_endpoint(
                     AnalysisRequest(question=QUESTION),
-                    authorization="Bearer local-test-token",
+                    authorization="Bearer synthetic-local-test-token",
                     idempotency_key="timeout-cancel-marker",
                 )
                 self.assertEqual(response.status_code, 504)
@@ -228,7 +239,7 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
                 self.assertTrue(state["cancel_requested"])
                 replay = analysis_endpoint(
                     AnalysisRequest(question=QUESTION),
-                    authorization="Bearer local-test-token",
+                    authorization="Bearer synthetic-local-test-token",
                     idempotency_key="timeout-cancel-marker",
                 )
                 self.assertEqual(replay.status_code, 409)
@@ -282,6 +293,68 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
             finally:
                 connection.close()
 
+    def test_concurrent_api_requests_with_same_key_share_one_run(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            database = create_database(root / "synthetic.sqlite")
+            planner = BlockingPlanner()
+            store = BarrierFindRunStore(root / "runs.sqlite")
+            app = create_app(InsightPilot(planner, database, tracer=None), run_store=store,
+                             api_token="synthetic-local-test-token", api_scopes={"refund:read"},
+                             max_concurrent=2, max_requests_per_minute=10,
+                             request_timeout_seconds=4)
+            analysis = route_endpoint(app, "/analysis")
+            authorization = "Bearer synthetic-local-test-token"
+            responses = []
+            errors = []
+
+            def submit():
+                try:
+                    response = analysis(AnalysisRequest(question=QUESTION),
+                                        authorization=authorization,
+                                        idempotency_key="parallel-api-key")
+                    responses.append(response)
+                except Exception as exc:
+                    errors.append(exc)
+
+            workers = [threading.Thread(target=submit) for _ in range(2)]
+            try:
+                for worker in workers:
+                    worker.start()
+                self.assertTrue(planner.entered.wait(timeout=3), "analysis worker did not start")
+                deadline = time.monotonic() + 2
+                while time.monotonic() < deadline and not responses:
+                    time.sleep(0.01)
+                self.assertEqual(len(responses), 1)
+                replay = responses[0]
+                self.assertEqual(replay.status_code, 202)
+                self.assertEqual(replay.headers.get("Idempotency-Replay"), "true")
+                self.assertEqual(planner.calls, 1)
+
+                planner.release.set()
+                for worker in workers:
+                    worker.join(timeout=5)
+                self.assertTrue(all(not worker.is_alive() for worker in workers))
+                self.assertEqual(errors, [])
+                self.assertEqual({response.status_code for response in responses}, {200, 202})
+                run_ids = {response_json(response)["run_id"] for response in responses}
+                self.assertEqual(len(run_ids), 1)
+                run_id = run_ids.pop()
+                self.assertTrue(all(response.headers["X-Request-ID"] == run_id for response in responses))
+                self.assertEqual(store.get(run_id)["status"], "answered")
+                self.assertEqual(planner.calls, 1)
+                connection = sqlite3.connect(store.path)
+                try:
+                    self.assertEqual(connection.execute("SELECT COUNT(*) FROM runs").fetchone()[0], 1)
+                finally:
+                    connection.close()
+            finally:
+                planner.release.set()
+                for worker in workers:
+                    if worker.ident is not None:
+                        worker.join(timeout=2)
+                app.state.analysis_executor.shutdown(wait=True)
+
     def test_sqlite_disconnect_is_terminal_idempotent_and_new_run_recovers(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -290,11 +363,11 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
             engine = FailOnceSQLiteEngine(database)
             store = RunStore(root / "runs.sqlite")
             app = create_app(InsightPilot(planner, database, query_engine=engine), run_store=store,
-                             api_token="local-test-token", api_scopes={"refund:read"},
+                             api_token="synthetic-local-test-token", api_scopes={"refund:read"},
                              max_requests_per_minute=20)
             analysis = route_endpoint(app, "/analysis")
             get_run = route_endpoint(app, "/runs/{run_id}")
-            authorization = "Bearer local-test-token"
+            authorization = "Bearer synthetic-local-test-token"
             try:
                 failed = analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
                                   idempotency_key="db-outage-1")
@@ -342,12 +415,12 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
             planner = BlockingPlanner()
             store = RunStore(root / "runs.sqlite")
             app = create_app(InsightPilot(planner, database), run_store=store,
-                             api_token="local-test-token", api_scopes={"refund:read", "refund:cancel"},
+                             api_token="synthetic-local-test-token", api_scopes={"refund:read", "refund:cancel"},
                              max_requests_per_minute=20)
             analysis = route_endpoint(app, "/analysis")
             cancel_run = route_endpoint(app, "/runs/{run_id}/cancel")
             get_run = route_endpoint(app, "/runs/{run_id}")
-            authorization = "Bearer local-test-token"
+            authorization = "Bearer synthetic-local-test-token"
             response_box = []
             request_thread = threading.Thread(target=lambda: response_box.append(
                 analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
@@ -441,10 +514,10 @@ class IP3DatabaseRecoveryTests(unittest.TestCase):
             planner = SlowTimeoutPlanner()
             store = RunStore(root / "runs.sqlite")
             app = create_app(InsightPilot(planner, database), run_store=store,
-                             api_token="local-test-token", api_scopes={"refund:read"},
+                             api_token="synthetic-local-test-token", api_scopes={"refund:read"},
                              max_requests_per_minute=20, request_timeout_seconds=0.15)
             analysis = route_endpoint(app, "/analysis")
-            authorization = "Bearer local-test-token"
+            authorization = "Bearer synthetic-local-test-token"
             try:
                 timeout_response = analysis(AnalysisRequest(question=QUESTION), authorization=authorization,
                                             idempotency_key="slow-model-timeout-1")

@@ -64,6 +64,16 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _verify_candidate_artifact_hashes(files: dict[str, Path], manifest: dict) -> None:
+    for name, field in (("blind.jsonl", "blind_sha256"), ("gold.jsonl", "gold_sha256"),
+                        ("synthetic.sqlite", "database_sha256")):
+        expected = manifest.get(field)
+        if not isinstance(expected, str) or not re.fullmatch(r"[a-f0-9]{64}", expected):
+            raise PreflightError(f"candidate manifest has invalid {field}")
+        if sha256_file(files[name]) != expected:
+            raise PreflightError(f"candidate {name} hash does not match manifest")
+
+
 def prompt_sha256() -> str:
     return hashlib.sha256(V14_SYSTEM_PROMPT.encode("utf-8")).hexdigest()
 
@@ -87,6 +97,7 @@ def create_offline_lock(candidate: Path) -> dict:
     if (manifest.get("status") != "candidate_pending_owner_review" or
             manifest.get("synthetic_only") is not True or manifest.get("model_calls") != 0):
         raise PreflightError("candidate is not a zero-call synthetic owner-review candidate")
+    _verify_candidate_artifact_hashes(paths, manifest)
     blind = [json.loads(line) for line in paths["blind.jsonl"].read_text(encoding="utf-8").splitlines()
              if line.strip()]
     payload = _canonical_payload_bytes(_payload_records(blind, manifest))
@@ -201,6 +212,7 @@ def _load_candidate(candidate: Path, lock: dict) -> tuple[dict, list[dict], list
     if (manifest.get("status") != "candidate_pending_owner_review" or
             manifest.get("synthetic_only") is not True or manifest.get("model_calls") != 0):
         raise PreflightError("candidate is not a zero-call synthetic owner-review candidate")
+    _verify_candidate_artifact_hashes(files, manifest)
     if lock.get("suite_id") != manifest.get("suite_id"):
         raise PreflightError("candidate suite ID mismatch")
     if lock.get("data_version") != manifest.get("data_version") or \

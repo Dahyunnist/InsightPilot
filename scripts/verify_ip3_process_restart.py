@@ -28,7 +28,7 @@ def compose(*args: str, check: bool = True, timeout: int = 60) -> subprocess.Com
         cwd=ROOT, text=True, capture_output=True, timeout=timeout,
     )
     if check and result.returncode:
-        raise RuntimeError(f"docker compose {' '.join(args)} failed ({result.returncode}): {result.stderr.strip()}")
+        raise RuntimeError(f"docker compose {' '.join(args)} failed ({result.returncode})")
     return result
 
 
@@ -56,7 +56,8 @@ def _initial_request() -> dict:
     try:
         status, body, _headers = api("POST", "/analysis", payload={"question": QUESTION},
                                      idempotency=True, timeout=12)
-        return {"http_status": status, "body": body}
+        return {"http_status": status, "status": body.get("status"),
+                "run_id": body.get("run_id")}
     except (OSError, TimeoutError, urllib.error.URLError) as exc:
         return {"transport_error": type(exc).__name__}
 
@@ -98,17 +99,12 @@ def verify() -> dict:
 
     started = False
     report = {
-        "suite_id": "insightpilot-ip3-forced-process-restart",
-        "image": IMAGE,
-        "image_id": image_id,
-        "python_runtime": "3.12.15",
         "synthetic_only": True,
         "model_calls": 0,
         "external_api_calls": 0,
         "transport": "FastAPI HTTP through localhost port mapping",
         "network": "local Compose bridge; fixed planner makes no external calls",
         "termination_signal": "SIGKILL",
-        "persistent_volumes": 0,
     }
     try:
         compose("up", "-d", "--wait", "--pull", "never")
@@ -147,14 +143,12 @@ def verify() -> dict:
             "POST", "/analysis", payload={"question": QUESTION}, idempotency=True,
         )
         report.update({
-            "container_id_preserved": before_id == after_id,
-            "container_id_before": before_id,
-            "container_id_after": after_id,
+            "container_id_stable": before_id == after_id,
             "inflight_request_after_kill": interrupted_request,
             "recovered_run": {"http_status": status, "status": record.get("status"),
                               "result_present": record.get("result") is not None},
             "idempotent_retry": {"http_status": replay_status, "status": replay_body.get("status"),
-                                 "reason": replay_body.get("reason"),
+                                 "reason": replay_body.get("reason"), "run_id": replay_body.get("run_id"),
                                  "replay_header": replay_headers.get("idempotency-replay")},
         })
         report["passed"] = bool(
@@ -171,12 +165,13 @@ def verify() -> dict:
             report["failure"] = "recovered state or replay did not match interrupted-run contract"
     except Exception as exc:
         report["passed"] = False
-        report["failure"] = f"{type(exc).__name__}: {exc}"
+        report["failure_class"] = type(exc).__name__
     finally:
         if started:
             cleanup = compose("down", check=False)
             report["compose_cleanup"] = cleanup.returncode == 0
-            report["cleanup_error"] = cleanup.stderr.strip() if cleanup.returncode else None
+            if cleanup.returncode:
+                report["cleanup_error"] = "dedicated Compose cleanup failed"
         else:
             report["compose_cleanup"] = True
     report["duration_seconds"] = round(time.perf_counter() - started_at, 3)

@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    pull_policy: never
+    container_name: ${INSIGHTPILOT_IP2_INVENTORY_CONTAINER:?runner must set a random container name}
+    environment:
+      POSTGRES_DB: ${INSIGHTPILOT_IP2_INVENTORY_DATABASE:?runner must set a random database name}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${INSIGHTPILOT_IP2_INVENTORY_ADMIN_PASSWORD:?runner must set an ephemeral password}
+    ports:
+      - "127.0.0.1::5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 2s
+      retries: 20

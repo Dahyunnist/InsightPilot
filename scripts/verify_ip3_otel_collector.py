@@ -17,7 +17,7 @@ PROJECT = "insightpilot-ip3-otel-localtest"
 COLLECTOR_IMAGE = "otel/opentelemetry-collector-contrib:0.138.0"
 OUTPUT = ROOT / "reports/ip3-otel-collector.json"
 API_IMAGE = "insightpilot-api-probe:latest"
-API_TOKEN = "ip3-otel-local-test-token"
+API_TOKEN = "ip3-otel-synthetic-local-test-token"
 QUESTION = "2026-10-05 至 2026-10-11 华东批准退款金额率是多少？ marker-sensitive-question-ip3"
 
 

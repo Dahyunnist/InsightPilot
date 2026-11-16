@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-11-16T07:16:16.765306+00:00",
+  "status": "repaired_offline_preflight_passed",
+  "previous_failure": {
+    "test": "test_result_digest_rejects_forged_and_truncated_values_without_candidate_files",
+    "exception_class": "PreflightError",
+    "reason": "source hash mismatch",
+    "stale_source_hashes": {
+      "metric_catalog": {
+        "old": "c6841bf22b9e2c20236fc0e3a0d1a47b5674406749a3a582675cf40399b53a1b",
+        "current": "55a5c34e2bfcc94bf4cfc44466e3b20b4b000ca41e313d45a9f098aa209233f0"
+      },
+      "scorer": {
+        "old": "e1cb44704c3c0b6a46e8a594490da8030cef2688b8544b3457c97cab05fe9eb8",
+        "current": "cb028764ea71131ffc96d35e83644e0a292ca913ad4b6b7805f6b5418767c663"
+      },
+      "query_engine": {
+        "old": "052a758e1561bc37e26a247111aeaad793d01f01a8960e37642eeca46bfbc355",
+        "current": "76287a2c8fae3128a0cb67971f4cc6243e04bd56e9bcbd236850caefbfbe11bf"
+      },
+      "offline_runner_module": {
+        "old": "568f3f63ccce65885a5dbc812e0a24777ab2e1c364a08310be0494302fadab80",
+        "current": "34d95c650c449090b783961d6bf956a338a7e801458089095722c419c84fff38"
+      }
+    }
+  },
+  "resolution": {
+    "offline_lock_sha256": "287fd81dac0703964f78e927ad64dc3342a4d16b236846e61334d05a19fd47a7",
+    "updated_only_offline_lock_source_hashes_and_cli_lock_digest": true,
+    "model_preregistration_sha256": "0cc47207e9aa7928db0918628f05c88dca1f0754cd575fb059eeea7e8e6630bb",
+    "model_preregistration_unchanged": true,
+    "candidate_hashes_unchanged": {
+      "manifest.json": "060cbdf6e17563d3873b934819c79538b0d74d1c88a01bc58ce905136e02835d",
+      "blind.jsonl": "aecba9db0a9c977fa7f95378815965218707b53b68b705530673ad3aeed4e080",
+      "gold.jsonl": "8c01a8cb71f38c4c1885cb8ef59cb4ce7defaa01848d4c9efb09b6cf6e9558c3",
+      "synthetic.sqlite": "50ae1d417a72c20699ab2c53775b3e530010f7e7f51a2cf66ef6ffcebd041b34"
+    }
+  },
+  "verification": {
+    "offline_and_model_runner_tests": "20 passed",
+    "offline_report": "reports/ip4-v14-offline-preflight-2026-11-16-r2.json",
+    "offline_baseline_passed": "8/22",
+    "network_calls": 0,
+    "model_calls": 0,
+    "model_runner_dry_run": "passed; 22 cases; 0 provider requests",
+    "live_provider_balance": "pending"
+  },
+  "failure_sample_policy": "test name, error class, reason and source hashes only; no question, gold content, SQL, or result rows"
+}

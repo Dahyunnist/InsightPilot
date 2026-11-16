@@ -33,10 +33,22 @@ BUNDLE = ROOT / "benchmarks/ip4-offline-prep-v1"
 MANIFEST = BUNDLE / "manifest.json"
 DATABASE = ROOT / "data/insightpilot-multidomain.sqlite"
 LEDGER = ROOT / "reports/model-experiment-cost-ledger.json"
-OUTPUT = ROOT / "reports/ip4-retrieval-ablation-model.json"
+DEFAULT_RUN_OUTPUT = ROOT / "reports/ip4-retrieval-ablation-model-2026-11-16.json"
+EXPECTED_MANIFEST_SHA256 = "94aadf46f508f23a58dbff01b1ceff2fa2f342a3e9a18453814e3e7d19bd246f"
+EXPECTED_BLIND_SHA256 = {
+    "refunds": "252993f200a1efb05ca0345ca36c233de3abc8f5e3907780e830b213969d1e7f",
+    "marketing_roi": "b1fc54513b86cf47d57b4d6e609c0bd4ca3e2acc9ee95d9021f6829328f16307",
+}
+EXPECTED_GOLD_SHA256 = {
+    "refunds": "088bcb677b189fb4d66b2f40be8a190fab331fdffc1c6c7a70d6e7da93222ae4",
+    "marketing_roi": "0c3dfb710f74820a9aa865b6e5df0395daab2550d9cc16a4431e9937ae8eb43b",
+}
 INPUT_TOKENS_PER_CALL = 4_000  # UTF-8 prompt bytes are capped at this value.
 OUTPUT_TOKENS_PER_CALL = 960
 CAP_USD = 0.1873344
+AUTHORIZED_MAX_CALLS = 88
+PLANNED_MAX_CALLS = 68
+PLANNED_RESERVE_LIMIT_USD = 0.159936
 INPUT_RATE = 0.30
 OUTPUT_RATE = 1.20
 PROMPT_BYTE_CAP = 4_000
@@ -48,6 +60,8 @@ def sha(path: Path) -> str:
 
 
 def load_bundle(database: Path) -> tuple[dict, list[dict], dict[str, dict], list[tuple[str, Path, Path]]]:
+    if sha(MANIFEST) != EXPECTED_MANIFEST_SHA256:
+        raise SystemExit("Frozen IP4 manifest hash mismatch; no model request sent.")
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     domains = []
     cases: list[dict] = []
@@ -56,7 +70,10 @@ def load_bundle(database: Path) -> tuple[dict, list[dict], dict[str, dict], list
         entry = manifest["domains"][domain]
         blind_path = BUNDLE / entry["blind_path"]
         gold_path = BUNDLE / entry["gold_path"]
-        if sha(blind_path) != entry["blind_sha256"] or sha(gold_path) != entry["gold_sha256"]:
+        if (entry["blind_sha256"] != EXPECTED_BLIND_SHA256[domain] or
+                entry["gold_sha256"] != EXPECTED_GOLD_SHA256[domain] or
+                sha(blind_path) != EXPECTED_BLIND_SHA256[domain] or
+                sha(gold_path) != EXPECTED_GOLD_SHA256[domain]):
             raise SystemExit("Frozen question/gold hash mismatch; no model request sent.")
         domain_cases = [json.loads(line) for line in blind_path.read_text(encoding="utf-8").splitlines() if line.strip()]
         domain_gold = [json.loads(line) for line in gold_path.read_text(encoding="utf-8").splitlines() if line.strip()]
@@ -180,7 +197,23 @@ def write_json(path: Path, value: dict) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--preflight-only", action="store_true")
+    parser.add_argument("--execute", action="store_true",
+                        help="send frozen synthetic prompts after all local and provider gates pass")
+    parser.add_argument("--output", type=Path, default=DEFAULT_RUN_OUTPUT)
     args = parser.parse_args()
+    if args.preflight_only and args.execute:
+        parser.error("--preflight-only and --execute cannot be combined")
+    if not args.preflight_only and not args.execute:
+        parser.error("live evaluation requires explicit --execute")
+    output = args.output.resolve()
+    try:
+        output.relative_to((ROOT / "reports").resolve())
+    except ValueError:
+        raise SystemExit("Run output must stay inside reports/; no request sent.") from None
+    progress_path = output.with_name(output.stem + "-progress.json")
+    balance_failure_path = output.with_name(output.stem + "-balance-preflight.json")
+    if args.execute and any(path.exists() for path in (output, progress_path, balance_failure_path)):
+        raise SystemExit("Run output already exists; choose a new path. No request sent.")
 
     # Rebuild the frozen fixture outside the repository so the unrelated working
     # database cannot silently contaminate this holdout or be overwritten.
@@ -192,7 +225,11 @@ def main() -> None:
                                 order_count=ORDER_COUNT)
     manifest, cases, gold, domain_files = load_bundle(database)
     ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
-    remaining_key = "remaining_global_cap_after_ip4_v13_model_usd"
+    if ledger.get("cap_usd") != 5.0:
+        raise SystemExit("Project ledger cap differs from frozen $5.00 cap; no model request sent.")
+    remaining_key = "remaining_global_cap_after_provider_account_reconciliation_usd"
+    if remaining_key not in ledger:
+        raise SystemExit("Conservative provider-account reconciliation missing; no model request sent.")
     remaining = float(ledger[remaining_key])
     per_call = (INPUT_TOKENS_PER_CALL * INPUT_RATE + OUTPUT_TOKENS_PER_CALL * OUTPUT_RATE) / 1_000_000
     blocked = sum(1 for case in cases if _preflight(case["question"]) is not None)
@@ -207,7 +244,9 @@ def main() -> None:
         raise SystemExit("Configured model differs from frozen IP4 approval; no request sent.")
     if remaining + 1e-12 < reserve or reserve > CAP_USD:
         raise SystemExit("Global remaining budget is below this run's approved reserve; no request sent.")
-    if blocked != 3 or arm_planned != {"retrieval_on": 15, "retrieval_off": 19} or max_calls > 88:
+    if (blocked != 3 or arm_planned != {"retrieval_on": 14, "retrieval_off": 19} or
+            max_calls > PLANNED_MAX_CALLS or max_calls > AUTHORIZED_MAX_CALLS or
+            reserve > PLANNED_RESERVE_LIMIT_USD or reserve > CAP_USD):
         raise SystemExit("Local deterministic guard count changed; re-freeze budget before model calls.")
     max_prompt = max(prompt_bytes(case, arm) for case in cases for arm in (True, False))
     if max_prompt > PROMPT_BYTE_CAP:
@@ -216,13 +255,18 @@ def main() -> None:
         print(json.dumps({"preflight": "passed", "suite_id": manifest["suite_id"], "case_count": len(cases),
                           "retrieval_arms": 2, "local_guard_skips_per_arm": blocked,
                           "maximum_api_calls": max_calls, "planned_external_analyses_by_arm": arm_planned,
+                          "authorized_maximum_api_calls": AUTHORIZED_MAX_CALLS,
                           "max_prompt_content_bytes": max_prompt,
                           "completion_token_cap": settings.max_completion_tokens,
                           "worst_case_reserve_usd": reserve,
-                          "remaining_after_reserve_usd": round(remaining - reserve, 8)}, indent=2))
+                          "remaining_after_reserve_usd": round(remaining - reserve, 8),
+                          "manifest_sha256": sha(MANIFEST),
+                          "blind_sha256": {domain: sha(blind) for domain, blind, _ in domain_files},
+                          "gold_sha256_local_only": {domain: sha(gold_path)
+                                                     for domain, _, gold_path in domain_files}}, indent=2))
         return
 
-    balance = check_balance(settings, reserve)
+    balance = check_balance(settings, CAP_USD)
     if balance["status"] != "passed":
         blocked = {
             "created_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -240,13 +284,21 @@ def main() -> None:
             "gold_sha256_local_only": {domain: sha(gpath) for domain, _, gpath in domain_files},
             "note": "Only the provider's account-balance endpoint was checked. The synthetic questions and all evaluation data remained local.",
         }
-        write_json(OUTPUT.with_name("ip4-retrieval-ablation-model-preflight.json"), blocked)
+        write_json(balance_failure_path, blocked)
         print(json.dumps({key: value for key, value in blocked.items()
                           if key not in ("blind_sha256", "gold_sha256_local_only")}, ensure_ascii=False, indent=2))
         return
     # Debit the full maximum before the first call. An interrupted run keeps this reserve.
     after_reserve = round(remaining - reserve, 8)
     ledger[remaining_key] = after_reserve
+    ledger["remaining_global_cap_after_ip4_v13_model_usd"] = after_reserve
+    reconciliation = ledger.get("ip4_retrieval_ablation_budget_2026_11_16")
+    if isinstance(reconciliation, dict):
+        reconciliation["status"] = "model_run_in_progress_reserve_held"
+        reconciliation["runner_budget_preflight_status"] = "passed_live_balance_and_project_cap"
+        reconciliation["model_calls"] = 0
+        reconciliation["provider_balance_request_count"] = 1
+        reconciliation["remaining_after_peak_reserve_usd"] = after_reserve
     ledger["ip4_retrieval_ablation_model"] = {
         "status": "in_progress_reserve_held", "suite_id": manifest["suite_id"],
         "data_fingerprint": manifest["data"]["data_fingerprint"], "case_count": len(cases),
@@ -287,7 +339,7 @@ def main() -> None:
             checkpoint = {"status": "in_progress", "arm": arm_name, "completed_cases_in_arm": len(detail_rows),
                           "total_cases_per_arm": len(cases), "calls_used": budget.calls,
                           "held_reserve_usd": reserve}
-            write_json(OUTPUT.with_name("ip4-retrieval-ablation-model-progress.json"), checkpoint)
+            write_json(progress_path, checkpoint)
         passed = sum(row["score"].get("passed", False) for row in detail_rows)
         arms.append({"arm": arm_name, "passed": passed, "total": len(detail_rows),
                      "answerable_passed": sum(row["score"].get("passed", False) for row in detail_rows
@@ -321,20 +373,28 @@ def main() -> None:
         "sample_limit": "仅 22 道冻结合成题；结果仅描述本题集，不外推生产或总体泛化。",
         "arms": arms,
     }
-    write_json(OUTPUT, report)
+    write_json(output, report)
     ledger[remaining_key] = final_remaining
+    ledger["remaining_global_cap_after_ip4_v13_model_usd"] = final_remaining
+    if isinstance(reconciliation, dict):
+        reconciliation["status"] = "completed_with_account_wide_conservative_reconciliation"
+        reconciliation["runner_budget_preflight_status"] = "passed_live_balance_and_project_cap"
+        reconciliation["model_calls"] = budget.calls
+        reconciliation["provider_balance_request_count"] = 1
+        reconciliation["observed_peak_price_estimate_usd"] = round(estimate, 8)
+        reconciliation["remaining_after_actual_model_usage_usd"] = final_remaining
     ledger["ip4_retrieval_ablation_model"] = {
         "status": "completed", "suite_id": manifest["suite_id"], "model_calls": budget.calls,
         "passed": {arm["arm"]: f"{arm['passed']}/{arm['total']}" for arm in arms},
         "reserve_usd": reserve, "peak_price_estimate_usd": round(estimate, 8),
         "released_unused_reserve_usd": released, "remaining_before_usd": remaining,
-        "remaining_after_usd": final_remaining, "report": "reports/ip4-retrieval-ablation-model.json",
+        "remaining_after_usd": final_remaining,
+        "report": str(output.relative_to(ROOT)).replace("\\", "/"),
         "provider_balance_preflight": balance,
     }
     write_json(LEDGER, ledger)
-    progress = OUTPUT.with_name("ip4-retrieval-ablation-model-progress.json")
-    if progress.exists():
-        progress.unlink()
+    if progress_path.exists():
+        progress_path.unlink()
     print(json.dumps({key: value for key, value in report.items() if key != "arms"}, ensure_ascii=False, indent=2))
     for arm in arms:
         print(f"{arm['arm']}: {arm['passed']}/{arm['total']} (answerable {arm['answerable_passed']}/{arm['answerable_total']}; guards {arm['guard_passed']}/{arm['guard_total']})")

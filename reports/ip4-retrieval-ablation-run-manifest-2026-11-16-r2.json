@@ -1,0 +1,276 @@
+{
+  "schema_version": 2,
+  "project": "InsightPilot",
+  "run_id": null,
+  "trace_id": null,
+  "span_id": null,
+  "evaluation_id": null,
+  "environment": null,
+  "git_sha": null,
+  "source_tree_clean": null,
+  "dataset_id": "insightpilot-ip4-offline-prep-v1",
+  "dataset_sha256": null,
+  "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
+  "split": "frozen_synthetic_retrieval_ablation",
+  "model_id": null,
+  "planned_model_id": "deepseek-v4-flash",
+  "prompt_sha256": null,
+  "tool_schema_sha256": null,
+  "scorer_sha256": null,
+  "runtime": {
+    "digest_sha256": null,
+    "python": null,
+    "python_implementation": null,
+    "platform": null,
+    "lock_sha256": null
+  },
+  "budget": {
+    "cap_usd": 0.1873344,
+    "spent_usd": null,
+    "reserved_usd": 0.155232,
+    "price_estimate_usd": 0.0323598,
+    "remaining_before_usd": 2.86483355,
+    "remaining_after_usd": 2.83247375,
+    "status": "completed_estimate_actual_cost_unconfirmed"
+  },
+  "gold_source": "independent_synthetic_local_only",
+  "gold_sha256": null,
+  "cost_usd": null,
+  "cost_status": "unconfirmed",
+  "model_calls": 36,
+  "model_input_received": true,
+  "request_outcome": {
+    "attempted": 36,
+    "provider_responses_received": 36,
+    "cost_status": "unconfirmed"
+  },
+  "max_steps": null,
+  "max_tokens": 960,
+  "status": "completed",
+  "source_status": "completed",
+  "evaluation_outcome": "completed_with_case_failures",
+  "started_at": null,
+  "completed_at": "2026-11-16T07:46:58.499616+00:00",
+  "field_status": {
+    "git_sha": "not_recorded",
+    "run_id": "not_recorded",
+    "trace_id": "not_recorded",
+    "span_id": "not_recorded",
+    "evaluation_id": "not_recorded",
+    "environment": "not_recorded",
+    "dataset_id": "recorded",
+    "dataset_sha256": "not_recorded",
+    "data_fingerprint": "recorded",
+    "split": "recorded",
+    "model_id": "not_recorded",
+    "prompt_sha256": "not_recorded",
+    "tool_schema_sha256": "not_applicable",
+    "scorer_sha256": "not_recorded",
+    "runtime.digest_sha256": "not_recorded",
+    "runtime.python": "not_recorded",
+    "runtime.platform": "not_recorded",
+    "runtime.lock_sha256": "not_recorded",
+    "budget.cap_usd": "recorded",
+    "budget.spent_usd": "not_recorded",
+    "budget.reserved_usd": "recorded",
+    "gold_sha256": "not_recorded",
+    "started_at": "not_recorded",
+    "completed_at": "recorded",
+    "max_steps": "not_recorded",
+    "max_tokens": "recorded",
+    "normalizer_sha256": "recorded",
+    "schema_sha256": "recorded"
+  },
+  "blocked_fields": [],
+  "trace_event_coverage": {
+    "timeout": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "retry": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "budget_exceeded": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "cancel": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "unsafe_action_blocked": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "checkpoint_resume": {
+      "count": 0,
+      "coverage": "not_covered"
+    }
+  },
+  "native_event_coverage": {
+    "analysis.started": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "analysis.completed": {
+      "count": 0,
+      "coverage": "not_covered"
+    },
+    "analysis.failed": {
+      "count": 0,
+      "coverage": "not_covered"
+    }
+  },
+  "trace_event_evidence": {
+    "source_status": "unavailable",
+    "source_logs_recorded": false,
+    "interpretation": "0 means not observed in retained trace evidence; it does not prove the event did not occur.",
+    "unavailable_events": {
+      "timeout": {
+        "count": null,
+        "status": "unavailable",
+        "reason": "Failed case records do not retain timeout event codes."
+      },
+      "retry": {
+        "count": null,
+        "status": "unavailable",
+        "reason": "Three calls exceed planned first analyses in retrieval_off; causes were not retained."
+      },
+      "budget_exceeded": {
+        "count": null,
+        "status": "unavailable",
+        "reason": "Report shows calls and estimate within limits, but retains no budget event trace."
+      },
+      "cancel": {
+        "count": null,
+        "status": "unavailable",
+        "reason": "No cancelled terminal cases are reported; no cancel event trace was retained."
+      },
+      "unsafe_action_blocked": {
+        "count": null,
+        "status": "unavailable",
+        "reason": "Guard outcomes are scored; no event trace was retained."
+      },
+      "checkpoint_resume": {
+        "count": null,
+        "status": "unavailable",
+        "reason": "Progress checkpoints are not included in the completed report."
+      },
+      "analysis.started": {
+        "count": null,
+        "status": "unavailable",
+        "reason": "No native trace JSONL was retained."
+      },
+      "analysis.completed": {
+        "count": null,
+        "status": "unavailable",
+        "reason": "No native trace JSONL was retained."
+      },
+      "analysis.failed": {
+        "count": null,
+        "status": "unavailable",
+        "reason": "No native trace JSONL was retained."
+      }
+    },
+    "run_id_note": "The runner called analyze without retaining its generated per-case run IDs.",
+    "trace_id_note": "The report and freeze do not record trace IDs or spans."
+  },
+  "report_level_control_checks": {
+    "observed_api_calls": 36,
+    "maximum_api_calls": 66,
+    "calls_within_cap": true,
+    "price_estimate_usd": 0.0323598,
+    "reserve_usd": 0.155232,
+    "estimate_within_reserve": true,
+    "estimate_within_authorized_cap": true,
+    "calls_over_planned_analyses_by_arm_unclassified": {
+      "retrieval_on": 0,
+      "retrieval_off": 3
+    }
+  },
+  "sample_boundary": {
+    "case_count": 22,
+    "case_runs": 44,
+    "domains": [
+      "refunds",
+      "marketing_roi"
+    ],
+    "data_kind": "synthetic",
+    "generalization_claim": false
+  },
+  "arm_call_audit": {
+    "retrieval_on": {
+      "case_runs": 22,
+      "model_calls": 14,
+      "planned_external_analyses": 14,
+      "calls_over_one_per_planned_analysis_unclassified": 0,
+      "terminal_status_counts": {
+        "answered": 13,
+        "clarify": 6,
+        "refused": 3
+      },
+      "passed": 21,
+      "total": 22
+    },
+    "retrieval_off": {
+      "case_runs": 22,
+      "model_calls": 22,
+      "planned_external_analyses": 19,
+      "calls_over_one_per_planned_analysis_unclassified": 3,
+      "terminal_status_counts": {
+        "answered": 3,
+        "clarify": 12,
+        "failed": 4,
+        "refused": 3
+      },
+      "passed": 9,
+      "total": 22
+    }
+  },
+  "unavailable_field_reasons": {
+    "git_sha": "The report and freeze do not bind the execution to a commit SHA.",
+    "run_id": "No evaluation-level ID was retained; per-case IDs were omitted from case records.",
+    "trace_id": "No trace ID was retained in the report or freeze.",
+    "span_id": "No span ID was retained in the report or freeze.",
+    "evaluation_id": "No evaluation ID was emitted by this runner.",
+    "dataset_sha256": "The source provides domain-separated blind hashes, not one canonical dataset hash.",
+    "model_id": "The report records configured model only; provider response model ID was not retained.",
+    "prompt_sha256": "Per-question prompt payloads and prompt hash were not retained.",
+    "scorer_sha256": "The report does not record a scorer source hash.",
+    "runtime": "Python/platform/dependency lock facts were not retained in the run report.",
+    "budget.spent_usd": "Provider invoice cost was not confirmed; price estimate is kept separately.",
+    "gold_sha256": "Only domain-separated local gold hashes exist; no single combined hash was recorded.",
+    "started_at": "Only report creation time was retained; run start time was not recorded.",
+    "max_steps": "The report records request caps, not an evaluation step cap.",
+    "retry_event": "Three calls exceed planned first analyses in retrieval_off; per-call causes were not retained, so they are not classified as retries.",
+    "trace_events": "No trace event stream was included with the model report."
+  },
+  "report_payload_boundary": {
+    "sent_fields": [
+      "question",
+      "candidate_metrics",
+      "allowed_metric_ids"
+    ],
+    "excluded_fields_attested": true,
+    "raw_questions_or_gold_content_in_sidecar": false
+  },
+  "source_artifacts": {
+    "report_path": "reports/ip4-retrieval-ablation-model-2026-11-16-r2.json",
+    "report_sha256": "6b4d9611b4fcd3b08778c48d99144e363768f8a92a1a045e4b3e4aae48fb7a59",
+    "freeze_path": "reports/ip4-retrieval-ablation-freeze-2026-11-16.json",
+    "freeze_sha256": "4ce7b52823ffa92a8b7a203a212fa641637d1f989c1870799943bc24105e8b5f",
+    "manifest_sha256": "94aadf46f508f23a58dbff01b1ceff2fa2f342a3e9a18453814e3e7d19bd246f",
+    "blind_sha256_by_domain": {
+      "refunds": "252993f200a1efb05ca0345ca36c233de3abc8f5e3907780e830b213969d1e7f",
+      "marketing_roi": "b1fc54513b86cf47d57b4d6e609c0bd4ca3e2acc9ee95d9021f6829328f16307"
+    },
+    "gold_sha256_local_only_by_domain": {
+      "refunds": "088bcb677b189fb4d66b2f40be8a190fab331fdffc1c6c7a70d6e7da93222ae4",
+      "marketing_roi": "0c3dfb710f74820a9aa865b6e5df0395daab2550d9cc16a4431e9937ae8eb43b"
+    },
+    "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9"
+  },
+  "normalizer_sha256": "006599c86910ac35cc8839baa7d754a59f5a3cda0ad7f24582ff4d12a13349ec",
+  "schema_sha256": "3d6fac5bc6563ec0e17afd0da323f84d70ccfc4a72644091f76f6d0e6d07b760"
+}

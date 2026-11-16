@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sqlite3
 from pathlib import Path
 
@@ -12,7 +13,9 @@ _TYPE_MAP = {"INTEGER": "BIGINT", "INT": "BIGINT", "REAL": "DOUBLE PRECISION",
              "FLOAT": "DOUBLE PRECISION", "TEXT": "TEXT", "BLOB": "BYTEA"}
 
 
-def prepare(sqlite_path: Path, dsn: str, app_role: str, app_password: str, bootstrap_path: Path) -> dict:
+def prepare(sqlite_path: Path, dsn: str, app_role: str, app_password: str, bootstrap_path: Path,
+            expected_database: str = "insightpilot_ip4",
+            included_tables: tuple[str, ...] | None = None) -> dict:
     try:
         import psycopg
         from psycopg import sql
@@ -21,8 +24,11 @@ def prepare(sqlite_path: Path, dsn: str, app_role: str, app_password: str, boots
 
     source = sqlite3.connect(sqlite_path)
     try:
-        tables = [row[0] for row in source.execute(
+        source_tables = [row[0] for row in source.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")]
+        tables = source_tables if included_tables is None else list(included_tables)
+        if not set(tables).issubset(source_tables):
+            raise RuntimeError("Requested fixture table is absent from the synthetic SQLite source")
         table_info = {name: source.execute(f'PRAGMA table_info("{name}")').fetchall() for name in tables}
         source_rows = {name: source.execute(f'SELECT * FROM "{name}"').fetchall() for name in tables}
     finally:
@@ -30,9 +36,11 @@ def prepare(sqlite_path: Path, dsn: str, app_role: str, app_password: str, boots
 
     with psycopg.connect(dsn, autocommit=True) as connection:
         database_name = connection.execute("SELECT current_database()").fetchone()[0]
-        if database_name != "insightpilot_ip4":
-            raise RuntimeError("Refusing to reset any database except the dedicated insightpilot_ip4 test database")
-        # This loader is intentionally destructive only inside the dedicated ephemeral IP4 test database.
+        allowed_database = (expected_database == "insightpilot_ip4" or
+                            re.fullmatch(r"insightpilot_ip2_inventory_[a-f0-9]{10}", expected_database))
+        if not allowed_database or database_name != expected_database:
+            raise RuntimeError("Refusing to reset a database outside the explicitly named dedicated test target")
+        # Schema reset is limited to a dedicated test target. Inventory integration supplies a random DB name.
         connection.execute("DROP SCHEMA public CASCADE")
         connection.execute("CREATE SCHEMA public")
         role_exists = connection.execute("SELECT 1 FROM pg_roles WHERE rolname=%s", (app_role,)).fetchone()
@@ -75,10 +83,22 @@ def prepare(sqlite_path: Path, dsn: str, app_role: str, app_password: str, boots
                                        ("spent_at", "campaign_id")),
         }
         for table, indexes in tenant_indexes.items():
+            if table not in tables:
+                continue
             for index_number, indexed_columns in enumerate(indexes, start=1):
                 index_name = f"ip4_{table}_{index_number}_tenant_idx"
                 connection.execute(sql.SQL("CREATE INDEX {} ON {} ({})").format(
                     sql.Identifier(index_name), sql.Identifier("public", table),
+                    sql.SQL(", ").join(sql.Identifier(column)
+                                        for column in (("tenant_id",) + indexed_columns))))
+        inventory_indexes = {
+            "inventory_daily_snapshots": ("snapshot_at",),
+            "inventory_cogs_events": ("sold_at",),
+        }
+        for table, indexed_columns in inventory_indexes.items():
+            if table in tables:
+                connection.execute(sql.SQL("CREATE INDEX {} ON {} ({})").format(
+                    sql.Identifier(f"ip2_{table}_tenant_idx"), sql.Identifier("public", table),
                     sql.SQL(", ").join(sql.Identifier(column)
                                         for column in (("tenant_id",) + indexed_columns))))
 
@@ -105,7 +125,7 @@ def prepare(sqlite_path: Path, dsn: str, app_role: str, app_password: str, boots
             if table != "data_meta":
                 connection.execute(sql.SQL("ANALYZE {}").format(sql.Identifier("public", table)))
 
-    return {"database": "insightpilot_ip4", "source_table_count": len(tables),
+    return {"database": expected_database, "source_table_count": len(tables),
             "tenant_rows": {"tenant-a": sum(len(source_rows[name]) for name in tables if name != "data_meta"),
                             "tenant-b": sum(len(source_rows[name]) for name in tables if name != "data_meta")},
             "tenant_isolation": "each RLS table has composite tenant primary key; all source rows loaded for both tenants"}
@@ -115,13 +135,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--database", type=Path, default=Path("data/insightpilot-multidomain.sqlite"))
     parser.add_argument("--bootstrap", type=Path, default=Path("docs/postgresql-rls-bootstrap.sql"))
+    parser.add_argument("--expected-database", default="insightpilot_ip4")
+    parser.add_argument("--tables", nargs="+", help="optional allowlist of synthetic source tables")
     args = parser.parse_args()
     dsn = os.environ.get("INSIGHTPILOT_IP4_ADMIN_DSN")
     app_role = os.environ.get("INSIGHTPILOT_IP4_APP_ROLE")
     app_password = os.environ.get("INSIGHTPILOT_IP4_APP_PASSWORD")
     if not dsn or not app_role or not app_password:
         parser.error("set INSIGHTPILOT_IP4_ADMIN_DSN, INSIGHTPILOT_IP4_APP_ROLE, and INSIGHTPILOT_IP4_APP_PASSWORD for the isolated test database")
-    print(prepare(args.database, dsn, app_role, app_password, args.bootstrap))
+    print(prepare(args.database, dsn, app_role, app_password, args.bootstrap,
+                  expected_database=args.expected_database,
+                  included_tables=tuple(args.tables) if args.tables else None))
 
 
 if __name__ == "__main__":

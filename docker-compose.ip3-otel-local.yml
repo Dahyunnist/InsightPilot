@@ -25,7 +25,7 @@ services:
       LLM_MODEL: ip3-otel-fixed-planner
       INSIGHTPILOT_DATABASE_PATH: /tmp/insightpilot-ip3-otel/fixture.sqlite
       INSIGHTPILOT_DATABASE_URL: ""
-      INSIGHTPILOT_API_TOKEN: ip3-otel-local-test-token
+      INSIGHTPILOT_API_TOKEN: ip3-otel-synthetic-local-test-token
       INSIGHTPILOT_API_SCOPES: refund:read
       OTEL_EXPORTER_OTLP_ENDPOINT: http://collector:4318
       IP3_OTEL_DATA_DIR: /tmp/insightpilot-ip3-otel

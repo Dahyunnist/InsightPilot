@@ -53,3 +53,9 @@ Docker 与专用连接配置可用后，使用独立 Compose project、临时 Co
 ```
 
 临时 Compose 启动前必须确认 project 名唯一、宿主端口动态分配、data dir 为 tmpfs、目标数据库名固定为 `insightpilot_ip4`。不能确认上述条件时，不运行 loader。当前工作机不满足 Docker/DSN 前置条件，以上步骤只作待复现实验说明。
+
+## 2026-11-16 v13 复验更新
+
+此前 v13 两后端 parity 缺口已由零模型调用复验关闭：同一冻结 22 题（refunds 12、marketing ROI 10）在 SQLite 与 PostgreSQL 两租户逐题一致，各 22/22，冻结 manifest/blind/gold 哈希匹配。完整隔离、运行 ID、PostgreSQL 版本与清理证据见 `reports/ip4-v13-postgres-parity-a2ea8ab495c14543afab476f0496ae65.json`；字段级总审计见 `reports/ip4-release-requirement-audit-2026-11-16.json`。
+
+该结论只适用于当前确定性 RulePlanner parity。36-call 模型消融的 run manifest 未记录执行 backend，不能外推为 PostgreSQL 模型执行；v13 模型执行代码锁仍 blocked。v14 的 22-case PostgreSQL parity 仍属待 owner review 候选证据，不计入冻结 release gate。

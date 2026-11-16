@@ -1,5 +1,13 @@
 # IP-2：指标目录 v2 与第二业务域
 
+## 2026-11-16 指标口径与 SQL 审计复核
+
+目录已随 `Metric` 与 catalog API 暴露 `definition_version`、`effective_from`、来源锚点、grain、分子/分母、业务时间基准、时区、freshness、源表、字段 lineage、合法维度、访问 scope 与适用数据版本。回答成功时返回上述口径、计划的 `metric_version` 和左闭右开日期、数据版本/fingerprint、后端、参数化 SQL、绑定参数及 verifier 结果；失败诊断只输出 `sql_sha256` 与 `parameter_count`，不回显 SQL 或参数。成功回答目前会返回 SQL 与参数，调用方须按其日志数据策略处理。
+
+库存周转 `inventory_turnover@1.0.0` 自 `2026-11-01` 生效，只支持 `insightpilot-inventory-v1`。口径为本地日期区间内销售成本之和 / 有效日库存账面金额均值；先按 Asia/Shanghai 每日汇总库存，再对有效日求均值。NULL 日不进均值，零值日保留；左闭右开本地午夜边界转换为 UTC：`2026-11-01` 至 `2026-11-04` 编译参数为 `2026-10-31T16:00:00Z` 至 `2026-11-03T16:00:00Z`。快照仅代表合成数据，不承诺生产实时 freshness。
+
+“退款率”检索同时返回订单率和金额率候选；planner 在模型调用前要求用户明确口径。已有合成测试覆盖这个澄清、版本生效日当天允许/日前与跨界拒绝、上海日界转换、NULL 和零分母，因此本次无代码或重复测试改动。定向回归结果记录于本次提交。
+
 ## 2026-11-16 目录契约复核
 
 目录审计现检查 definition source 的 Markdown 标题锚点、lineage 表与 `source_tables` 一致性，以及发布的数据版本和支持列表一致。补齐多触点归因、营销 ROI 契约标题，并移除归因指标未使用的 `data_meta.snapshot_at` lineage。检查仅调用内存目录校验，不读取评测集或报告；PostgreSQL parity 仍待真实宿主验收。
@@ -58,3 +66,7 @@ PostgreSQL bootstrap 现为 `inventory_daily_snapshots` 与 `inventory_cogs_even
 离线验收：库存周转、共享引擎契约与新集成测试共 `12 passed, 1 skipped`；SQLGlot 成功验证并转译四个绑定参数。PostgreSQL 实测尚未执行，本次未读取 `.env` 来启动具破坏性的数据库重建。当前结果证明可接入共享契约，不代表 PostgreSQL parity 已通过。
 
 同日尝试用随机 Compose 项目、内部网络、tmpfs 和本机临时端口启动 PostgreSQL。Docker Desktop 对内部网络中的映射端口没有提供宿主可达绑定；数据库无连接记录，测试未进入数据库断言。该随机项目的容器和网络已按项目名清理；既有 IP-4 容器及卷未触碰。此次不计 PostgreSQL parity 通过。后续需用无外网的容器内测试 runner，或经核验的 host-only bridge 重跑。
+
+## 2026-11-16 库存周转 PostgreSQL/RLS 实跑完成
+
+前文离线与启动失败记录是当时状态。最终使用隔离随机 Compose project、随机数据库、loopback 动态端口与 tmpfs 完成实跑；SQLite/PostgreSQL 两租户库存周转 parity 及 RLS canary 通过，模型调用 0。成功证据见 [IP-1 当前宿主复验](stage-IP1.md#2026-11-16-库存周转-postgresql-parity-与-rls-实跑) 与 `reports/ip2-inventory-postgres-acceptance-5dc9bc4bf9.json`。此项关闭 IP-2 库存指标的 PostgreSQL parity 缺口；仍不代表生产数据或部署。

@@ -9,7 +9,6 @@ S4 要求报告危险查询拦截率。新增 10 个固定合成危险 SQL 用�
 ## 可复现
 
 ```powershell
-Set-Location E:\job\insightpilot
 .\.venv\Scripts\python.exe -m scripts.evaluate_sql_safety
 .\.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/test_sql_safety_eval.py tests/test_s2_policy.py
 ```

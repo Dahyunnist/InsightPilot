@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from insightpilot.run_manifest import validate_public_run_manifest, validate_run_manifest, write_validated_reports
+from scripts.build_ip4_retrieval_ablation_manifest import build_manifest as build_ip4_retrieval_manifest
 from scripts.normalize_ip4_public_manifests import (audit_r3_legacy_reservation,
                                                     build_public_views, normalize_baseline,
                                                     normalize_blocked_attempt)
@@ -171,6 +172,39 @@ class RunManifestTests(unittest.TestCase):
         baseline["request_outcome"]["provider_responses_received"] = 16
         self.assertIn("provider responses cannot exceed attempted requests",
                       validate_public_run_manifest(baseline))
+
+    def test_ip4_retrieval_manifest_keeps_missing_run_evidence_explicit(self):
+        root = Path(__file__).resolve().parents[1]
+        report_path = root / "reports/ip4-retrieval-ablation-model-2026-11-16-r2.json"
+        source_before = report_path.read_bytes()
+        manifest = build_ip4_retrieval_manifest()
+
+        self.assertEqual([], validate_public_run_manifest(manifest))
+        self.assertEqual(source_before, report_path.read_bytes())
+        for field in ("run_id", "trace_id", "span_id", "evaluation_id", "git_sha", "model_id"):
+            self.assertIsNone(manifest[field])
+            self.assertEqual("not_recorded", manifest["field_status"][field])
+        self.assertEqual("deepseek-v4-flash", manifest["planned_model_id"])
+        self.assertEqual(22, manifest["sample_boundary"]["case_count"])
+        self.assertFalse(manifest["sample_boundary"]["generalization_claim"])
+        self.assertEqual(36, manifest["model_calls"])
+        self.assertEqual(36, manifest["request_outcome"]["provider_responses_received"])
+        self.assertIsNone(manifest["cost_usd"])
+        self.assertEqual(0.0323598, manifest["budget"]["price_estimate_usd"])
+        self.assertEqual(3, manifest["arm_call_audit"]["retrieval_off"][
+            "calls_over_one_per_planned_analysis_unclassified"])
+        self.assertEqual("unavailable", manifest["trace_event_evidence"]["source_status"])
+        self.assertEqual("unavailable", manifest["trace_event_evidence"]["unavailable_events"]["retry"]["status"])
+        self.assertTrue(all(event["count"] == 0 and event["coverage"] == "not_covered"
+                            for event in manifest["trace_event_coverage"].values()))
+
+    def test_null_actual_model_id_requires_unavailable_status(self):
+        import copy
+
+        manifest = build_ip4_retrieval_manifest()
+        manifest["field_status"]["model_id"] = "recorded"
+        errors = validate_public_run_manifest(copy.deepcopy(manifest))
+        self.assertIn("null model_id requires unavailable field status", errors)
 
 
 if __name__ == "__main__":

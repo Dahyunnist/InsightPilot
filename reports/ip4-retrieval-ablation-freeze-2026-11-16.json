@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "status": "blocked_live_provider_balance_recheck",
+  "suite_id": "insightpilot-ip4-offline-prep-v1",
+  "case_count": 22,
+  "manifest_sha256": "94aadf46f508f23a58dbff01b1ceff2fa2f342a3e9a18453814e3e7d19bd246f",
+  "blind_sha256": {
+    "refunds": "252993f200a1efb05ca0345ca36c233de3abc8f5e3907780e830b213969d1e7f",
+    "marketing_roi": "b1fc54513b86cf47d57b4d6e609c0bd4ca3e2acc9ee95d9021f6829328f16307"
+  },
+  "gold_sha256_local_only": {
+    "refunds": "088bcb677b189fb4d66b2f40be8a190fab331fdffc1c6c7a70d6e7da93222ae4",
+    "marketing_roi": "0c3dfb710f74820a9aa865b6e5df0395daab2550d9cc16a4431e9937ae8eb43b"
+  },
+  "data_version": "insightpilot-multidomain-v1",
+  "data_fingerprint": "9171b5a859f09882038c38516e725122383f4e252e773a302324ba1b016da0e9",
+  "prior_report_sha256": "7b0b3304d177e9bb5e71381facc450b0abd7d551cec66cc1e5529c7ca1c13b9c",
+  "verified_against": [
+    "manifest",
+    "prior completed report"
+  ],
+  "question_and_gold_contents_included": false,
+  "request_payload_fields": [
+    "question",
+    "candidate_metrics",
+    "allowed_metric_ids"
+  ],
+  "authorized_maximum_api_calls": 88,
+  "prior_request_plan": {
+    "retrieval_on": 15,
+    "retrieval_off": 19,
+    "maximum_api_calls": 68,
+    "worst_case_reserve_usd": 0.159936
+  },
+  "current_request_plan": {
+    "retrieval_on": 14,
+    "retrieval_off": 19,
+    "maximum_api_calls": 66,
+    "worst_case_reserve_usd": 0.155232
+  },
+  "request_plan_revision": {
+    "previous_preflight_error": "Local deterministic guard count changed; re-freeze budget before model calls.",
+    "guard_case_id": "IP4V13-M09",
+    "prior_retrieval_on_model_calls": 1,
+    "current_retrieval_on_status": "deterministic clarification",
+    "current_reason_code": "multiple_metric_definitions",
+    "retrieval_off_plan_unchanged": true,
+    "candidate_question_gold_hashes_unchanged": true,
+    "outbound_fields_unchanged": true,
+    "model_calls_before_confirmation": 0
+  },
+  "provider_balance_preflight": {
+    "status": "passed",
+    "currency": "CNY",
+    "available": 29.06,
+    "required_for_authorized_peak_usd_0_1873344": 1.405008,
+    "checked_balance_report_required_cny_for_0_187_usd": 1.4025,
+    "provider_requests": 1,
+    "model_calls": 0,
+    "checked_at_utc": null
+  },
+  "local_preflight": {
+    "status": "passed",
+    "case_count": 22,
+    "planned_external_analyses_by_arm": {
+      "retrieval_on": 14,
+      "retrieval_off": 19
+    },
+    "maximum_api_calls": 66,
+    "authorized_maximum_api_calls": 88,
+    "worst_case_reserve_usd": 0.155232,
+    "authorized_peak_cap_usd": 0.1873344,
+    "max_prompt_content_bytes": 3221,
+    "prompt_byte_cap": 4000,
+    "network_calls": 0,
+    "model_calls": 0,
+    "provider_balance_rechecked_by_runner_before_execution": true,
+    "output_path": "reports/ip4-retrieval-ablation-model-2026-11-16.json"
+  },
+  "latest_live_balance_recheck": {
+    "status": "check_failed",
+    "error_class": "URLError",
+    "checked_at_utc": "2026-11-16T07:39:02.887121+00:00",
+    "provider_requests": 1,
+    "model_requests": 0,
+    "model_payload_sent": false
+  },
+  "earlier_user_supplied_balance_result": {
+    "status": "passed",
+    "currency": "CNY",
+    "available": 29.06,
+    "required_cny": 1.4025,
+    "provider_requests": 1,
+    "model_calls": 0,
+    "checked_at_utc": null
+  },
+  "model_calls": 0,
+  "model_requests_sent": 0
+}

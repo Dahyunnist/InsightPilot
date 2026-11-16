@@ -32,11 +32,11 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect Docker containers.' }
     if ($Existing) { throw 'Container insightpilot-ip4-postgres already exists; stop it before acceptance run.' }
 
-    $env:INSIGHTPILOT_IP4_ADMIN_PASSWORD = 'local-acceptance-admin-only'
-    $env:INSIGHTPILOT_IP4_ADMIN_DSN = 'postgresql://postgres:local-acceptance-admin-only@127.0.0.1:55432/insightpilot_ip4'
+    $env:INSIGHTPILOT_IP4_ADMIN_PASSWORD = 'synthetic-local-acceptance-admin-only'
+    $env:INSIGHTPILOT_IP4_ADMIN_DSN = 'postgresql://postgres:synthetic-local-acceptance-admin-only@127.0.0.1:55432/insightpilot_ip4'
     $env:INSIGHTPILOT_IP4_APP_ROLE = 'insightpilot_acceptance_app'
-    $env:INSIGHTPILOT_IP4_APP_PASSWORD = 'local-acceptance-app-only'
-    $env:INSIGHTPILOT_IP4_APP_DSN = 'postgresql://insightpilot_acceptance_app:local-acceptance-app-only@127.0.0.1:55432/insightpilot_ip4'
+    $env:INSIGHTPILOT_IP4_APP_PASSWORD = 'synthetic-local-acceptance-app-only'
+    $env:INSIGHTPILOT_IP4_APP_DSN = 'postgresql://insightpilot_acceptance_app:synthetic-local-acceptance-app-only@127.0.0.1:55432/insightpilot_ip4'
 
     $ComposeAttempted = $true
     Invoke-Checked 'docker' @('compose', '-f', $ComposeFile, 'up', '-d', '--wait')
